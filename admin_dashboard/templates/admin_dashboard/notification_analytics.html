@@ -1,0 +1,229 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Notification Analytics" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'admin_dashboard:notification_management' %}" class="hover:text-zm-green">{% trans "Notifications" %}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">{% trans "Analytics" %}</span>
+    </nav>
+
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+                <i class="fas fa-chart-bar text-purple-500 mr-2"></i>{% trans "Notification Analytics" %}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">{% trans "Track engagement and delivery metrics" %}</p>
+        </div>
+        <div class="flex space-x-2">
+            <a href="?days=7" class="px-4 py-2 {% if days == 7 %}bg-zm-green text-white{% else %}bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300{% endif %} rounded-lg">7 {% trans "days" %}</a>
+            <a href="?days=30" class="px-4 py-2 {% if days == 30 %}bg-zm-green text-white{% else %}bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300{% endif %} rounded-lg">30 {% trans "days" %}</a>
+            <a href="?days=90" class="px-4 py-2 {% if days == 90 %}bg-zm-green text-white{% else %}bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-300{% endif %} rounded-lg">90 {% trans "days" %}</a>
+        </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+            <p class="text-blue-100 text-sm font-medium">{% trans "Total Sent" %}</p>
+            <h3 class="text-4xl font-bold mt-2">{{ total_sent }}</h3>
+            <p class="text-blue-100 text-xs mt-2">{% trans "Last" %} {{ days }} {% trans "days" %}</p>
+        </div>
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+            <p class="text-green-100 text-sm font-medium">{% trans "Delivered" %}</p>
+            <h3 class="text-4xl font-bold mt-2">{{ total_delivered }}</h3>
+            <p class="text-green-100 text-xs mt-2">{{ engagement_rate }}% {% trans "success rate" %}</p>
+        </div>
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <p class="text-purple-100 text-sm font-medium">{% trans "Engagement Rate" %}</p>
+            <h3 class="text-4xl font-bold mt-2">{{ engagement_rate }}%</h3>
+            <p class="text-purple-100 text-xs mt-2">
+                {% if engagement_rate >= 40 %}✅ {% trans "Target achieved!" %}{% else %}📈 {% trans "Growing" %}{% endif %}
+            </p>
+        </div>
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
+            <p class="text-red-100 text-sm font-medium">{% trans "Failed" %}</p>
+            <h3 class="text-4xl font-bold mt-2">{{ total_failed }}</h3>
+            <p class="text-red-100 text-xs mt-2">{% widthratio total_failed total_sent 100 %}% {% trans "failure rate" %}</p>
+        </div>
+    </div>
+
+    <!-- Channel Performance -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+            <i class="fas fa-signal mr-2"></i>{% trans "Channel Performance" %}
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for channel in channel_performance %}
+            <div class="border border-gray-200 dark:border-zinc-700 rounded-lg p-4">
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="font-bold text-gray-900 dark:text-white">{{ channel.channel }}</h4>
+                    <span class="text-2xl font-bold text-zm-green">{{ channel.rate }}%</span>
+                </div>
+                <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">{% trans "Total Sent" %}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ channel.total }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600 dark:text-gray-400">{% trans "Delivered" %}</span>
+                        <span class="font-medium text-gray-900 dark:text-white">{{ channel.delivered }}</span>
+                    </div>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2 mt-3">
+                    <div class="bg-zm-green h-2 rounded-full" style="width: {{ channel.rate }}%"></div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Daily Trend Chart -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+            <i class="fas fa-chart-line mr-2"></i>{% trans "Daily Trend" %}
+        </h3>
+        <canvas id="dailyTrendChart" height="80"></canvas>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Notification Type Breakdown -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                <i class="fas fa-tags mr-2"></i>{% trans "Notification Types" %}
+            </h3>
+            <div class="space-y-3">
+                {% for type in type_breakdown %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">{{ type.notification_type }}</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ type.count }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
+                        {% widthratio type.count total_sent 100 as percentage %}
+                        <div class="bg-blue-500 h-2 rounded-full" style="width: {{ percentage }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Peak Hours -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">
+                <i class="fas fa-clock mr-2"></i>{% trans "Peak Hours" %}
+            </h3>
+            <canvas id="peakHoursChart" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Top Users -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                <i class="fas fa-users mr-2"></i>{% trans "Top Users by Notifications Received" %}
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Rank" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "User" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Notifications" %}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for user in top_users %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700">
+                        <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">{{ forloop.counter }}</td>
+                        <td class="px-6 py-4">
+                            <a href="{% url 'admin_dashboard:user_detail' user.user__id %}" 
+                               class="text-zm-green hover:text-green-600 font-medium">
+                                {{ user.user__username }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 font-bold text-gray-900 dark:text-white">{{ user.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Daily Trend Chart
+const dailyCtx = document.getElementById('dailyTrendChart').getContext('2d');
+new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+        labels: [{% for day in daily_trend %}'{{ day.date }}',{% endfor %}],
+        datasets: [{
+            label: '{% trans "Sent" %}',
+            data: [{% for day in daily_trend %}{{ day.sent }},{% endfor %}],
+            borderColor: 'rgb(59, 130, 246)',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4
+        }, {
+            label: '{% trans "Delivered" %}',
+            data: [{% for day in daily_trend %}{{ day.delivered }},{% endfor %}],
+            borderColor: 'rgb(34, 197, 94)',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Peak Hours Chart
+const hoursCtx = document.getElementById('peakHoursChart').getContext('2d');
+new Chart(hoursCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for hour in hour_stats %}'{{ hour.hour }}',{% endfor %}],
+        datasets: [{
+            label: '{% trans "Notifications" %}',
+            data: [{% for hour in hour_stats %}{{ hour.count }},{% endfor %}],
+            backgroundColor: 'rgba(34, 197, 94, 0.5)',
+            borderColor: 'rgb(34, 197, 94)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

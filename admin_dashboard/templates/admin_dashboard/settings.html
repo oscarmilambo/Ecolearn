@@ -1,0 +1,28 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}System Settings & SMS Broadcast{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold mb-6">Send SMS Campaign</h3>
+    <form method="post" action="{% url 'admin_dashboard:settings' %}">
+            {% csrf_token %}
+            <textarea name="message" class="w-full p-4 border rounded-lg mb-4" placeholder="Enter message..."></textarea>
+            <button type="submit" class="w-full bg-zm-green text-white py-3 rounded-lg hover:bg-green-700 transition">
+                <i class="fas fa-paper-plane"></i> Send to All Users ({{ total_users }})
+            </button>
+        </form>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold mb-6">System Stats</h3>
+        <div class="space-y-4">
+            <div><strong>Budget Used:</strong> K3,400</div>
+            <div><strong>Annual Benefits:</strong> K8,700</div>
+            <div><strong>ROI:</strong> <span class="text-zm-green font-bold">{{ roi }}%</span></div>
+            <div><strong>Last Backup:</strong> {% now "d M Y H:i" %}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

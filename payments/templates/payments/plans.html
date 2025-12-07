@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Plans - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-eco-green to-eco-dark py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center text-white">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">Choose Your Plan</h1>
+            <p class="text-xl opacity-90">Unlock premium features and support environmental education</p>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {% for plan in plans %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden {% if plan.plan_type == 'premium' %}ring-2 ring-eco-green{% endif %}">
+                {% if plan.plan_type == 'premium' %}
+                    <div class="bg-eco-green text-white text-center py-2 text-sm font-semibold">
+                        MOST POPULAR
+                    </div>
+                {% endif %}
+                
+                <div class="p-8">
+                    <div class="text-center mb-6">
+                        {% if plan.plan_type == 'premium' %}
+                            <i class="fas fa-crown text-yellow-500 text-4xl mb-4"></i>
+                        {% elif plan.plan_type == 'certificate' %}
+                            <i class="fas fa-certificate text-blue-500 text-4xl mb-4"></i>
+                        {% elif plan.plan_type == 'donation' %}
+                            <i class="fas fa-heart text-red-500 text-4xl mb-4"></i>
+                        {% else %}
+                            <i class="fas fa-calendar text-purple-500 text-4xl mb-4"></i>
+                        {% endif %}
+                        
+                        <h3 class="text-2xl font-bold text-gray-800 mb-2">{{ plan.name }}</h3>
+                        <div class="text-4xl font-bold text-gray-900 mb-1">
+                            {{ plan.currency }} {{ plan.price }}
+                        </div>
+                        {% if plan.duration_days %}
+                            <div class="text-gray-500 text-sm">
+                                per {{ plan.duration_days }} days
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-gray-600 text-center mb-6">{{ plan.description }}</p>
+                    
+                    <ul class="space-y-3 mb-8">
+                        {% for feature in plan.features %}
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-eco-green mr-3"></i>
+                                <span class="text-gray-700">{{ feature }}</span>
+                            </li>
+                        {% empty %}
+                            {% if plan.plan_type == 'premium' %}
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Access to all premium modules</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Downloadable certificates</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Priority support</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Advanced analytics</span>
+                                </li>
+                            {% elif plan.plan_type == 'certificate' %}
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Official completion certificate</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Digital and printable format</span>
+                                </li>
+                            {% elif plan.plan_type == 'donation' %}
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Support environmental education</span>
+                                </li>
+                                <li class="flex items-center">
+                                    <i class="fas fa-check text-eco-green mr-3"></i>
+                                    <span class="text-gray-700">Help fund community programs</span>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                    
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'payments:initiate_payment' plan.id %}" class="block w-full text-center bg-eco-green text-white py-3 rounded-lg font-semibold hover:bg-eco-dark transition-colors">
+                            {% if plan.plan_type == 'donation' %}
+                                Donate Now
+                            {% else %}
+                                Choose Plan
+                            {% endif %}
+                        </a>
+                    {% else %}
+                        <a href="{% url 'accounts:login' %}" class="block w-full text-center bg-gray-300 text-gray-600 py-3 rounded-lg font-semibold">
+                            Login to Continue
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-span-full text-center py-12">
+                <i class="fas fa-credit-card text-gray-400 text-6xl mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">No plans available</h3>
+                <p class="text-gray-500">Payment plans will be available soon.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Mobile Money Information -->
+    <div class="mt-16 bg-gray-50 rounded-lg p-8">
+        <div class="text-center mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Supported Payment Methods</h2>
+            <p class="text-gray-600">Pay securely using your mobile money account</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg p-6 text-center shadow-sm">
+                <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-mobile-alt text-yellow-600 text-2xl"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">MTN Mobile Money</h3>
+                <p class="text-sm text-gray-600">Pay with your MTN mobile money wallet</p>
+            </div>
+            
+            <div class="bg-white rounded-lg p-6 text-center shadow-sm">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-mobile-alt text-red-600 text-2xl"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">Airtel Money</h3>
+                <p class="text-sm text-gray-600">Pay with your Airtel Money account</p>
+            </div>
+            
+            <div class="bg-white rounded-lg p-6 text-center shadow-sm">
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-mobile-alt text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="font-semibold text-gray-800 mb-2">Zamtel Kwacha</h3>
+                <p class="text-sm text-gray-600">Pay with your Zamtel Kwacha wallet</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ Section -->
+    <div class="mt-16">
+        <h2 class="text-2xl font-bold text-gray-800 text-center mb-8">Frequently Asked Questions</h2>
+        
+        <div class="max-w-3xl mx-auto space-y-4">
+            <div class="bg-white rounded-lg shadow-sm">
+                <button class="w-full text-left p-6 focus:outline-none" onclick="toggleFAQ(this)">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-800">How do mobile money payments work?</h3>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                </button>
+                <div class="hidden px-6 pb-6">
+                    <p class="text-gray-600">
+                        After selecting a plan, you'll be prompted to enter your mobile number. We'll send a payment request to your phone, which you can approve using your mobile money PIN.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm">
+                <button class="w-full text-left p-6 focus:outline-none" onclick="toggleFAQ(this)">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-800">Is my payment information secure?</h3>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                </button>
+                <div class="hidden px-6 pb-6">
+                    <p class="text-gray-600">
+                        Yes, all payments are processed securely through official mobile money APIs. We don't store your mobile money PIN or sensitive payment information.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-sm">
+                <button class="w-full text-left p-6 focus:outline-none" onclick="toggleFAQ(this)">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-semibold text-gray-800">Can I cancel my subscription?</h3>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                </button>
+                <div class="hidden px-6 pb-6">
+                    <p class="text-gray-600">
+                        Yes, you can cancel your subscription at any time from your account settings. You'll continue to have access until the end of your current billing period.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleFAQ(button) {
+    const content = button.nextElementSibling;
+    const icon = button.querySelector('i');
+    
+    content.classList.toggle('hidden');
+    
+    if (content.classList.contains('hidden')) {
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,259 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block page_title %}Report Details - {{ report.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Back Button -->
+    <a href="{% url 'admin_dashboard:reports' %}" class="inline-flex items-center text-green-600 hover:text-green-700 font-medium">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+        Back to Reports
+    </a>
+
+    <!-- Report Header -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <div class="flex justify-between items-start">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">{{ report.reference_number }}</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">{{ report.location_description }}</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
+                    {% if report.status == 'pending' %}bg-yellow-100 text-yellow-800{% endif %}
+                    {% if report.status == 'verified' %}bg-blue-100 text-blue-800{% endif %}
+                    {% if report.status == 'in_progress' %}bg-purple-100 text-purple-800{% endif %}
+                    {% if report.status == 'resolved' %}bg-green-100 text-green-800{% endif %}
+                    {% if report.status == 'rejected' %}bg-red-100 text-red-800{% endif %}">
+                    {{ report.get_status_display }}
+                </span>
+                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium
+                    {% if report.severity == 'low' %}bg-gray-100 text-gray-800{% endif %}
+                    {% if report.severity == 'medium' %}bg-yellow-100 text-yellow-800{% endif %}
+                    {% if report.severity == 'high' %}bg-orange-100 text-orange-800{% endif %}
+                    {% if report.severity == 'critical' %}bg-red-100 text-red-800{% endif %}">
+                    {{ report.get_severity_display }} Priority
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Main Content -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Report Details -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Report Details</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Description</p>
+                        <p class="text-gray-900 dark:text-white mt-1">{{ report.description }}</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Waste Type</p>
+                            <p class="text-gray-900 dark:text-white mt-1">{{ report.waste_type|default:"Not specified" }}</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">Estimated Volume</p>
+                            <p class="text-gray-900 dark:text-white mt-1">{{ report.estimated_volume|default:"Not specified" }}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Location</p>
+                        <p class="text-gray-900 dark:text-white mt-1">{{ report.location_description }}</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            GPS: {{ report.latitude }}, {{ report.longitude }}
+                        </p>
+                    </div>
+
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Reported</p>
+                        <p class="text-gray-900 dark:text-white mt-1">{{ report.reported_at|date:"F d, Y H:i" }}</p>
+                    </div>
+
+                    {% if report.verified_at %}
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Verified</p>
+                        <p class="text-gray-900 dark:text-white mt-1">{{ report.verified_at|date:"F d, Y H:i" }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if report.resolved_at %}
+                    <div>
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Resolved</p>
+                        <p class="text-gray-900 dark:text-white mt-1">{{ report.resolved_at|date:"F d, Y H:i" }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Photos -->
+            {% if report.photo1 or report.photo2 or report.photo3 %}
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Photos</h2>
+                <div class="grid grid-cols-3 gap-4">
+                    {% if report.photo1 %}
+                    <a href="{{ report.photo1.url }}" target="_blank">
+                        <img src="{{ report.photo1.url }}" alt="Photo 1" class="w-full h-48 object-cover rounded-lg hover:opacity-75 transition">
+                    </a>
+                    {% endif %}
+                    {% if report.photo2 %}
+                    <a href="{{ report.photo2.url }}" target="_blank">
+                        <img src="{{ report.photo2.url }}" alt="Photo 2" class="w-full h-48 object-cover rounded-lg hover:opacity-75 transition">
+                    </a>
+                    {% endif %}
+                    {% if report.photo3 %}
+                    <a href="{{ report.photo3.url }}" target="_blank">
+                        <img src="{{ report.photo3.url }}" alt="Photo 3" class="w-full h-48 object-cover rounded-lg hover:opacity-75 transition">
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Updates Timeline -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Updates Timeline</h2>
+                
+                {% if updates %}
+                <div class="space-y-4">
+                    {% for update in updates %}
+                    <div class="border-l-4 {% if update.is_public %}border-green-500{% else %}border-gray-300{% endif %} pl-4 py-2">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <p class="text-gray-900 dark:text-white">{{ update.update_text }}</p>
+                                <p class="text-sm text-gray-500 mt-1">
+                                    By {{ update.updated_by.get_full_name|default:update.updated_by.username }} • 
+                                    {{ update.created_at|date:"M d, Y H:i" }}
+                                    {% if update.is_public %}
+                                    <span class="text-green-600">• Public</span>
+                                    {% else %}
+                                    <span class="text-gray-400">• Internal</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-gray-500 text-center py-4">No updates yet</p>
+                {% endif %}
+            </div>
+
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div class="space-y-6">
+            
+            <!-- Update Status -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Update Status</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_status">
+                    <select name="status" required
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white mb-3">
+                        {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if report.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition font-medium">
+                        Update Status & Notify User
+                    </button>
+                </form>
+            </div>
+
+            <!-- Forward to Authority -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Forward to Authority</h3>
+                
+                {% if report.forwarded_to_authority %}
+                <div class="bg-green-50 dark:bg-green-900 p-4 rounded-lg mb-4">
+                    <p class="text-sm text-green-800 dark:text-green-200 font-medium">✓ Forwarded to:</p>
+                    <p class="text-green-900 dark:text-green-100 mt-1">{{ report.authority_name }}</p>
+                    <p class="text-xs text-green-700 dark:text-green-300 mt-1">{{ report.authority_contact }}</p>
+                </div>
+                {% endif %}
+
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="forward_to_authority">
+                    <select name="authority" required
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white mb-3">
+                        <option value="">Select Authority</option>
+                        {% for authority in authorities %}
+                        <option value="{{ authority.id }}">{{ authority.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                        Forward & Notify User
+                    </button>
+                </form>
+            </div>
+
+            <!-- Add Update -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Add Update</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_update">
+                    <textarea name="update_text" rows="4" required
+                              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white mb-3"
+                              placeholder="Enter update message..."></textarea>
+                    <label class="flex items-center space-x-2 mb-3">
+                        <input type="checkbox" name="is_public" checked class="w-4 h-4 text-green-600 rounded">
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Visible to reporter (notify user)</span>
+                    </label>
+                    <button type="submit" class="w-full bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition font-medium">
+                        Add Update
+                    </button>
+                </form>
+            </div>
+
+            <!-- Admin Notes -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Admin Notes (Internal)</h3>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add_notes">
+                    <textarea name="admin_notes" rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white mb-3"
+                              placeholder="Internal notes (not visible to reporter)">{{ report.admin_notes }}</textarea>
+                    <button type="submit" class="w-full bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition font-medium">
+                        Save Notes
+                    </button>
+                </form>
+            </div>
+
+            <!-- Reporter Info -->
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Reporter Information</h3>
+                {% if report.is_anonymous %}
+                <p class="text-gray-500 text-sm">Anonymous Report</p>
+                {% else %}
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Name:</p>
+                    <p class="text-gray-900 dark:text-white">{{ report.reporter.get_full_name|default:report.reporter.username }}</p>
+                    {% if report.reporter.phone_number %}
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Phone:</p>
+                    <p class="text-gray-900 dark:text-white">{{ report.reporter.phone_number }}</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+</div>
+{% endblock %}

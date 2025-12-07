@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+
+{% block title %}Reports Map - EcoLearn{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #map {
+        height: 600px;
+        width: 100%;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .report-popup {
+        max-width: 250px;
+    }
+    
+    .severity-low { color: #22c55e; }
+    .severity-medium { color: #f59e0b; }
+    .severity-high { color: #ef4444; }
+    .severity-critical { color: #dc2626; }
+    
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-verified { background-color: #dbeafe; color: #1e40af; }
+    .status-in_progress { background-color: #fde68a; color: #92400e; }
+    .status-resolved { background-color: #d1fae5; color: #065f46; }
+    .status-rejected { background-color: #fee2e2; color: #991b1b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="bg-gradient-to-r from-red-600 to-red-800 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center">
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">
+                <i class="fas fa-map-marker-alt mr-3"></i>Dumping Reports Map
+            </h1>
+            <p class="text-xl md:text-2xl mb-8 opacity-90">
+                View illegal dumping reports across Zambia and help keep our communities clean
+            </p>
+            <div class="space-x-4">
+                <a href="{% url 'reporting:report_dumping' %}" class="bg-white text-red-600 hover:bg-gray-100 px-6 py-3 rounded-lg font-semibold inline-block transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Report Dumping
+                </a>
+                <a href="{% url 'reporting:track_report' %}" class="border-2 border-white text-white hover:bg-white hover:text-red-600 px-6 py-3 rounded-lg font-semibold inline-block transition-colors">
+                    <i class="fas fa-search mr-2"></i>Track Report
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Map Controls -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-800 mb-2">Map Legend</h3>
+                <div class="flex flex-wrap gap-4 text-sm">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                        <span>Low Severity</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-yellow-500 rounded-full mr-2"></div>
+                        <span>Medium Severity</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-orange-500 rounded-full mr-2"></div>
+                        <span>High Severity</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 bg-red-600 rounded-full mr-2"></div>
+                        <span>Critical Severity</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-2">
+                <button id="filter-all" class="px-4 py-2 bg-eco-green text-white rounded-md hover:bg-eco-dark transition-colors">
+                    All Reports
+                </button>
+                <button id="filter-pending" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Pending
+                </button>
+                <button id="filter-verified" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Verified
+                </button>
+                <button id="filter-resolved" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+                    Resolved
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Map Container -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <div id="map"></div>
+    </div>
+</div>
+
+<!-- Statistics Section -->
+<div class="bg-gray-100 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Reporting Statistics</h2>
+            <p class="text-xl text-gray-600">Community impact and progress</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl font-bold text-blue-600 mb-2" id="total-reports">{{ reports|length }}</div>
+                <div class="text-gray-600">Total Reports</div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl font-bold text-yellow-600 mb-2" id="pending-reports">-</div>
+                <div class="text-gray-600">Pending Review</div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl font-bold text-orange-600 mb-2" id="progress-reports">-</div>
+                <div class="text-gray-600">In Progress</div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6 text-center">
+                <div class="text-3xl font-bold text-green-600 mb-2" id="resolved-reports">-</div>
+                <div class="text-gray-600">Resolved</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action -->
+<div class="bg-red-600 py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold text-white mb-4">
+            Help Keep Zambia Clean
+        </h2>
+        <p class="text-xl text-white opacity-90 mb-8 max-w-2xl mx-auto">
+            Report illegal dumping in your area and help local authorities take action quickly
+        </p>
+        <a href="{% url 'reporting:report_dumping' %}" class="bg-white text-red-600 hover:bg-gray-100 px-8 py-4 rounded-lg font-semibold text-lg inline-block transition-colors">
+            <i class="fas fa-camera mr-2"></i>Report Dumping Site
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+// Initialize map centered on Zambia
+const map = L.map('map').setView([-15.3875, 28.3228], 6);
+
+// Add OpenStreetMap tiles
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+}).addTo(map);
+
+// Reports data from Django
+const reportsData = {{ reports|safe }};
+
+// Store all markers for filtering
+let allMarkers = [];
+
+// Function to get marker color based on severity
+function getMarkerColor(severity) {
+    switch(severity) {
+        case 'low': return '#22c55e';
+        case 'medium': return '#f59e0b';
+        case 'high': return '#f97316';
+        case 'critical': return '#dc2626';
+        default: return '#6b7280';
+    }
+}
+
+// Function to get status badge class
+function getStatusClass(status) {
+    return `status-${status}`;
+}
+
+// Function to get status display name
+function getStatusDisplay(status) {
+    const statusMap = {
+        'pending': 'Pending Review',
+        'verified': 'Verified',
+        'in_progress': 'In Progress',
+        'resolved': 'Resolved',
+        'rejected': 'Rejected'
+    };
+    return statusMap[status] || status;
+}
+
+// Add markers to map
+reportsData.forEach(function(report) {
+    if (report.latitude && report.longitude) {
+        const marker = L.circleMarker([report.latitude, report.longitude], {
+            color: getMarkerColor(report.severity),
+            fillColor: getMarkerColor(report.severity),
+            fillOpacity: 0.7,
+            radius: 8,
+            weight: 2
+        });
+        
+        // Create popup content
+        const popupContent = `
+            <div class="report-popup">
+                <h4 class="font-semibold text-gray-800 mb-2">
+                    Report #${report.reference_number}
+                </h4>
+                <p class="text-sm text-gray-600 mb-2">
+                    <i class="fas fa-map-marker-alt mr-1"></i>
+                    ${report.location_description}
+                </p>
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs px-2 py-1 rounded-full severity-${report.severity}">
+                        ${report.severity.charAt(0).toUpperCase() + report.severity.slice(1)} Severity
+                    </span>
+                    <span class="text-xs px-2 py-1 rounded-full ${getStatusClass(report.status)}">
+                        ${getStatusDisplay(report.status)}
+                    </span>
+                </div>
+                <a href="/reporting/report/${report.id}/" class="text-eco-green hover:text-eco-dark text-sm font-medium">
+                    View Details →
+                </a>
+            </div>
+        `;
+        
+        marker.bindPopup(popupContent);
+        marker.addTo(map);
+        
+        // Store marker with metadata for filtering
+        marker.reportData = report;
+        allMarkers.push(marker);
+    }
+});
+
+// Filter functionality
+function filterMarkers(status) {
+    allMarkers.forEach(function(marker) {
+        if (status === 'all' || marker.reportData.status === status) {
+            map.addLayer(marker);
+        } else {
+            map.removeLayer(marker);
+        }
+    });
+    
+    // Update button states
+    document.querySelectorAll('[id^="filter-"]').forEach(function(btn) {
+        btn.classList.remove('bg-eco-green', 'text-white');
+        btn.classList.add('bg-gray-200', 'text-gray-700');
+    });
+    
+    document.getElementById(`filter-${status}`).classList.remove('bg-gray-200', 'text-gray-700');
+    document.getElementById(`filter-${status}`).classList.add('bg-eco-green', 'text-white');
+}
+
+// Add event listeners for filter buttons
+document.getElementById('filter-all').addEventListener('click', () => filterMarkers('all'));
+document.getElementById('filter-pending').addEventListener('click', () => filterMarkers('pending'));
+document.getElementById('filter-verified').addEventListener('click', () => filterMarkers('verified'));
+document.getElementById('filter-resolved').addEventListener('click', () => filterMarkers('resolved'));
+
+// Update statistics
+function updateStatistics() {
+    const stats = {
+        pending: 0,
+        in_progress: 0,
+        resolved: 0
+    };
+    
+    reportsData.forEach(function(report) {
+        if (stats.hasOwnProperty(report.status)) {
+            stats[report.status]++;
+        }
+    });
+    
+    document.getElementById('pending-reports').textContent = stats.pending;
+    document.getElementById('progress-reports').textContent = stats.in_progress;
+    document.getElementById('resolved-reports').textContent = stats.resolved;
+}
+
+// Initialize statistics
+updateStatistics();
+
+// Fit map to show all markers if any exist
+if (allMarkers.length > 0) {
+    const group = new L.featureGroup(allMarkers);
+    map.fitBounds(group.getBounds().pad(0.1));
+}
+</script>
+{% endblock %}

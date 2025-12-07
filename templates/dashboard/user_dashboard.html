@@ -1,0 +1,552 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Dashboard - EcoLearn{% endblock %}
+
+{% block content %}
+<!-- Hero Section with Background Slideshow -->
+<div class="relative overflow-hidden" style="height: 400px;">
+    <div class="absolute inset-0 z-0">
+        <div class="slideshow-container">
+            <div class="slide fade" style="background-image: url('{% static 'images/reduction.jpg' %}');"></div>
+            <div class="slide fade" style="background-image: url('{% static 'images/community.jpg' %}');"></div>
+            <div class="slide fade" style="background-image: url('{% static 'images/kutoba.jpg' %}');"></div>
+            <div class="slide fade" style="background-image: url('{% static 'images/ma bin.jpeg' %}');"></div>
+            <div class="slide fade" style="background-image: url('{% static 'images/black.jpg' %}');"></div>
+        </div>
+        <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent"></div>
+    </div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+        <div class="text-white w-full">
+            <h1 class="text-4xl md:text-5xl font-bold mb-3 animate-fade-in-up">
+                Welcome back, {{ user.get_full_name|default:user.username }}! 
+            </h1>
+            <p class="text-xl md:text-2xl opacity-90 animate-fade-in-up delay-200">
+                Here's your environmental impact summary
+            </p>
+            
+            <!-- Debug Info (styled for hero section) -->
+            <div class="mt-4 inline-block bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-3 text-sm animate-fade-in-up delay-400">
+                <p class="font-semibold mb-1">🔍 Dashboard Stats:</p>
+                <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs opacity-90">
+                    <span>Events: {{ upcoming_events|length }}</span>
+                    <span>Challenges: {{ active_challenges|length }}</span>
+                    <span>Reports: {{ total_reports }}</span>
+                    <span>Topics: {{ forum_topics_count }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Impact Score Card (Enhanced with animation) -->
+        <div class="bg-gradient-to-r from-eco-green to-eco-dark rounded-lg p-8 text-white mb-8 shadow-2xl transform hover:scale-[1.02] transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-semibold mb-3 flex items-center">
+                        <i class="fas fa-award mr-3 text-3xl"></i>
+                        Your Impact Score
+                    </h2>
+                    <p class="text-5xl font-bold mb-2">{{ impact_score|default:0 }} Points</p>
+                    <p class="text-lg text-eco-light flex items-center">
+                        <i class="fas fa-seedling mr-2"></i>
+                        Keep up the great work! 
+                    </p>
+                </div>
+                <div class="hidden md:block">
+                    <i class="fas fa-award text-8xl opacity-20 achievement-badge"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Grid (Enhanced) -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Learning Stats -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Modules Completed</p>
+                        <p class="text-3xl font-bold text-gray-900 my-2">{{ modules_completed|default:0 }}</p>
+                        <a href="{% url 'elearning:module_list' %}" class="text-xs text-eco-green hover:underline mt-1 inline-flex items-center group">
+                            View Modules 
+                            <i class="fas fa-arrow-right ml-1 text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                    <div class="bg-gradient-to-br from-blue-100 to-blue-200 rounded-full p-4 shadow-sm">
+                        <i class="fas fa-graduation-cap text-blue-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Certificates -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Certificates Earned</p>
+                        <p class="text-3xl font-bold text-gray-900 my-2">{{ certificates_earned|default:0 }}</p>
+                        <a href="{% url 'elearning:certificates' %}" class="text-xs text-eco-green hover:underline mt-1 inline-flex items-center group">
+                            View Certificates 
+                            <i class="fas fa-arrow-right ml-1 text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                    <div class="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-full p-4 shadow-sm">
+                        <i class="fas fa-certificate text-yellow-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Issues Reported</p>
+                        <p class="text-3xl font-bold text-gray-900 my-2">{{ total_reports|default:0 }}</p>
+                        <a href="{% url 'reporting:report_dumping' %}" class="text-xs text-eco-green hover:underline mt-1 inline-flex items-center group">
+                            Report Issue 
+                            <i class="fas fa-arrow-right ml-1 text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                    <div class="bg-gradient-to-br from-red-100 to-red-200 rounded-full p-4 shadow-sm">
+                        <i class="fas fa-flag text-red-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Community Impact -->
+            <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm font-medium">Events Attended</p>
+                        <p class="text-3xl font-bold text-gray-900 my-2">{{ events_attended|default:0 }}</p>
+                        <a href="{% url 'community:events_list' %}" class="text-xs text-eco-green hover:underline mt-1 inline-flex items-center group">
+                            View Events 
+                            <i class="fas fa-arrow-right ml-1 text-[10px] group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+                    <div class="bg-gradient-to-br from-green-100 to-green-200 rounded-full p-4 shadow-sm">
+                        <i class="fas fa-calendar-check text-green-600 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column (2/3 width) -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Upcoming Events -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-calendar text-eco-green mr-2"></i>
+                            Your Upcoming Events
+                        </h3>
+                        <a href="{% url 'community:events_list' %}" class="text-sm text-eco-green hover:text-eco-dark">
+                            View All →
+                        </a>
+                    </div>
+                    <div class="p-6">
+                        {% if upcoming_events %}
+                            <div class="space-y-4">
+                                {% for participation in upcoming_events %}
+                                <div class="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                                    <div class="flex-shrink-0">
+                                        <div class="w-12 h-12 bg-eco-green rounded-full flex items-center justify-center">
+                                            <i class="fas fa-calendar-day text-white"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <a href="{% url 'community:event_detail' participation.event.id %}" 
+                                           class="text-gray-900 font-medium hover:text-eco-green">
+                                            {{ participation.event.title }}
+                                        </a>
+                                        <p class="text-sm text-gray-500 mt-1">
+                                            <i class="far fa-calendar mr-1"></i>
+                                            {{ participation.event.start_date|date:"M d, Y - g:i A" }}
+                                        </p>
+                                        <p class="text-sm text-gray-500">
+                                            <i class="fas fa-map-marker-alt mr-1"></i>
+                                            {{ participation.event.location }}
+                                        </p>
+                                    </div>
+                                    <span class="px-3 py-1 text-xs font-semibold text-eco-green bg-eco-light rounded-full">
+                                        Registered
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <i class="fas fa-calendar-times text-gray-300 text-5xl mb-4"></i>
+                                <p class="text-gray-500 mb-4">You haven't registered for any events yet</p>
+                                <a href="{% url 'community:events_list' %}" 
+                                   class="inline-block px-6 py-2 bg-eco-green text-white rounded-md hover:bg-eco-dark transition">
+                                    Browse Events
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Active Challenges -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-trophy text-eco-green mr-2"></i>
+                            Active Challenges
+                        </h3>
+                        <a href="{% url 'community:challenges_list' %}" class="text-sm text-eco-green hover:text-eco-dark">
+                            View All →
+                        </a>
+                    </div>
+                    <div class="p-6">
+                        {% if active_challenges %}
+                            <div class="space-y-4">
+                                {% for participation in active_challenges %}
+                                <div class="p-4 border border-gray-200 rounded-lg hover:border-eco-green transition">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <a href="{% url 'community:challenge_detail' participation.challenge.id %}" 
+                                           class="text-gray-900 font-medium hover:text-eco-green">
+                                            {{ participation.challenge.title }}
+                                        </a>
+                                        <span class="text-sm font-semibold text-eco-green">
+                                            {{ participation.contribution }} pts
+                                        </span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-3 mb-2">
+                                        <div class="bg-eco-green h-3 rounded-full transition-all" 
+                                             style="width: {{ participation.challenge.progress_percentage }}%"></div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs text-gray-500">
+                                        <span>{{ participation.challenge.progress_percentage }}% complete</span>
+                                        <span>Ends {{ participation.challenge.end_date|date:"M d" }}</span>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-8">
+                                <i class="fas fa-trophy text-gray-300 text-5xl mb-4"></i>
+                                <p class="text-gray-500 mb-4">No active challenges</p>
+                                <a href="{% url 'community:challenges_list' %}" 
+                                   class="inline-block px-6 py-2 bg-eco-green text-white rounded-md hover:bg-eco-dark transition">
+                                    Join a Challenge
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Learning Progress -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-book-reader text-eco-green mr-2"></i>
+                            My Learning
+                        </h3>
+                        <a href="{% url 'elearning:module_list' %}" class="text-sm text-eco-green hover:text-eco-dark">
+                            View All →
+                        </a>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-3 gap-4 text-center mb-6">
+                            <div class="p-4 bg-blue-50 rounded-lg">
+                                <p class="text-2xl font-bold text-blue-600">{{ modules_completed|default:0 }}</p>
+                                <p class="text-xs text-gray-600 mt-1">Completed</p>
+                            </div>
+                            <div class="p-4 bg-yellow-50 rounded-lg">
+                                <p class="text-2xl font-bold text-yellow-600">{{ modules_in_progress|default:0 }}</p>
+                                <p class="text-xs text-gray-600 mt-1">In Progress</p>
+                            </div>
+                            <div class="p-4 bg-green-50 rounded-lg">
+                                <p class="text-2xl font-bold text-green-600">{{ certificates_earned|default:0 }}</p>
+                                <p class="text-xs text-gray-600 mt-1">Certificates</p>
+                            </div>
+                        </div>
+                        
+                        {% if enrolled_modules %}
+                            <h4 class="font-semibold text-gray-700 mb-3">Continue Learning:</h4>
+                            <div class="space-y-2">
+                                {% for module in enrolled_modules|slice:":3" %}
+                                <a href="{% url 'elearning:module_detail' module.slug %}" 
+                                   class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-eco-light transition">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-book text-eco-green"></i>
+                                        <span class="text-sm font-medium text-gray-900">{{ module.title }}</span>
+                                    </div>
+                                    <i class="fas fa-arrow-right text-gray-400"></i>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p class="text-gray-500 mb-3">Start your learning journey today!</p>
+                                <a href="{% url 'elearning:module_list' %}" 
+                                   class="inline-block px-6 py-2 bg-eco-green text-white rounded-md hover:bg-eco-dark transition">
+                                    Browse Modules
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Reports -->
+                {% if recent_reports %}
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-flag text-eco-green mr-2"></i>
+                            My Recent Reports
+                        </h3>
+                        <a href="{% url 'reporting:track_report' %}" class="text-sm text-eco-green hover:text-eco-dark">
+                            View All →
+                        </a>
+                    </div>
+                    <div class="p-6 space-y-3">
+                        {% for report in recent_reports %}
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex-1">
+                                <p class="text-gray-900 font-medium">{{ report.get_waste_type_display }}</p>
+                                <p class="text-sm text-gray-500">{{ report.location }}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{ report.created_at|date:"M d, Y" }}</p>
+                            </div>
+                            <span class="px-3 py-1 text-xs font-semibold rounded-full
+                                {% if report.status == 'resolved' %}text-green-600 bg-green-100
+                                {% elif report.status == 'in_progress' %}text-yellow-600 bg-yellow-100
+                                {% else %}text-gray-600 bg-gray-100{% endif %}">
+                                {{ report.get_status_display }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+
+            <!-- Right Column (1/3 width) -->
+            <div class="space-y-6">
+                
+                <!-- Achievements -->
+                {% if achievements %}
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-medal text-eco-green mr-2"></i>
+                            Achievements
+                        </h3>
+                    </div>
+                    <div class="p-6 space-y-4">
+                        {% for achievement in achievements %}
+                        <div class="flex items-start space-x-3 p-3 bg-{{ achievement.color }}-50 rounded-lg">
+                            <div class="flex-shrink-0">
+                                <div class="w-10 h-10 bg-{{ achievement.color }}-100 rounded-full flex items-center justify-center">
+                                    <i class="fas {{ achievement.icon }} text-{{ achievement.color }}-600"></i>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-gray-900">{{ achievement.title }}</p>
+                                <p class="text-sm text-gray-600">{{ achievement.description }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Notifications -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-bell text-eco-green mr-2"></i>
+                            Notifications
+                            {% if unread_notifications > 0 %}
+                            <span class="ml-2 px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-full">
+                                {{ unread_notifications }}
+                            </span>
+                            {% endif %}
+                        </h3>
+                        <a href="{% url 'community:notifications' %}" class="text-sm text-eco-green hover:text-eco-dark">
+                            View All →
+                        </a>
+                    </div>
+                    <div class="p-6">
+                        {% if recent_notifications %}
+                            <div class="space-y-3">
+                                {% for notification in recent_notifications %}
+                                <div class="flex items-start space-x-3 p-2 {% if not notification.is_read %}bg-blue-50 rounded{% endif %}">
+                                    <div class="flex-shrink-0 mt-1">
+                                        <i class="fas fa-circle text-xs {% if not notification.is_read %}text-blue-600{% else %}text-gray-300{% endif %}"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <p class="text-sm font-medium text-gray-900">{{ notification.title }}</p>
+                                        <p class="text-xs text-gray-500 mt-1">{{ notification.message|truncatewords:10 }}</p>
+                                        <p class="text-xs text-gray-400 mt-1">{{ notification.created_at|timesince }} ago</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-sm text-gray-500 text-center py-4">No new notifications</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-md">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            <i class="fas fa-bolt text-eco-green mr-2"></i>
+                            Quick Actions
+                        </h3>
+                    </div>
+                    <div class="p-6 space-y-2">
+                        <a href="{% url 'elearning:module_list' %}" 
+                           class="flex items-center p-3 text-gray-700 hover:bg-eco-light rounded-md transition group">
+                            <i class="fas fa-book w-5 mr-3 text-eco-green group-hover:scale-110 transition"></i>
+                            <span class="text-sm">Browse Modules</span>
+                        </a>
+                        <a href="{% url 'reporting:report_dumping' %}" 
+                           class="flex items-center p-3 text-gray-700 hover:bg-eco-light rounded-md transition group">
+                            <i class="fas fa-flag w-5 mr-3 text-eco-green group-hover:scale-110 transition"></i>
+                            <span class="text-sm">Report Dumping</span>
+                        </a>
+                        <a href="{% url 'community:events_list' %}" 
+                           class="flex items-center p-3 text-gray-700 hover:bg-eco-light rounded-md transition group">
+                            <i class="fas fa-calendar w-5 mr-3 text-eco-green group-hover:scale-110 transition"></i>
+                            <span class="text-sm">Join Events</span>
+                        </a>
+                        <a href="{% url 'community:challenges_list' %}" 
+                           class="flex items-center p-3 text-gray-700 hover:bg-eco-light rounded-md transition group">
+                            <i class="fas fa-trophy w-5 mr-3 text-eco-green group-hover:scale-110 transition"></i>
+                            <span class="text-sm">View Challenges</span>
+                        </a>
+                        <a href="{% url 'community:create_story' %}" 
+                           class="flex items-center p-3 text-gray-700 hover:bg-eco-light rounded-md transition group">
+                            <i class="fas fa-star w-5 mr-3 text-eco-green group-hover:scale-110 transition"></i>
+                            <span class="text-sm">Share Success Story</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Community Stats -->
+                <div class="bg-gradient-to-br from-eco-green to-eco-dark rounded-lg shadow-md p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-users mr-2"></i>
+                        Community Stats
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm opacity-90">Forum Topics</span>
+                            <span class="font-bold">{{ forum_topics_count|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm opacity-90">Forum Replies</span>
+                            <span class="font-bold">{{ forum_replies_count|default:0 }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm opacity-90">Success Stories</span>
+                            <span class="font-bold">{{ approved_stories|default:0 }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<style>
+/* Slideshow Styles */
+.slideshow-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0;
+    animation: slideAnimation 25s infinite;
+    transform: scale(1.1);
+    transition: opacity 1.5s ease-in-out;
+}
+
+.slide:nth-child(1) { animation-delay: 0s; }
+.slide:nth-child(2) { animation-delay: 5s; }
+.slide:nth-child(3) { animation-delay: 10s; }
+.slide:nth-child(4) { animation-delay: 15s; }
+.slide:nth-child(5) { animation-delay: 20s; }
+
+@keyframes slideAnimation {
+    0% { 
+        opacity: 0; 
+        transform: scale(1.15);
+    }
+    8% { 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    20% { 
+        opacity: 1; 
+        transform: scale(1.05);
+    }
+    28% { 
+        opacity: 0; 
+        transform: scale(1);
+    }
+    100% { 
+        opacity: 0; 
+        transform: scale(1.15);
+    }
+}
+
+/* Text Animation */
+@keyframes fade-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.8s ease-out forwards;
+    opacity: 0;
+}
+
+.delay-200 { animation-delay: 0.2s; }
+.delay-400 { animation-delay: 0.4s; }
+
+/* Achievement badge pulse */
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 20px 10px rgba(34, 197, 94, 0.1);
+    }
+}
+
+.achievement-badge {
+    animation: pulse-glow 2s infinite;
+}
+</style>
+{% endblock %}

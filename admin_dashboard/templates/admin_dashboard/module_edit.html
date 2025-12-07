@@ -1,0 +1,309 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block page_title %}Edit Module - {{ module.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6 p-6">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <a href="{% url 'admin_dashboard:modules' %}" class="text-green-600 hover:text-green-700">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+            </a>
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Module</h1>
+                <p class="text-gray-600 dark:text-gray-400">{{ module.title }}</p>
+            </div>
+        </div>
+        <a href="{% url 'admin_dashboard:lesson_create' module.id %}" 
+           class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add Lesson</span>
+        </a>
+    </div>
+
+    <!-- Module Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Enrollments</p>
+            <p class="text-3xl font-bold text-blue-600">{{ enrollments }}</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Completions</p>
+            <p class="text-3xl font-bold text-green-600">{{ completions }}</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Views</p>
+            <p class="text-3xl font-bold text-purple-600">{{ module.views_count }}</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <p class="text-sm text-gray-600 dark:text-gray-400">Avg Rating</p>
+            <p class="text-3xl font-bold text-yellow-600">{{ avg_rating|floatformat:1 }}</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Module Form -->
+        <div class="lg:col-span-2 space-y-6">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <!-- Basic Information -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📝 Basic Information</h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Module Title *
+                            </label>
+                            <input type="text" name="title" value="{{ module.title }}" required
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Description *
+                            </label>
+                            <textarea name="description" rows="4" required
+                                      class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">{{ module.description }}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Category *
+                                </label>
+                                <select name="category" required
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if module.category.id == category.id %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Difficulty Level *
+                                </label>
+                                <select name="difficulty" required
+                                        class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                                    {% for value, label in difficulty_choices %}
+                                    <option value="{{ value }}" {% if module.difficulty == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Duration (minutes)
+                                </label>
+                                <input type="number" name="duration_minutes" value="{{ module.duration_minutes }}" min="0"
+                                       class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                    Points Reward
+                                </label>
+                                <input type="number" name="points_reward" value="{{ module.points_reward }}" min="0"
+                                       class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Video URL (YouTube, Vimeo, etc.)
+                            </label>
+                            <input type="url" name="video_url" value="{{ module.video_url }}"
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white"
+                                   placeholder="https://youtube.com/watch?v=...">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Thumbnail Image
+                            </label>
+                            {% if module.thumbnail %}
+                            <div class="mb-2">
+                                <img src="{{ module.thumbnail.url }}" alt="{{ module.title }}" class="w-32 h-24 object-cover rounded">
+                            </div>
+                            {% endif %}
+                            <input type="file" name="thumbnail" accept="image/*"
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                PDF Guide (Optional)
+                            </label>
+                            {% if module.pdf_guide %}
+                            <div class="mb-2">
+                                <a href="{{ module.pdf_guide.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                                    📄 View Current PDF Guide
+                                </a>
+                            </div>
+                            {% endif %}
+                            <input type="file" name="pdf_guide" accept=".pdf"
+                                   class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                            <p class="text-xs text-gray-500 mt-1">Upload a PDF guide or reference document (Max 10MB)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Multilingual Content -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🇿🇲 Multilingual Content</h2>
+                    
+                    <div class="space-y-6">
+                        <!-- Bemba -->
+                        <div class="border-l-4 border-orange-500 pl-4">
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-3">Bemba (Chibemba)</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Title (Bemba)
+                                    </label>
+                                    <input type="text" name="title_bem" value="{{ module.title_bem }}"
+                                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Description (Bemba)
+                                    </label>
+                                    <textarea name="description_bem" rows="3"
+                                              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">{{ module.description_bem }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nyanja -->
+                        <div class="border-l-4 border-purple-500 pl-4">
+                            <h3 class="font-bold text-gray-900 dark:text-white mb-3">Nyanja (Chinyanja)</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Title (Nyanja)
+                                    </label>
+                                    <input type="text" name="title_ny" value="{{ module.title_ny }}"
+                                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Description (Nyanja)
+                                    </label>
+                                    <textarea name="description_ny" rows="3"
+                                              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">{{ module.description_ny }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Publishing Options -->
+                <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🔒 Publishing Options</h2>
+                    
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" name="is_published" {% if module.is_published %}checked{% endif %} 
+                                   class="w-5 h-5 text-green-600 rounded">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Published (visible to students)
+                            </span>
+                        </label>
+
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" name="is_featured" {% if module.is_featured %}checked{% endif %}
+                                   class="w-5 h-5 text-purple-600 rounded">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Featured (show on homepage)
+                            </span>
+                        </label>
+
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" name="is_premium" {% if module.is_premium %}checked{% endif %}
+                                   class="w-5 h-5 text-yellow-600 rounded">
+                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                Premium content (requires payment)
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex justify-end space-x-4">
+                    <a href="{% url 'admin_dashboard:modules' %}" 
+                       class="px-6 py-3 border border-gray-300 dark:border-zinc-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lessons Sidebar -->
+        <div class="space-y-6">
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Lessons ({{ lessons.count }})</h2>
+                    <a href="{% url 'admin_dashboard:lesson_create' module.id %}" 
+                       class="text-blue-600 hover:text-blue-700 text-sm font-medium">+ Add</a>
+                </div>
+
+                {% if lessons %}
+                <div class="space-y-2">
+                    {% for lesson in lessons %}
+                    <div class="p-3 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ lesson.order }}. {{ lesson.title }}
+                                </p>
+                                <div class="flex items-center space-x-2 mt-1">
+                                    <span class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-800">
+                                        {{ lesson.get_content_type_display }}
+                                    </span>
+                                    {% if lesson.is_published %}
+                                    <span class="text-xs px-2 py-1 rounded bg-green-100 text-green-800">Published</span>
+                                    {% else %}
+                                    <span class="text-xs px-2 py-1 rounded bg-gray-100 text-gray-800">Draft</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="flex space-x-1 ml-2">
+                                <a href="{% url 'admin_dashboard:lesson_edit' lesson.id %}" 
+                                   class="text-blue-600 hover:text-blue-800 text-xs">Edit</a>
+                                <a href="{% url 'admin_dashboard:lesson_delete' lesson.id %}" 
+                                   onclick="return confirm('Delete this lesson?')"
+                                   class="text-red-600 hover:text-red-800 text-xs">Del</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500 text-center py-4">No lessons yet. Add your first lesson!</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

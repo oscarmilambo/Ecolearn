@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Reports{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                My Reports
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300">
+                Track and manage all your submitted reports
+            </p>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 mb-8">
+            <form method="get" class="flex flex-wrap items-center gap-4">
+                <div class="flex-1 min-w-[200px]">
+                    <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Filter by Status
+                    </label>
+                    <select name="status" id="status" onchange="this.form.submit()" class="w-full px-4 py-2 border-2 border-gray-300 dark:border-zinc-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-zinc-700 dark:text-white">
+                        <option value="">All Reports</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex items-end">
+                    <a href="{% url 'reporting:report_dumping' %}" class="inline-flex items-center px-6 py-2.5 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-lg hover:from-green-700 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        New Report
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Reports Grid -->
+        {% if page_obj %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {% for report in page_obj %}
+            <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transform hover:-translate-y-1 transition-all">
+                <!-- Status Bar -->
+                <div class="h-2 {% if report.status == 'resolved' %}bg-green-500{% elif report.status == 'in_progress' %}bg-orange-500{% elif report.status == 'verified' %}bg-blue-500{% elif report.status == 'pending' %}bg-yellow-500{% else %}bg-red-500{% endif %}"></div>
+                
+                <!-- Photo -->
+                {% if report.photo1 %}
+                <div class="h-48 overflow-hidden">
+                    <img src="{{ report.photo1.url }}" alt="Report photo" class="w-full h-full object-cover">
+                </div>
+                {% else %}
+                <div class="h-48 bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-600 flex items-center justify-center">
+                    <svg class="w-16 h-16 text-gray-400 dark:text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                {% endif %}
+
+                <!-- Content -->
+                <div class="p-6">
+                    <!-- Reference Number -->
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-mono font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded-full">
+                            {{ report.reference_number }}
+                        </span>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {% if report.status == 'resolved' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200{% elif report.status == 'in_progress' %}bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200{% elif report.status == 'verified' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200{% elif report.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200{% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
+                            {{ report.get_status_display }}
+                        </span>
+                    </div>
+
+                    <!-- Location -->
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                        {{ report.location_description }}
+                    </h3>
+
+                    <!-- Description -->
+                    <p class="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">
+                        {{ report.description }}
+                    </p>
+
+                    <!-- Meta Info -->
+                    <div class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
+                        <span class="flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            {{ report.reported_at|date:"M d, Y" }}
+                        </span>
+                        <span class="{% if report.severity == 'critical' %}text-red-600{% elif report.severity == 'high' %}text-orange-600{% elif report.severity == 'medium' %}text-yellow-600{% else %}text-green-600{% endif %} font-semibold">
+                            {{ report.get_severity_display }}
+                        </span>
+                    </div>
+
+                    <!-- Action Button -->
+                    <a href="{% url 'reporting:report_detail' report.id %}" class="block w-full text-center px-4 py-2 bg-gray-100 dark:bg-zinc-700 text-gray-900 dark:text-white font-medium rounded-lg hover:bg-gray-200 dark:hover:bg-zinc-600 transition-colors">
+                        View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="flex items-center justify-center space-x-2">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% if current_status %}&status={{ current_status }}{% endif %}" class="px-4 py-2 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors">
+                    First
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" class="px-4 py-2 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors">
+                    Previous
+                </a>
+            {% endif %}
+
+            <span class="px-4 py-2 bg-green-600 text-white rounded-lg font-semibold">
+                {{ page_obj.number }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}" class="px-4 py-2 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors">
+                    Next
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% if current_status %}&status={{ current_status }}{% endif %}" class="px-4 py-2 bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition-colors">
+                    Last
+                </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-12 text-center">
+            <svg class="w-24 h-24 text-gray-400 dark:text-zinc-600 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">No Reports Yet</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+                You haven't submitted any reports. Help keep your community clean!
+            </p>
+            <a href="{% url 'reporting:report_dumping' %}" class="inline-flex items-center px-8 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Submit Your First Report
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

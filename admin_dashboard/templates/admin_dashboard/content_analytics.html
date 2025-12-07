@@ -1,0 +1,227 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block page_title %}Content Analytics{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6 p-6">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Content Analytics</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Track module engagement and performance metrics</p>
+        </div>
+        <a href="{% url 'admin_dashboard:modules' %}" 
+           class="bg-gray-600 text-white px-5 py-3 rounded-lg hover:bg-gray-700 transition">
+            ← Back to Modules
+        </a>
+    </div>
+
+    <!-- Content Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+            <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Modules</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ total_content.modules }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ total_content.published_modules }} published</p>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+            <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Lessons</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ total_content.lessons }}</p>
+            <p class="text-xs text-gray-500 mt-1">{{ total_content.published_lessons }} published</p>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+            <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Video Lessons</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ total_content.video_lessons }}</p>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+            <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Audio Lessons</p>
+            <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ total_content.audio_lessons }}</p>
+        </div>
+    </div>
+
+    <!-- Translation Coverage -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">🌍 Multilingual Content Coverage</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Bemba -->
+            <div class="bg-orange-50 dark:bg-orange-900 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-orange-900 dark:text-orange-100">🇿🇲 Bemba (Chibemba)</h3>
+                    <span class="text-3xl font-bold text-orange-600 dark:text-orange-300">
+                        {{ translation_coverage.bemba_percentage }}%
+                    </span>
+                </div>
+                <div class="w-full bg-orange-200 dark:bg-orange-800 rounded-full h-4 mb-3">
+                    <div class="bg-orange-600 h-4 rounded-full transition-all duration-500" 
+                         style="width: {{ translation_coverage.bemba_percentage }}%"></div>
+                </div>
+                <p class="text-sm text-orange-700 dark:text-orange-200">
+                    {{ translation_coverage.bemba_count }} of {{ total_content.modules }} modules translated
+                </p>
+            </div>
+
+            <!-- Nyanja -->
+            <div class="bg-purple-50 dark:bg-purple-900 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-purple-900 dark:text-purple-100">🇿🇲 Nyanja (Chinyanja)</h3>
+                    <span class="text-3xl font-bold text-purple-600 dark:text-purple-300">
+                        {{ translation_coverage.nyanja_percentage }}%
+                    </span>
+                </div>
+                <div class="w-full bg-purple-200 dark:bg-purple-800 rounded-full h-4 mb-3">
+                    <div class="bg-purple-600 h-4 rounded-full transition-all duration-500" 
+                         style="width: {{ translation_coverage.nyanja_percentage }}%"></div>
+                </div>
+                <p class="text-sm text-purple-700 dark:text-purple-200">
+                    {{ translation_coverage.nyanja_count }} of {{ total_content.modules }} modules translated
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Performing Modules -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Most Viewed -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">👁️ Most Viewed Modules</h2>
+            <div class="space-y-3">
+                {% for module in top_modules %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ module.title }}</p>
+                        <p class="text-xs text-gray-500">{{ module.category.name }}</p>
+                    </div>
+                    <span class="text-lg font-bold text-blue-600">{{ module.views_count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Most Enrolled -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📚 Most Enrolled Modules</h2>
+            <div class="space-y-3">
+                {% for module in most_enrolled %}
+                <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white">{{ module.title }}</p>
+                        <p class="text-xs text-gray-500">{{ module.category.name }}</p>
+                    </div>
+                    <span class="text-lg font-bold text-green-600">{{ module.enrollments_count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Highest Rated -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">⭐ Highest Rated Modules</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for module in highest_rated %}
+            <div class="p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                <div class="flex items-start justify-between mb-2">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white flex-1">{{ module.title }}</p>
+                    <span class="text-xl font-bold text-yellow-600 ml-2">{{ module.average_rating|floatformat:1 }}</span>
+                </div>
+                <p class="text-xs text-gray-500">{{ module.category.name }}</p>
+                <div class="flex items-center mt-2 text-xs text-gray-600 dark:text-gray-400">
+                    <span>{{ module.enrollments_count }} enrollments</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Category Performance -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📊 Category Performance</h2>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Category</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Total Views</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Total Enrollments</th>
+                        <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Avg Rating</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for category in category_performance %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700">
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
+                            {{ category.name }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ category.total_views|default:0 }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ category.total_enrollments|default:0 }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-yellow-600 font-medium">
+                            {{ category.avg_rating|floatformat:1|default:"—" }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Location-Based Analytics -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📍 Module Usage by Location</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for location in location_analytics %}
+            <div class="bg-gradient-to-br from-blue-50 to-green-50 dark:from-zinc-700 dark:to-zinc-600 rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{{ location.name }}</h3>
+                    <span class="text-3xl">📍</span>
+                </div>
+                <div class="space-y-2 mb-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600 dark:text-gray-400">Total Users:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ location.total_users }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600 dark:text-gray-400">Enrollments:</span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ location.total_enrollments }}</span>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 dark:border-zinc-600 pt-3">
+                    <p class="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Most Popular Modules:</p>
+                    <div class="space-y-1">
+                        {% for module in location.popular_modules %}
+                        <div class="text-xs text-gray-600 dark:text-gray-400">
+                            {{ forloop.counter }}. {{ module.title|truncatewords:5 }} ({{ module.location_enrollments }})
+                        </div>
+                        {% empty %}
+                        <p class="text-xs text-gray-500">No enrollments yet</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Language Usage -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🗣️ Language Preference Distribution</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for lang in language_usage %}
+            <div class="bg-gray-50 dark:bg-zinc-700 rounded-lg p-6 text-center">
+                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">{{ lang.name }}</p>
+                <p class="text-4xl font-bold text-gray-900 dark:text-white">{{ lang.users }}</p>
+                <p class="text-xs text-gray-500 mt-2">users prefer this language</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block title %}Create New Topic{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12">
+  <div class="max-w-3xl mx-auto px-4">
+    <h1 class="text-3xl font-bold text-green-800 mb-8">Start a New Discussion in {{ category.name }}</h1>
+    
+    <div class="bg-white rounded-lg shadow p-8">
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-6">
+          <label class="block text-gray-700 font-medium mb-2">Title</label>
+          {{ form.title }}
+        </div>
+        <div class="mb-6">
+          <label class="block text-gray-700 font-medium mb-2">Your Message</label>
+          {{ form.content }}
+        </div>
+        <div class="flex gap-4">
+          <button type="submit" class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 font-medium">
+            Create Topic
+          </button>
+          <a href="{% url 'community:category_topics' category.id %}" class="text-gray-600 hover:text-gray-800">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

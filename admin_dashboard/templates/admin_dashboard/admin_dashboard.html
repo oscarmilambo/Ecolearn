@@ -1,0 +1,287 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block title %}{% translate "Illegal Dumping Reports" %}{% endblock %}
+{% block page_title %}{% translate "Illegal Dumping Reports Management" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .eco-green { background-color: #22c55e !important; }
+    .eco-green-text { color: #22c55e !important; }
+    .severity-low { background-color: #ecfccb; color: #65a30d; }
+    .severity-medium { background-color: #fed7aa; color: #c2410c; }
+    .severity-high { background-color: #fecaca; color: #dc2626; }
+    .status-pending { background-color: #fef3c7; color: #d97706; }
+    .status-in-progress { background-color: #bfdbfe; color: #2563eb; }
+    .status-resolved { background-color: #d1fae5; color: #059669; }
+    #reportMap { height: 500px; border-radius: 16px; border: 3px solid #22c55e; box-shadow: 0 10px 25px rgba(34, 197, 94, 0.2); }
+    .photo-thumbnail { 
+        max-height: 90px; 
+        border: 2px solid #22c55e; 
+        border-radius: 8px; 
+        transition: all 0.3s; 
+    }
+    .photo-thumbnail:hover { 
+        transform: scale(1.1); 
+        box-shadow: 0 8px 20px rgba(34, 197, 94, 0.4); 
+    }
+    .action-btn {
+        @apply px-4 py-2 rounded-lg font-medium text-white transition transform hover:scale-105;
+    }
+    .zm-green { @apply text-[#22c55e]; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- ECO-GREEN STAT CARDS — TEXT NOW 100% VISIBLE IN LIGHT & DARK MODE -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <!-- Total Reports -->
+    <div class="eco-green text-white rounded-xl shadow-2xl p-6 transform hover:scale-105 transition-all duration-300 border-4 border-white/30">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-5xl font-extrabold drop-shadow-2xl">{{ total_reports }}</p>
+                <p class="text-xl font-bold mt-1 drop-shadow-lg">Total Reports</p>
+            </div>
+            <i class="fas fa-exclamation-triangle text-6xl opacity-40 drop-shadow"></i>
+        </div>
+        <p class="text-sm font-medium mt-3 bg-white/20 rounded-lg px-3 py-2 inline-block backdrop-blur">
+            Last 6 months: <span class="font-bold">{{ reports_last_6_months }}</span>
+        </p>
+    </div>
+
+    <!-- Pending Action -->
+    <div class="eco-green text-white rounded-xl shadow-2xl p-6 transform hover:scale-105 transition-all duration-300 border-4 border-white/30">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-5xl font-extrabold drop-shadow-2xl text-yellow-300">{{ pending_reports }}</p>
+                <p class="text-xl font-bold mt-1 drop-shadow-lg">Pending Action</p>
+            </div>
+            <i class="fas fa-clock text-6xl opacity-40 drop-shadow animate-pulse"></i>
+        </div>
+        <p class="text-sm font-medium mt-3 bg-red-600/80 rounded-lg px-3 py-2 inline-block backdrop-blur">
+            High priority: <span class="font-bold">{{ high_priority_pending }}</span>
+        </p>
+    </div>
+
+    <!-- In Progress -->
+    <div class="eco-green text-white rounded-xl shadow-2xl p-6 transform hover:scale-105 transition-all duration-300 border-4 border-white/30">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-5xl font-extrabold drop-shadow-2xl text-blue-300">{{ in_progress_reports }}</p>
+                <p class="text-xl font-bold mt-1 drop-shadow-lg">In Progress</p>
+            </div>
+            <i class="fas fa-tools text-6xl opacity-40 drop-shadow"></i>
+        </div>
+        <p class="text-sm font-medium mt-3 bg-orange-600/80 rounded-lg px-3 py-2 inline-block backdrop-blur">
+            Overdue: <span class="font-bold">{{ overdue_reports }}</span>
+        </p>
+    </div>
+
+    <!-- Resolved -->
+    <div class="eco-green text-white rounded-xl shadow-2xl p-6 transform hover:scale-105 transition-all duration-300 border-4 border-white/30">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-5xl font-extrabold drop-shadow-2xl text-emerald-300">{{ resolved_reports }}</p>
+                <p class="text-xl font-bold mt-1 drop-shadow-lg">Resolved</p>
+            </div>
+            <i class="fas fa-check-circle text-6xl opacity-40 drop-shadow"></i>
+        </div>
+        <p class="text-sm font-medium mt-3 bg-white/20 rounded-lg px-3 py-2 inline-block backdrop-blur">
+            Success rate: <span class="font-bold">{{ resolution_rate }}%</span>
+        </p>
+    </div>
+</div>
+
+    <!-- Interactive Map with EcoLearn Green Border -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-gray-200 dark:border-zinc-700 flex justify-between items-center">
+            <h3 class="text-2xl font-bold text-zm-black dark:text-white">
+                Live Dumping Hotspots - Lusaka
+            </h3>
+            <span class="text-sm eco-green-text font-bold">
+                <i class="fas fa-circle text-xs mr-1"></i> {{ report_locs|length }} Active Sites
+            </span>
+        </div>
+        <div id="reportMap"></div>
+    </div>
+
+    <!-- Advanced Reports Table -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-2xl overflow-hidden">
+        <div class="p-6 border-b border-gray-200 dark:border-zinc-700">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
+                <h3 class="text-2xl font-bold">All Illegal Dumping Reports</h3>
+                <div class="flex flex-wrap gap-3">
+                    <input type="text" id="searchInput" placeholder="Search by location or ID..." 
+                           class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-zm-green dark:bg-zinc-700">
+                    <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg dark:bg-zinc-700">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                    <a href="{% url 'admin_dashboard:export_reports' %}" 
+                       class="bg-zm-green text-white px-5 py-2 rounded-lg hover:bg-green-700 flex items-center space-x-2">
+                        <i class="fas fa-file-export"></i>
+                        <span>Export CSV</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full" id="reportsTable">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Ref #</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Reporter</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Location</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Waste Type</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Severity</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Reported</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Photos</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider">Quick Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for report in reports %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                        <td class="px-6 py-4 font-mono text-sm">#ZMR{{ report.id|stringformat:"04d" }}</td>
+                        <td class="px-6 py-4">
+                            {% if report.is_anonymous %}
+                                <span class="text-gray-500 italic">Anonymous Citizen</span>
+                            {% else %}
+                                <span class="font-medium">{{ report.reporter.get_full_name|default:report.reporter.username }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm">{{ report.location_description|truncatechars:40 }}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {{ report.get_waste_type_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-bold 
+                                {% if report.severity == 'low' %}severity-low{% endif %}
+                                {% if report.severity == 'medium' %}severity-medium{% endif %}
+                                {% if report.severity == 'high' %}severity-high bg-red-600 text-white{% endif %}">
+                                {{ report.get_severity_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex px-3 py-1 rounded-full text-xs font-bold 
+                                {% if report.status == 'pending' %}status-pending{% endif %}
+                                {% if report.status == 'in_progress' %}status-in-progress{% endif %}
+                                {% if report.status == 'resolved' %}status-resolved{% endif %}">
+                                {{ report.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ report.reported_at|date:"d M Y" }}<br>
+                            <span class="text-xs">{{ report.reported_at|time:"H:i" }}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if report.photo1 or report.photo2 or report.photo3 %}
+                                <div class="flex space-x-2">
+                                    {% if report.photo1 %}<img src="{{ report.photo1.url }}" class="photo-thumbnail" onclick="openModal('{{ report.photo1.url }}')">{% endif %}
+                                    {% if report.photo2 %}<img src="{{ report.photo2.url }}" class="photo-thumbnail" onclick="openModal('{{ report.photo2.url }}')">{% endif %}
+                                    {% if report.photo3 %}<img src="{{ report.photo3.url }}" class="photo-thumbnail" onclick="openModal('{{ report.photo3.url }}')">{% endif %}
+                                </div>
+                            {% else %}
+                                <span class="text-gray-400 text-xs">No photos</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col space-y-2">
+                                <a href="{% url 'admin_dashboard:mark_resolved' report.id %}" 
+                                class="action-btn bg-zm-green hover:bg-green-700 text-xs">
+                                    Mark Resolved
+                                </a>
+                                <a href="{% url 'admin_dashboard:notify_lcc' report.id %}" 
+                                class="action-btn bg-blue-600 hover:bg-blue-700 text-xs">
+                                    Notify LCC
+                                </a>
+                                <a href="{% url 'admin_dashboard:assign_team' report.id %}" 
+                                    class="action-btn bg-orange-600 hover:bg-orange-700 text-xs">
+                                    Assign Team
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-12 text-gray-500">
+                            <i class="fas fa-check-circle text-6xl text-zm-green mb-4 block"></i>
+                            <p class="text-xl font-semibold">No pending reports!</p>
+                            <p>Zambia is clean today</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Full Screen Photo Modal -->
+<div id="photoModal" class="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50 hidden" onclick="closeModal()">
+    <div class="relative max-w-5xl w-full p-8">
+        <img id="modalImage" src="" alt="Full Report Photo" class="w-full rounded-xl shadow-2xl">
+        <button onclick="closeModal()" class="absolute top-4 right-4 bg-white text-red-600 rounded-full p-3 hover:bg-gray-100 transition">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+        <div class="absolute bottom-4 left-4 bg-black bg-opacity-70 text-white px-4 py-2 rounded-lg">
+            Click anywhere to close
+        </div>
+    </div>
+</div>
+
+<script>
+    // Map with EcoLearn Green Markers
+    const map = L.map('reportMap').setView([-15.4167, 28.2833], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    const greenIcon = L.icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-green.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+    });
+
+    {% for loc in report_locs %}
+    L.marker([{{ loc.latitude }}, {{ loc.longitude }}], {icon: greenIcon})
+    .addTo(map)
+    .bindPopup(`<b>{{ loc.waste_type }}</b><br>{{ loc.description|safe }}`);
+    {% endfor %}
+
+    // Search & Filter
+    document.getElementById('searchInput').addEventListener('keyup', filterTable);
+    document.getElementById('statusFilter').addEventListener('change', filterTable);
+
+    function filterTable() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const status = document.getElementById('statusFilter').value;
+        const rows = document.querySelectorAll('#reportsTable tbody tr');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowStatus = row.querySelector('td:nth-child(6)')?.textContent.toLowerCase();
+            const matchesSearch = text.includes(search);
+            const matchesStatus = !status || rowStatus.includes(status);
+            row.style.display = matchesSearch && matchesStatus ? '' : 'none';
+        });
+    }
+
+    // Modal
+    function openModal(url) {
+        document.getElementById('modalImage').src = url;
+        document.getElementById('photoModal').classList.remove('hidden');
+    }
+    function closeModal() {
+        document.getElementById('photoModal').classList.add('hidden');
+    }
+</script>
+{% endblock %}

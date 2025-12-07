@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notification Preferences - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-bell text-eco-green mr-2"></i>
+                Notification Preferences
+            </h1>
+            <p class="text-gray-600">Control how and when you receive notifications</p>
+        </div>
+
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Notification Channels -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-mobile-alt text-eco-green mr-2"></i>
+                    Notification Channels
+                </h2>
+                <p class="text-sm text-gray-600 mb-6">Choose how you want to receive notifications</p>
+                
+                <div class="space-y-4">
+                    <!-- SMS -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-sms text-2xl text-blue-500 mr-4"></i>
+                            <div>
+                                <h3 class="font-medium text-gray-900">SMS Notifications</h3>
+                                <p class="text-sm text-gray-500">Receive text messages on your phone</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="sms_enabled" class="sr-only peer" 
+                                   {% if preferences.sms_enabled %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- WhatsApp -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fab fa-whatsapp text-2xl text-green-500 mr-4"></i>
+                            <div>
+                                <h3 class="font-medium text-gray-900">WhatsApp Notifications</h3>
+                                <p class="text-sm text-gray-500">Receive messages on WhatsApp</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="whatsapp_enabled" class="sr-only peer" 
+                                   {% if preferences.whatsapp_enabled %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                    
+                    <!-- Email -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <div class="flex items-center">
+                            <i class="fas fa-envelope text-2xl text-red-500 mr-4"></i>
+                            <div>
+                                <h3 class="font-medium text-gray-900">Email Notifications</h3>
+                                <p class="text-sm text-gray-500">Receive emails at {{ user.email }}</p>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="email_enabled" class="sr-only peer" 
+                                   {% if preferences.email_enabled %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notification Types -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-list text-eco-green mr-2"></i>
+                    Notification Types
+                </h2>
+                <p class="text-sm text-gray-600 mb-6">Choose what you want to be notified about</p>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Event Reminders</h3>
+                            <p class="text-sm text-gray-500">Get notified about upcoming community events</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="event_reminders" class="sr-only peer" 
+                                   {% if preferences.event_reminders %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Challenge Updates</h3>
+                            <p class="text-sm text-gray-500">Receive updates on your challenge progress</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="challenge_updates" class="sr-only peer" 
+                                   {% if preferences.challenge_updates %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Forum Replies</h3>
+                            <p class="text-sm text-gray-500">Get notified when someone replies to your posts</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="forum_replies" class="sr-only peer" 
+                                   {% if preferences.forum_replies %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Reward Updates</h3>
+                            <p class="text-sm text-gray-500">Receive updates on reward redemptions</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="reward_updates" class="sr-only peer" 
+                                   {% if preferences.reward_updates %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-4">
+                        <div>
+                            <h3 class="font-medium text-gray-900">Community News</h3>
+                            <p class="text-sm text-gray-500">Get updates about community activities and campaigns</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="community_news" class="sr-only peer" 
+                                   {% if preferences.community_news %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-eco-light rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-eco-green"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Frequency -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                    <i class="fas fa-clock text-eco-green mr-2"></i>
+                    Notification Frequency
+                </h2>
+                <p class="text-sm text-gray-600 mb-6">How often do you want to receive notifications?</p>
+                
+                <div class="space-y-3">
+                    <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-eco-green transition-colors {% if preferences.frequency == 'instant' %}border-eco-green bg-eco-light{% else %}border-gray-200{% endif %}">
+                        <input type="radio" name="frequency" value="instant" class="text-eco-green focus:ring-eco-green" 
+                               {% if preferences.frequency == 'instant' %}checked{% endif %}>
+                        <div class="ml-3">
+                            <span class="font-medium text-gray-900">Instant</span>
+                            <p class="text-sm text-gray-500">Receive notifications immediately</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-eco-green transition-colors {% if preferences.frequency == 'daily' %}border-eco-green bg-eco-light{% else %}border-gray-200{% endif %}">
+                        <input type="radio" name="frequency" value="daily" class="text-eco-green focus:ring-eco-green" 
+                               {% if preferences.frequency == 'daily' %}checked{% endif %}>
+                        <div class="ml-3">
+                            <span class="font-medium text-gray-900">Daily Digest</span>
+                            <p class="text-sm text-gray-500">Receive a summary once per day</p>
+                        </div>
+                    </label>
+                    
+                    <label class="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:border-eco-green transition-colors {% if preferences.frequency == 'weekly' %}border-eco-green bg-eco-light{% else %}border-gray-200{% endif %}">
+                        <input type="radio" name="frequency" value="weekly" class="text-eco-green focus:ring-eco-green" 
+                               {% if preferences.frequency == 'weekly' %}checked{% endif %}>
+                        <div class="ml-3">
+                            <span class="font-medium text-gray-900">Weekly Summary</span>
+                            <p class="text-sm text-gray-500">Receive a summary once per week</p>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="flex items-center justify-between">
+                <a href="{% url 'accounts:profile' %}" 
+                   class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-3 bg-eco-green text-white rounded-lg hover:bg-eco-dark transition-colors font-semibold">
+                    <i class="fas fa-save mr-2"></i>Save Preferences
+                </button>
+            </div>
+        </form>
+
+        <!-- Test Notification -->
+        <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-info-circle text-blue-500 text-xl mr-3"></i>
+                    <div>
+                        <h3 class="text-sm font-medium text-blue-800">Test Your Notifications</h3>
+                        <p class="text-sm text-blue-700">Send a test notification to verify your settings</p>
+                    </div>
+                </div>
+                <button onclick="sendTestNotification()" 
+                        class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                    Send Test
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function sendTestNotification() {
+    fetch('{% url "accounts:test_notification" %}', {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Test notification sent! Check your phone/email.');
+        } else {
+            alert('Failed to send test notification: ' + data.error);
+        }
+    })
+    .catch(err => {
+        alert('Error sending test notification');
+        console.error(err);
+    });
+}
+</script>
+{% endblock %}

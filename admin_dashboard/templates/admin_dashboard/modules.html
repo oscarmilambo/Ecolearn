@@ -1,0 +1,397 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block page_title %}Content Management System{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6 p-6">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Content Management System</h1>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">Manage e-learning modules and content</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'admin_dashboard:content_analytics' %}" 
+               class="bg-blue-600 text-white px-5 py-3 rounded-lg hover:bg-blue-700 transition flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Analytics</span>
+            </a>
+            <a href="{% url 'admin_dashboard:module_create' %}" 
+               class="bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-green-700 transition flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                <span>Create Module</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Modules</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ total_modules }}</p>
+                </div>
+                <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Published</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ published_modules }}</p>
+                </div>
+                <div class="bg-green-100 dark:bg-green-900 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-yellow-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Drafts</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ draft_modules }}</p>
+                </div>
+                <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-yellow-600 dark:text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Featured</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ featured_modules }}</p>
+                </div>
+                <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Category Breakdown -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Content by Category</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {% for category in category_stats %}
+            <div class="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-zinc-700 dark:to-zinc-600 rounded-lg p-4 hover:shadow-md transition-all duration-200 border border-gray-200 dark:border-zinc-600">
+                <div class="flex items-center space-x-4">
+                    <!-- Category Icon/Thumbnail -->
+                    <div class="flex-shrink-0">
+                        {% if category.icon %}
+                            <img src="{{ category.icon.url }}" alt="{{ category.name }}" 
+                                 class="w-12 h-12 rounded-lg object-cover shadow-sm">
+                        {% else %}
+                            <div class="w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-sm"
+                                 style="background: linear-gradient(135deg, {{ category.color|default:'#4F46E5' }}, {{ category.color|default:'#4F46E5' }}99);">
+                                <i class="{{ category.icon_class|default:'fas fa-leaf' }} text-lg"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Category Info -->
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ category.name }}</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <p class="text-2xl font-bold text-gray-700 dark:text-gray-200">{{ category.module_count }}</p>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">modules</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Progress Bar (if needed) -->
+                {% if category.module_count > 0 %}
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                        <span>Published</span>
+                        <span>{{ category.published_count|default:0 }}/{{ category.module_count }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-zinc-600 rounded-full h-1.5">
+                        <div class="bg-gradient-to-r from-green-400 to-green-600 h-1.5 rounded-full transition-all duration-300" 
+                             style="width: {% if category.module_count > 0 %}{{ category.published_count|default:0|floatformat:0 }}{% widthratio category.published_count|default:0 category.module_count 100 %}{% else %}0{% endif %}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Filter Modules</h2>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-6 gap-4">
+            <input type="text" name="search" value="{{ search_query }}" 
+                   placeholder="Search modules..." 
+                   class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+            
+            <select name="category" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category.id }}" {% if category_filter == category.id|stringformat:"s" %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+            
+            <select name="difficulty" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                <option value="">All Difficulties</option>
+                {% for value, label in difficulty_choices %}
+                <option value="{{ value }}" {% if difficulty_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            
+            <select name="language" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                <option value="">All Languages</option>
+                <option value="en">English Only</option>
+                <option value="bem">Has Bemba</option>
+                <option value="ny">Has Nyanja</option>
+                <option value="all">All 3 Languages</option>
+            </select>
+            
+            <select name="status" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                <option value="">All Status</option>
+                <option value="published" {% if status_filter == 'published' %}selected{% endif %}>Published</option>
+                <option value="unpublished" {% if status_filter == 'unpublished' %}selected{% endif %}>Unpublished</option>
+                <option value="featured" {% if status_filter == 'featured' %}selected{% endif %}>Featured</option>
+            </select>
+            
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-medium">
+                Apply Filters
+            </button>
+        </form>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <form method="post" action="{% url 'admin_dashboard:module_bulk_action' %}" id="bulkActionForm">
+            {% csrf_token %}
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="selectAll" class="w-5 h-5 text-green-600 rounded">
+                        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Select All</span>
+                    </label>
+                    <span class="text-sm text-gray-600 dark:text-gray-400" id="selectedCount">0 selected</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <select name="action" required class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                        <option value="">Select Action</option>
+                        <option value="publish">✓ Publish</option>
+                        <option value="unpublish">✗ Unpublish</option>
+                        <option value="feature">⭐ Mark as Featured</option>
+                        <option value="unfeature">Remove Featured</option>
+                        <option value="delete">🗑️ Delete</option>
+                    </select>
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition font-medium">
+                        Apply to Selected
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Modules Table -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">All Modules ({{ modules.count }})</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">
+                            <input type="checkbox" class="w-5 h-5 text-green-600 rounded" disabled>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Module</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Category</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Difficulty</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Translations</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Enrollments</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Views</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for module in modules %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                        <td class="px-6 py-4">
+                            <input type="checkbox" name="module_ids" value="{{ module.id }}" 
+                                   class="module-checkbox w-5 h-5 text-green-600 rounded" form="bulkActionForm">
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                {% if module.thumbnail %}
+                                <div class="relative">
+                                    <img src="{{ module.thumbnail.url }}" alt="{{ module.title }}" 
+                                         class="w-16 h-16 rounded-lg object-cover shadow-sm border border-gray-200 dark:border-zinc-600">
+                                    <!-- Overlay for status -->
+                                    {% if not module.is_published %}
+                                    <div class="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                                        <span class="text-white text-xs font-medium">DRAFT</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <div class="relative">
+                                    <div class="w-16 h-16 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-sm border border-gray-200 dark:border-zinc-600"
+                                         style="background: linear-gradient(135deg, {{ module.category.color|default:'#4F46E5' }}, {{ module.category.color|default:'#4F46E5' }}CC);">
+                                        {{ module.title|slice:":1"|upper }}
+                                    </div>
+                                    <!-- Category icon overlay -->
+                                    <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center shadow-sm border border-gray-200 dark:border-zinc-600">
+                                        <i class="{{ module.category.icon_class|default:'fas fa-leaf' }} text-xs text-gray-600 dark:text-gray-400"></i>
+                                    </div>
+                                    <!-- Draft overlay -->
+                                    {% if not module.is_published %}
+                                    <div class="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                                        <span class="text-white text-xs font-medium">DRAFT</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                                <div class="ml-4">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">{{ module.title }}</div>
+                                    <div class="flex items-center space-x-2 mt-1">
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ module.duration_minutes }} min</span>
+                                        {% if module.is_featured %}
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                            ⭐ Featured
+                                        </span>
+                                        {% endif %}
+                                        {% if module.is_premium %}
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            💎 Premium
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ module.category.name }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                {% if module.difficulty == 'beginner' %}bg-green-100 text-green-800{% endif %}
+                                {% if module.difficulty == 'intermediate' %}bg-yellow-100 text-yellow-800{% endif %}
+                                {% if module.difficulty == 'advanced' %}bg-red-100 text-red-800{% endif %}">
+                                {{ module.get_difficulty_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm">
+                            {% if module.title_bem %}🇿🇲 BEM{% endif %}
+                            {% if module.title_ny %}🇿🇲 NY{% endif %}
+                            {% if not module.title_bem and not module.title_ny %}—{% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ module.enrolled }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ module.views_count }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-col space-y-1">
+                                {% if module.is_published %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        ✓ Published
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        Draft
+                                    </span>
+                                {% endif %}
+                                {% if module.is_featured %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                        ⭐ Featured
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm space-x-2">
+                            <a href="{% url 'admin_dashboard:module_edit' module.id %}" 
+                               class="text-blue-600 hover:text-blue-800 font-medium">Edit</a>
+                            <a href="{% url 'admin_dashboard:module_toggle_publish' module.id %}" 
+                               class="text-green-600 hover:text-green-800 font-medium">
+                                {% if module.is_published %}Unpublish{% else %}Publish{% endif %}
+                            </a>
+                            <a href="{% url 'admin_dashboard:module_delete' module.id %}" 
+                               onclick="return confirm('Are you sure you want to delete this module?')"
+                               class="text-red-600 hover:text-red-800 font-medium">Delete</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                            No modules found. Create your first module!
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// Select All functionality
+document.getElementById('selectAll').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.module-checkbox');
+    checkboxes.forEach(cb => cb.checked = this.checked);
+    updateSelectedCount();
+});
+
+// Update selected count
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('.module-checkbox:checked').length;
+    document.getElementById('selectedCount').textContent = checked + ' selected';
+}
+
+// Add event listeners to all checkboxes
+document.querySelectorAll('.module-checkbox').forEach(cb => {
+    cb.addEventListener('change', updateSelectedCount);
+});
+
+// Confirm bulk delete
+document.getElementById('bulkActionForm').addEventListener('submit', function(e) {
+    const action = this.querySelector('select[name="action"]').value;
+    const checked = document.querySelectorAll('.module-checkbox:checked').length;
+    
+    if (checked === 0) {
+        e.preventDefault();
+        alert('Please select at least one module.');
+        return;
+    }
+    
+    if (action === 'delete') {
+        if (!confirm(`Are you sure you want to delete ${checked} module(s)? This action cannot be undone.`)) {
+            e.preventDefault();
+        }
+    }
+});
+</script>
+
+{% endblock %}

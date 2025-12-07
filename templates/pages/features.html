@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Features | EcoLearn{% endblock %}
+
+{% block content %}
+<!-- Features Page Content -->
+<section class="py-16 bg-green-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <!-- Hero Section -->
+        <div class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Platform Features</h1>
+            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                Discover how EcoLearn combines cutting-edge technology with environmental education to create meaningful impact.
+            </p>
+        </div>
+
+        <!-- Main Features -->
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg">
+                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-graduation-cap text-green-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-900 mb-4">Interactive Courses</h3>
+                <p class="text-gray-600 mb-4">Engaging multimedia lessons with quizzes, videos, and practical assignments.</p>
+            </div>
+            <!-- Add more features -->
+        </div>
+    </div>
+</section>
+{% endblock %}

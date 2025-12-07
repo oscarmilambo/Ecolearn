@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Update Report - {{ report.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'admin_dashboard:reports' %}" class="inline-flex items-center text-green-600 hover:text-green-700 dark:text-green-400 mb-4 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to Reports
+            </a>
+            <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                Update Report
+            </h1>
+            <p class="text-lg text-gray-600 dark:text-gray-300">
+                Reference: <span class="font-mono font-semibold text-green-600 dark:text-green-400">{{ report.reference_number }}</span>
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Report Details Card -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-6 sticky top-8">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Report Details
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <!-- Status Badge -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Current Status</label>
+                            <div class="mt-1">
+                                {% if report.status == 'pending' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                        <span class="w-2 h-2 mr-2 bg-yellow-400 rounded-full animate-pulse"></span>
+                                        Pending Review
+                                    </span>
+                                {% elif report.status == 'verified' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                        <span class="w-2 h-2 mr-2 bg-blue-400 rounded-full"></span>
+                                        Verified
+                                    </span>
+                                {% elif report.status == 'in_progress' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                        <span class="w-2 h-2 mr-2 bg-orange-400 rounded-full animate-pulse"></span>
+                                        In Progress
+                                    </span>
+                                {% elif report.status == 'resolved' %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                        <span class="w-2 h-2 mr-2 bg-green-400 rounded-full"></span>
+                                        Resolved
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                        <span class="w-2 h-2 mr-2 bg-red-400 rounded-full"></span>
+                                        Rejected
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Location</label>
+                            <p class="mt-1 text-gray-900 dark:text-white">{{ report.location_description }}</p>
+                        </div>
+
+                        <!-- Severity -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Severity</label>
+                            <p class="mt-1">
+                                {% if report.severity == 'critical' %}
+                                    <span class="text-red-600 dark:text-red-400 font-semibold">🔴 Critical</span>
+                                {% elif report.severity == 'high' %}
+                                    <span class="text-orange-600 dark:text-orange-400 font-semibold">🟠 High</span>
+                                {% elif report.severity == 'medium' %}
+                                    <span class="text-yellow-600 dark:text-yellow-400 font-semibold">🟡 Medium</span>
+                                {% else %}
+                                    <span class="text-green-600 dark:text-green-400 font-semibold">🟢 Low</span>
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <!-- Waste Type -->
+                        {% if report.waste_type %}
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Waste Type</label>
+                            <p class="mt-1 text-gray-900 dark:text-white">{{ report.waste_type }}</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Reported Date -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Reported</label>
+                            <p class="mt-1 text-gray-900 dark:text-white">{{ report.reported_at|date:"F d, Y H:i" }}</p>
+                        </div>
+
+                        <!-- Reporter -->
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 dark:text-gray-400">Reporter</label>
+                            <p class="mt-1 text-gray-900 dark:text-white">
+                                {% if report.is_anonymous %}
+                                    Anonymous
+                                {% else %}
+                                    {{ report.reporter.get_full_name|default:report.reporter.username }}
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <!-- Photos -->
+                        {% if report.photo1 or report.photo2 or report.photo3 %}
+                        <div>
+                            <label class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2 block">Photos</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                {% if report.photo1 %}
+                                <a href="{{ report.photo1.url }}" target="_blank" class="block">
+                                    <img src="{{ report.photo1.url }}" alt="Photo 1" class="w-full h-20 object-cover rounded-lg hover:opacity-75 transition-opacity">
+                                </a>
+                                {% endif %}
+                                {% if report.photo2 %}
+                                <a href="{{ report.photo2.url }}" target="_blank" class="block">
+                                    <img src="{{ report.photo2.url }}" alt="Photo 2" class="w-full h-20 object-cover rounded-lg hover:opacity-75 transition-opacity">
+                                </a>
+                                {% endif %}
+                                {% if report.photo3 %}
+                                <a href="{{ report.photo3.url }}" target="_blank" class="block">
+                                    <img src="{{ report.photo3.url }}" alt="Photo 3" class="w-full h-20 object-cover rounded-lg hover:opacity-75 transition-opacity">
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Update Form -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-8">
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Add Update
+                    </h2>
+
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+
+                        <!-- Status Update -->
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 dark:from-zinc-700 dark:to-zinc-700 p-6 rounded-xl">
+                            <label for="new_status" class="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                                Change Status
+                            </label>
+                            <select name="new_status" id="new_status" class="w-full px-4 py-3 border-2 border-gray-300 dark:border-zinc-600 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent dark:bg-zinc-800 dark:text-white transition-all">
+                                <option value="">-- Keep Current Status --</option>
+                                {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if report.status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                Select a new status if the report's situation has changed
+                            </p>
+                        </div>
+
+                        <!-- Update Text -->
+                        <div>
+                            <label for="{{ form.update_text.id_for_label }}" class="block text-sm font-semibold text-gray-900 dark:text-white mb-3">
+                                Update Details <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.update_text }}
+                            {% if form.update_text.errors %}
+                                <p class="mt-2 text-sm text-red-600 dark:text-red-400">{{ form.update_text.errors.0 }}</p>
+                            {% endif %}
+                            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                                Provide detailed information about actions taken, findings, or next steps
+                            </p>
+                        </div>
+
+                        <!-- Public Visibility -->
+                        <div class="flex items-start">
+                            <div class="flex items-center h-5">
+                                {{ form.is_public }}
+                            </div>
+                            <div class="ml-3">
+                                <label for="{{ form.is_public.id_for_label }}" class="font-medium text-gray-900 dark:text-white">
+                                    Make this update public
+                                </label>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">
+                                    Public updates will be visible to the reporter and on the public map
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-zinc-700">
+                            <a href="{% url 'admin_dashboard:reports' %}" class="inline-flex items-center px-6 py-3 border-2 border-gray-300 dark:border-zinc-600 rounded-xl text-gray-700 dark:text-gray-300 bg-white dark:bg-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-700 font-medium transition-all">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                                </svg>
+                                Cancel
+                            </a>
+                            <button type="submit" class="inline-flex items-center px-8 py-3 border border-transparent rounded-xl text-white bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Submit Update
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Previous Updates -->
+                {% if report.updates.all %}
+                <div class="mt-8 bg-white dark:bg-zinc-800 rounded-2xl shadow-xl p-8">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Update History
+                    </h3>
+                    <div class="space-y-4">
+                        {% for update in report.updates.all %}
+                        <div class="border-l-4 {% if update.is_public %}border-green-500{% else %}border-gray-400{% endif %} pl-4 py-2">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ update.updated_by.get_full_name|default:update.updated_by.username }}
+                                    </span>
+                                    {% if update.is_public %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                            Public
+                                        </span>
+                                    {% else %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                            Internal
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <span class="text-sm text-gray-500 dark:text-gray-400">
+                                    {{ update.created_at|date:"M d, Y H:i" }}
+                                </span>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300">{{ update.update_text }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add smooth animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate form elements on focus
+    const inputs = document.querySelectorAll('input, textarea, select');
+    inputs.forEach(input => {
+        input.addEventListener('focus', function() {
+            this.parentElement.classList.add('scale-[1.01]');
+        });
+        input.addEventListener('blur', function() {
+            this.parentElement.classList.remove('scale-[1.01]');
+        });
+    });
+
+    // Status change confirmation
+    const statusSelect = document.getElementById('new_status');
+    statusSelect.addEventListener('change', function() {
+        if (this.value === 'resolved') {
+            if (!confirm('Are you sure you want to mark this report as resolved? This action will close the case.')) {
+                this.value = '';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

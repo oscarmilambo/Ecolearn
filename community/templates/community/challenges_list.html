@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Community Challenges - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                🏆 Community Challenges
+            </h1>
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Join challenges, collect waste, earn points, and make a difference in your community!
+            </p>
+        </div>
+
+        <!-- Active Challenges -->
+        {% if challenges %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for challenge in challenges %}
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    
+                    <!-- Challenge Banner -->
+                    {% if challenge.image %}
+                    <div class="h-48 bg-cover bg-center" style="background-image: url('{{ challenge.image.url }}');">
+                        <div class="h-full bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+                            <span class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-sm font-bold">
+                                {{ challenge.reward_points }} Points
+                            </span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="h-48 bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
+                        <i class="fas fa-trophy text-white text-6xl"></i>
+                    </div>
+                    {% endif %}
+
+                    <!-- Challenge Content -->
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2">
+                            {{ challenge.title }}
+                        </h3>
+                        
+                        <p class="text-gray-600 mb-4 line-clamp-3">
+                            {{ challenge.description }}
+                        </p>
+
+                        <!-- Progress Bar -->
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                <span>Progress</span>
+                                <span class="font-semibold">{{ challenge.current_progress }}/{{ challenge.target_goal }}</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-3">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-3 rounded-full transition-all duration-500" 
+                                     style="width: {{ challenge.progress_percentage }}%">
+                                </div>
+                            </div>
+                            <p class="text-xs text-gray-500 mt-1">{{ challenge.progress_percentage }}% Complete</p>
+                        </div>
+
+                        <!-- Challenge Info -->
+                        <div class="space-y-2 mb-4 text-sm">
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-calendar-alt w-5 text-green-500"></i>
+                                <span class="ml-2">Ends: {{ challenge.end_date|date:"M d, Y" }}</span>
+                            </div>
+                            <div class="flex items-center text-gray-600">
+                                <i class="fas fa-users w-5 text-blue-500"></i>
+                                <span class="ml-2">{{ challenge.participants.count }} Participants</span>
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        {% if challenge.id in user_challenges %}
+                        <a href="{% url 'community:challenge_detail' challenge.id %}" 
+                           class="block w-full bg-gradient-to-r from-green-500 to-blue-500 text-white text-center py-3 rounded-xl font-bold text-lg hover:from-green-600 hover:to-blue-600 transition-all duration-300 shadow-md">
+                            View Challenge →
+                        </a>
+                        {% else %}
+                        <form method="post" action="{% url 'community:join_challenge' challenge.id %}">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-gray-900 py-3 rounded-xl font-bold text-lg hover:from-yellow-500 hover:to-orange-600 transition-all duration-300 shadow-md">
+                                🎯 Join Challenge
+                            </button>
+                        </form>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <!-- No Challenges -->
+            <div class="text-center py-16">
+                <i class="fas fa-trophy text-gray-300 text-6xl mb-4"></i>
+                <h3 class="text-2xl font-bold text-gray-700 mb-2">No Active Challenges</h3>
+                <p class="text-gray-500">Check back soon for new challenges!</p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

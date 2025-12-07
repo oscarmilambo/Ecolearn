@@ -1,0 +1,43 @@
+# Python / Django
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+*.sqlite3
+*.sqlite3-journal
+
+# Virtual env
+venv/
+env/
+.venv/
+ENV/
+
+# Environment variables
+.env
+!.env.example
+
+# Media & uploads (too big + user-generated)
+media/
+!media/category_icons/
+!media/module_thumbnails/
+
+# Staticfiles (generated)
+staticfiles/
+
+# IDE / local
+.vscode/
+.idea/
+*.swp
+*~
+
+# Logs & debug
+logs/
+*.log
+
+# Migrations cache
+*/migrations/__pycache__/
+
+# Other junk
+.DS_Store
+Thumbs.db

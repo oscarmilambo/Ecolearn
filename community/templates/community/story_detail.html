@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ story.title }} - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Back Button -->
+        <a href="{% url 'community:success_stories' %}" class="inline-flex items-center text-eco-green hover:text-eco-dark mb-6">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Stories
+        </a>
+
+        <!-- Story Card -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            {% if story.image %}
+            <img src="{{ story.image.url }}" alt="{{ story.title }}" class="w-full h-96 object-cover">
+            {% endif %}
+            
+            <div class="p-8">
+                <!-- Story Type Badge -->
+                <span class="inline-block px-3 py-1 bg-eco-light text-eco-dark text-sm font-semibold rounded-full mb-4">
+                    {{ story.get_story_type_display }}
+                </span>
+                
+                <!-- Title -->
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">{{ story.title }}</h1>
+                
+                <!-- Author & Date -->
+                <div class="flex items-center text-gray-600 mb-6">
+                    <i class="fas fa-user-circle mr-2"></i>
+                    <span class="mr-4">{{ story.author.get_full_name|default:story.author.username }}</span>
+                    <i class="fas fa-calendar mr-2"></i>
+                    <span>{{ story.created_at|date:"F d, Y" }}</span>
+                    {% if story.location %}
+                    <i class="fas fa-map-marker-alt ml-4 mr-2"></i>
+                    <span>{{ story.location }}</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Story Content -->
+                <div class="prose prose-lg max-w-none mb-8">
+                    {{ story.content|linebreaks }}
+                </div>
+                
+                <!-- Video if available -->
+                {% if story.video_url %}
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold mb-3">Video</h3>
+                    <div class="aspect-w-16 aspect-h-9">
+                        <iframe src="{{ story.video_url }}" frameborder="0" allowfullscreen class="w-full h-96 rounded-lg"></iframe>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Like Button -->
+                <div class="flex items-center justify-between py-6 border-t border-b border-gray-200 mb-6">
+                    <div class="flex items-center space-x-4">
+                        <button onclick="likeStory({{ story.id }})" 
+                                id="like-btn-{{ story.id }}"
+                                class="flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors
+                                       {% if user_liked %}bg-red-100 text-red-600{% else %}bg-gray-100 text-gray-600 hover:bg-red-100 hover:text-red-600{% endif %}">
+                            <i class="{% if user_liked %}fas{% else %}far{% endif %} fa-heart"></i>
+                            <span id="like-count-{{ story.id }}">{{ story.like_count }}</span>
+                        </button>
+                    </div>
+                    
+                    <!-- Share Buttons -->
+                    <div class="flex items-center space-x-2">
+                        <span class="text-gray-600 mr-2">Share:</span>
+                        <button onclick="shareToWhatsApp('story', {{ story.id }})" 
+                                class="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                            <i class="fab fa-whatsapp text-xl"></i>
+                        </button>
+                        <button onclick="shareToFacebook('story', {{ story.id }})" 
+                                class="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </button>
+                        <button onclick="shareToTwitter('story', {{ story.id }})" 
+                                class="p-2 bg-blue-400 text-white rounded-lg hover:bg-blue-500 transition-colors">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Featured Badge -->
+                {% if story.is_featured %}
+                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-yellow-600 text-2xl mr-3"></i>
+                        <p class="text-yellow-800 font-semibold">This is a featured success story!</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Related Stories -->
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">More Success Stories</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for related_story in related_stories %}
+                <a href="{% url 'community:story_detail' related_story.id %}" 
+                   class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow">
+                    {% if related_story.image %}
+                    <img src="{{ related_story.image.url }}" alt="{{ related_story.title }}" class="w-full h-48 object-cover">
+                    {% else %}
+                    <div class="w-full h-48 bg-gradient-to-br from-eco-green to-green-600 flex items-center justify-center">
+                        <i class="fas fa-star text-white text-5xl"></i>
+                    </div>
+                    {% endif %}
+                    <div class="p-4">
+                        <h3 class="font-semibold text-gray-900 mb-2">{{ related_story.title|truncatewords:10 }}</h3>
+                        <p class="text-sm text-gray-600">{{ related_story.content|truncatewords:15 }}</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+// Like Story
+function likeStory(storyId) {
+    fetch(`/community/stories/${storyId}/like/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const btn = document.getElementById(`like-btn-${storyId}`);
+        const count = document.getElementById(`like-count-${storyId}`);
+        const icon = btn.querySelector('i');
+        
+        if (data.liked) {
+            btn.classList.add('bg-red-100', 'text-red-600');
+            btn.classList.remove('bg-gray-100', 'text-gray-600');
+            icon.classList.remove('far');
+            icon.classList.add('fas');
+        } else {
+            btn.classList.remove('bg-red-100', 'text-red-600');
+            btn.classList.add('bg-gray-100', 'text-gray-600');
+            icon.classList.add('far');
+            icon.classList.remove('fas');
+        }
+        
+        count.textContent = data.like_count;
+    });
+}
+
+// Share to WhatsApp
+function shareToWhatsApp(contentType, contentId) {
+    fetch("{% url 'community:share_to_social' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `content_type=${contentType}&content_id=${contentId}&platform=whatsapp`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.open(data.share_url, '_blank');
+        }
+    });
+}
+
+// Share to Facebook
+function shareToFacebook(contentType, contentId) {
+    fetch("{% url 'community:share_to_social' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `content_type=${contentType}&content_id=${contentId}&platform=facebook`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.open(data.share_url, '_blank', 'width=600,height=400');
+        }
+    });
+}
+
+// Share to Twitter
+function shareToTwitter(contentType, contentId) {
+    fetch("{% url 'community:share_to_social' %}", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-CSRFToken': '{{ csrf_token }}'
+        },
+        body: `content_type=${contentType}&content_id=${contentId}&platform=twitter`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.open(data.share_url, '_blank', 'width=600,height=400');
+        }
+    });
+}
+</script>
+{% endblock %}

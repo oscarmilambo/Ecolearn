@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoLearn | Learn. Engage. Grow.</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+{% load static %}
+<style>
+/* Custom Eco Theme */
+:root {
+    --eco-green: #22c55e;
+    --eco-light-green: #d1fae5;
+    --eco-deep-green: #166534;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Hero background animation */
+.eco-bg {
+    background: linear-gradient(135deg, var(--eco-green), #86efac, var(--eco-light-green));
+    background-size: 400% 400%;
+    animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+/* Card hover */
+.feature-card:hover {
+    transform: translateY(-4px);
+    transition: all 0.3s ease;
+    box-shadow: 0 10px 15px -3px rgba(34,197,94,0.2);
+}
+
+/* Sticky white navbar */
+nav {
+    background-color: white;
+    color: black;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+/* EcoLearn logo color */
+.ecolearn-logo {
+    color: black;
+}
+
+.ecolearn-icon {
+    color: var(--eco-green);
+}
+
+/* Message animation */
+@keyframes slide-in {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+}
+
+/* New: Scroll-to-Top Button Style */
+#scroll-to-top {
+    bottom: 20px;
+    right: 20px;
+    z-index: 100;
+}
+</style>
+</head>
+
+<body class="bg-green-50 text-gray-800 font-sans">
+
+<nav class="w-full">
+    <div class="max-w-7xl mx-auto px-6 py-3 flex justify-between items-center">
+        <a href="{% url 'home' %}" class="flex items-center text-2xl font-extrabold ecolearn-logo" aria-label="Go to EcoLearn home">
+            <i class="fas fa-leaf mr-2 ecolearn-icon" aria-hidden="true"></i>EcoLearn
+        </a>
+
+        <div class="hidden md:flex space-x-8 text-sm font-semibold">
+            <a href="{% url 'about' %}" class="text-black hover:text-green-600 transition">About</a>
+            <a href="{% url 'features' %}" class="text-black hover:text-green-600 transition">Features</a>
+            <a href="{% url 'contact' %}" class="text-black hover:text-green-600 transition">Contact</a>
+        </div>
+
+        <div class="hidden md:flex space-x-4">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="text-black hover:text-green-600 transition">
+                    <i class="fas fa-tachometer-alt mr-1" aria-hidden="true"></i>Dashboard
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md font-semibold transition">
+                    Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="text-black hover:text-green-600 transition">
+                    <i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i>Login
+                </a>
+                <a href="{% url 'accounts:register' %}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md font-semibold transition">
+                    Join Free
+                </a>
+            {% endif %}
+        </div>
+        
+        <div class="md:hidden">
+            <button id="mobile-menu-btn" class="text-black focus:outline-none" aria-label="Toggle mobile menu">
+                <i class="fas fa-bars text-2xl" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+    
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t">
+        <div class="px-6 py-4 space-y-3">
+            <a href="{% url 'about' %}" class="block text-black hover:text-green-600 transition">About</a>
+            <a href="{% url 'features' %}" class="block text-black hover:text-green-600 transition">Features</a>
+            <a href="{% url 'contact' %}" class="block text-black hover:text-green-600 transition">Contact</a>
+            <hr class="border-gray-200">
+            {% if user.is_authenticated %}
+                <a href="{% url 'dashboard' %}" class="block text-black hover:text-green-600 transition">
+                    <i class="fas fa-tachometer-alt mr-1" aria-hidden="true"></i>Dashboard
+                </a>
+                <a href="{% url 'accounts:logout' %}" class="block bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-center transition">
+                    Logout
+                </a>
+            {% else %}
+                <a href="{% url 'accounts:login' %}" class="block text-black hover:text-green-600 transition">
+                    <i class="fas fa-sign-in-alt mr-1" aria-hidden="true"></i>Login
+                </a>
+                <a href="{% url 'accounts:register' %}" class="block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-center transition">
+                    Join Free
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+{% if messages %}
+    <div class="fixed top-20 right-4 z-50 space-y-2">
+        {% for message in messages %}
+            <div class="message-container bg-white border-l-4 
+                {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% elif message.tags == 'warning' %}border-yellow-500{% else %}border-blue-500{% endif %} 
+                p-4 rounded-lg shadow-lg max-w-sm animate-slide-in" role="alert">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        {% if message.tags == 'success' %}
+                            <i class="fas fa-check-circle text-green-500 text-lg" aria-hidden="true"></i>
+                        {% elif message.tags == 'error' %}
+                            <i class="fas fa-exclamation-circle text-red-500 text-lg" aria-hidden="true"></i>
+                        {% elif message.tags == 'warning' %}
+                            <i class="fas fa-exclamation-triangle text-yellow-500 text-lg" aria-hidden="true"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle text-blue-500 text-lg" aria-hidden="true"></i>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3 flex-1">
+                        <p class="text-sm text-gray-700 font-medium">{{ message }}</p>
+                    </div>
+                    <button onclick="this.closest('.message-container').remove()" class="ml-4 text-gray-400 hover:text-gray-600 focus:outline-none" aria-label="Close message">
+                        <i class="fas fa-times" aria-hidden="true"></i>
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<section class="eco-bg text-black pt-28 pb-20">
+    <div class="max-w-7xl mx-auto px-4 grid md:grid-cols-2 items-center gap-10">
+        <div class="text-center md:text-left">
+            <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight drop-shadow-lg">
+                Building a Greener Future for Zambia 🇿🇲
+            </h1>
+            <p class="text-lg md:text-xl mb-10 text-black/90">
+                EcoLearn empowers learners, communities, and innovators to embrace sustainability through **education, action, and collaboration** focused on Zambian realities.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
+                <a href="{% url 'accounts:register' %}" class="bg-white text-green-700 hover:bg-green-100 px-8 py-3 rounded-full text-lg font-semibold shadow-xl transition">
+                    <i class="fas fa-rocket mr-2" aria-hidden="true"></i>Get Started Free
+                </a>
+                <a href="{% url 'features' %}" class="border-2 border-green-700 text-green-700 hover:bg-green-700 hover:text-white px-8 py-3 rounded-full text-lg font-semibold transition">
+                    Explore Features
+                </a>
+            </div>
+        </div>
+        
+        <div class="hidden md:block">
+            <div class="bg-white/50 p-6 rounded-3xl shadow-2xl backdrop-blur-sm">
+                
+                <p class="mt-4 text-sm text-center font-medium text-gray-700">Practical knowledge for a better Zambia.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="about" class="py-20 bg-white text-center">
+<div class="max-w-5xl mx-auto px-4">
+    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6">Why EcoLearn? 🌱</h2>
+    <p class="text-gray-600 max-w-3xl mx-auto mb-12">
+    EcoLearn is Zambia's premier e-learning platform dedicated to environmental education — connecting knowledge, culture, and community for a sustainable tomorrow.
+    </p>
+    <div class="grid md:grid-cols-3 gap-8">
+    <div class="p-8 bg-green-50 rounded-xl shadow feature-card">
+        <i class="fas fa-seedling text-3xl text-green-600 mb-4" aria-hidden="true"></i>
+        <h3 class="text-xl font-semibold mb-2">Sustainability Skills</h3>
+        <p class="text-gray-600">Master eco-friendly practices in waste management, recycling, and renewable energy.</p>
+    </div>
+    <div class="p-8 bg-blue-50 rounded-xl shadow feature-card">
+        <i class="fas fa-users text-3xl text-blue-600 mb-4" aria-hidden="true"></i>
+        <h3 class="text-xl font-semibold mb-2">Community Connection</h3>
+        <p class="text-gray-600">Collaborate with local learners and make a difference in your neighborhood.</p>
+    </div>
+    <div class="p-8 bg-yellow-50 rounded-xl shadow feature-card">
+        <i class="fas fa-award text-3xl text-yellow-500 mb-4" aria-hidden="true"></i>
+        <h3 class="text-xl font-semibold mb-2">Recognized Certification</h3>
+        <p class="text-gray-600">Earn EcoLearn certificates that prove your sustainability expertise.</p>
+    </div>
+    </div>
+</div>
+</section>
+
+<section id="features" class="py-24 bg-green-50">
+<div class="max-w-7xl mx-auto px-6 text-center">
+    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8">Explore Our Platform 📘</h2>
+    <p class="text-gray-600 max-w-2xl mx-auto mb-12">Everything you need to learn, engage, and create positive change for the planet.</p>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
+        <i class="fas fa-book-open text-4xl text-green-600 mb-4" aria-hidden="true"></i>
+        <h3 class="font-semibold text-xl mb-2">Interactive Lessons</h3>
+        <p class="text-gray-600">Engage in gamified learning with quizzes, videos, and progress tracking.</p>
+    </div>
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
+        <i class="fas fa-language text-4xl text-green-500 mb-4" aria-hidden="true"></i>
+        <h3 class="font-semibold text-xl mb-2">Multilingual Support</h3>
+        <p class="text-gray-600">Learn in English, Bemba, or Nyanja — for an inclusive Zambian experience.</p>
+    </div>
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
+        <i class="fas fa-mobile-alt text-4xl text-yellow-500 mb-4" aria-hidden="true"></i>
+        <h3 class="font-semibold text-xl mb-2">Mobile Friendly</h3>
+        <p class="text-gray-600">Access EcoLearn anytime, anywhere — perfectly optimized for all devices.</p>
+    </div>
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
+        <i class="fas fa-comments text-4xl text-blue-600 mb-4" aria-hidden="true"></i>
+        <h3 class="font-semibold text-xl mb-2">Community Forums</h3>
+        <p class="text-gray-600">Share ideas, discuss sustainability, and inspire local change.</p>
+    </div>
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
+        <i class="fas fa-coins text-4xl text-amber-600 mb-4" aria-hidden="true"></i>
+        <h3 class="font-semibold text-xl mb-2">Mobile Money Ready</h3>
+        <p class="text-gray-600">Easily pay for premium content using MTN, Airtel, or Zamtel mobile money.</p>
+    </div>
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
+        <i class="fas fa-bell text-4xl text-indigo-600 mb-4" aria-hidden="true"></i>
+        <h3 class="font-semibold text-xl mb-2">Smart Notifications</h3>
+        <p class="text-gray-600">Receive updates on new courses, events, and community challenges.</p>
+    </div>
+    </div>
+</div>
+</section>
+
+<section class="bg-green-600 text-white py-20 text-center">
+<h2 class="text-3xl md:text-4xl font-bold mb-4">Join the Green Revolution Today!</h2>
+<p class="text-white/90 max-w-2xl mx-auto mb-8">
+    Take your first step toward sustainability education and community action in Zambia.
+</p>
+<a href="{% url 'accounts:register' %}" class="bg-white text-green-700 hover:bg-green-100 px-8 py-3 rounded-full text-lg font-semibold inline-block transition shadow-lg">
+    Start Learning Now
+</a>
+</section>
+
+<footer id="contact" class="bg-gray-900 text-gray-400 py-12">
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-3 gap-10">
+    <div>
+        <h3 class="text-xl font-semibold text-white mb-4 flex items-center">
+        <i class="fas fa-leaf mr-2 text-green-500" aria-hidden="true"></i>EcoLearn
+        </h3>
+        <p>Empowering Zambia through environmental knowledge and action.</p>
+    </div>
+    <div>
+        <h4 class="text-lg font-semibold text-white mb-4">Quick Links</h4>
+        <ul class="space-y-2">
+        <li><a href="{% url 'about' %}" class="hover:text-white transition">About</a></li>
+        <li><a href="{% url 'features' %}" class="hover:text-white transition">Features</a></li>
+        <li><a href="{% url 'contact' %}" class="hover:text-white transition">Contact</a></li>
+        <li><a href="{% url 'accounts:register' %}" class="hover:text-white transition">Register</a></li>
+        <li><a href="{% url 'accounts:login' %}" class="hover:text-white transition">Login</a></li>
+        </ul>
+    </div>
+    <div>
+        <h4 class="text-lg font-semibold text-white mb-4">Contact Us</h4>
+        <p><i class="fas fa-envelope mr-2" aria-hidden="true"></i>info@ecolearn.zm</p>
+        <p><i class="fas fa-phone mr-2" aria-hidden="true"></i>+260 970 594 105</p>
+        <div class="mt-4">
+            <a href="{% url 'contact' %}" class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm transition">
+                Contact Form
+            </a>
+        </div>
+    </div>
+    </div>
+    <div class="text-center border-t border-gray-700 mt-8 pt-6 text-sm text-gray-500">
+    © {% now "Y" %} EcoLearn. All Rights Reserved.
+    </div>
+</footer>
+
+<button id="scroll-to-top" class="fixed hidden bg-green-600 hover:bg-green-700 text-white p-3 rounded-full shadow-lg transition" aria-label="Scroll to top">
+    <i class="fas fa-arrow-up"></i>
+</button>
+
+<script>
+    // Mobile menu toggle
+    document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
+        document.getElementById('mobile-menu').classList.toggle('hidden');
+    });
+    
+    // Auto-hide messages after 5 seconds
+    const messageContainers = document.querySelectorAll('.message-container');
+    if (messageContainers.length > 0) {
+        setTimeout(function() {
+            messageContainers.forEach(function(msg) {
+                msg.style.transition = 'opacity 0.5s';
+                msg.style.opacity = '0';
+                setTimeout(function() {
+                    msg.remove();
+                }, 500);
+            });
+        }, 5000);
+    }
+    
+    // Scroll to Top logic
+    const scrollToTopBtn = document.getElementById('scroll-to-top');
+
+    // Show or hide the button based on scroll position
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            scrollToTopBtn.classList.remove('hidden');
+        } else {
+            scrollToTopBtn.classList.add('hidden');
+        }
+    });
+
+    // Smooth scroll function
+    scrollToTopBtn.addEventListener('click', () => {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+</script>
+
+</body>
+</html>

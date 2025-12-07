@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Badges - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-medal text-eco-green mr-2"></i>
+                My Badges
+            </h1>
+            <p class="text-gray-600">Collect badges by achieving environmental milestones!</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Badges Earned</p>
+                        <p class="text-3xl font-bold text-eco-green">{{ user_badges.count }}</p>
+                    </div>
+                    <i class="fas fa-award text-4xl text-eco-green"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Available to Earn</p>
+                        <p class="text-3xl font-bold text-orange-500">{{ available_badges.count }}</p>
+                    </div>
+                    <i class="fas fa-lock text-4xl text-orange-500"></i>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Completion</p>
+                        <p class="text-3xl font-bold text-blue-500">
+                            {% widthratio user_badges.count 1 available_badges.count|add:user_badges.count %}%
+                        </p>
+                    </div>
+                    <i class="fas fa-chart-pie text-4xl text-blue-500"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Earned Badges -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-star text-eco-green mr-2"></i>
+                Earned Badges
+            </h2>
+            
+            {% if user_badges %}
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {% for user_badge in user_badges %}
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center hover:shadow-lg transition-shadow">
+                        {% if user_badge.badge.icon %}
+                        <img src="{{ user_badge.badge.icon.url }}" alt="{{ user_badge.badge.name }}" class="w-24 h-24 mx-auto mb-4">
+                        {% else %}
+                        <div class="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-eco-green to-eco-dark rounded-full flex items-center justify-center">
+                            <i class="fas fa-medal text-white text-4xl"></i>
+                        </div>
+                        {% endif %}
+                        <h3 class="font-semibold text-gray-900 mb-2">{{ user_badge.badge.name }}</h3>
+                        <p class="text-sm text-gray-600 mb-3">{{ user_badge.badge.description }}</p>
+                        <p class="text-xs text-gray-500">Earned: {{ user_badge.earned_at|date:"M d, Y" }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white rounded-lg shadow-md p-12 text-center">
+                    <i class="fas fa-medal text-gray-300 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Badges Yet</h3>
+                    <p class="text-gray-500">Start earning badges by completing activities!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Available Badges -->
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-900 mb-6">
+                <i class="fas fa-lock text-orange-500 mr-2"></i>
+                Locked Badges
+            </h2>
+            
+            {% if available_badges %}
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {% for badge in available_badges %}
+                    <div class="bg-white rounded-lg shadow-md p-6 text-center opacity-60 hover:opacity-100 transition-opacity">
+                        {% if badge.icon %}
+                        <img src="{{ badge.icon.url }}" alt="{{ badge.name }}" class="w-24 h-24 mx-auto mb-4 grayscale">
+                        {% else %}
+                        <div class="w-24 h-24 mx-auto mb-4 bg-gray-300 rounded-full flex items-center justify-center">
+                            <i class="fas fa-lock text-gray-500 text-3xl"></i>
+                        </div>
+                        {% endif %}
+                        <h3 class="font-semibold text-gray-900 mb-2">{{ badge.name }}</h3>
+                        <p class="text-sm text-gray-600 mb-3">{{ badge.description }}</p>
+                        <div class="bg-gray-100 rounded-lg p-2">
+                            <p class="text-xs text-gray-600">Requires:</p>
+                            <p class="text-sm font-semibold text-gray-900">{{ badge.points_required }} points</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="bg-white rounded-lg shadow-md p-12 text-center">
+                    <i class="fas fa-trophy text-eco-green text-6xl mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">All Badges Earned!</h3>
+                    <p class="text-gray-500">Congratulations! You've earned all available badges!</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- How to Earn Badges -->
+        <div class="mt-12 bg-gradient-to-r from-eco-green to-eco-dark rounded-lg p-8 text-white">
+            <h2 class="text-2xl font-bold mb-4">
+                <i class="fas fa-lightbulb mr-2"></i>
+                How to Earn Badges
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                    <i class="fas fa-graduation-cap text-3xl mb-2"></i>
+                    <h3 class="font-semibold mb-1">Complete Learning</h3>
+                    <p class="text-sm text-eco-light">Finish modules and quizzes to earn points</p>
+                </div>
+                <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                    <i class="fas fa-flag text-3xl mb-2"></i>
+                    <h3 class="font-semibold mb-1">Report Issues</h3>
+                    <p class="text-sm text-eco-light">Submit verified dumping reports</p>
+                </div>
+                <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                    <i class="fas fa-users text-3xl mb-2"></i>
+                    <h3 class="font-semibold mb-1">Join Community</h3>
+                    <p class="text-sm text-eco-light">Participate in events and challenges</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

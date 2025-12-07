@@ -1,0 +1,57 @@
+﻿{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block page_title %}Create Lesson{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <h1 class="text-3xl font-bold">Create New Lesson</h1>
+    <p>Module: {{ module.title }}</p>
+    
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold mb-4">Lesson Information</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Lesson Title *</label>
+                    <input type="text" name="title" required class="w-full px-4 py-2 border rounded-lg">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Content Type *</label>
+                    <select name="content_type" required class="w-full px-4 py-2 border rounded-lg">
+                        <option value="">Select Type</option>
+                        {% for value, label in content_types %}
+                        <option value="{{ value }}">{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Content *</label>
+                    <textarea name="content" rows="6" required class="w-full px-4 py-2 border rounded-lg"></textarea>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Order</label>
+                        <input type="number" name="order" value="0" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Duration (minutes)</label>
+                        <input type="number" name="duration_minutes" value="10" class="w-full px-4 py-2 border rounded-lg">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex justify-end space-x-4">
+            <a href="{% url 'admin_dashboard:module_edit' module.id %}" class="px-6 py-3 border rounded-lg">Cancel</a>
+            <button type="submit" class="px-6 py-3 bg-green-600 text-white rounded-lg">Create Lesson</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

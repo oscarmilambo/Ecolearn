@@ -1,0 +1,303 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block page_title %}Edit Lesson - {{ lesson.title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6 p-6">
+    
+    <!-- Header -->
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'admin_dashboard:module_edit' lesson.module.id %}" class="text-green-600 hover:text-green-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Edit Lesson</h1>
+            <p class="text-gray-600 dark:text-gray-400">Module: {{ lesson.module.title }}</p>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Basic Information -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">📝 Lesson Information (English)</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Lesson Title *
+                    </label>
+                    <input type="text" name="title" value="{{ lesson.title }}" required
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Content Type *
+                        </label>
+                        <select name="content_type" required id="content_type"
+                                class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                            {% for value, label in content_types %}
+                            <option value="{{ value }}" {% if lesson.content_type == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Order
+                        </label>
+                        <input type="number" name="order" value="{{ lesson.order }}" min="0"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Duration (minutes)
+                        </label>
+                        <input type="number" name="duration_minutes" value="{{ lesson.duration_minutes }}" min="0"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Content (Text) *
+                    </label>
+                    <textarea name="content" rows="6" required
+                              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">{{ lesson.content }}</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Media Files - English -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6" id="media_section">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🎬 Media Files (English)</h2>
+            
+            <div class="space-y-4">
+                <div id="video_upload">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Video File (English)
+                    </label>
+                    {% if lesson.video_file %}
+                    <div class="mb-2">
+                        <a href="{{ lesson.video_file.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                            🎬 View Current Video
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="video_file" accept="video/*"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                    <p class="text-xs text-gray-500 mt-1">Upload new video to replace current one</p>
+                </div>
+
+                <div id="audio_upload">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Audio File (English)
+                    </label>
+                    {% if lesson.audio_file %}
+                    <div class="mb-2">
+                        <a href="{{ lesson.audio_file.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                            🎵 View Current Audio
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="audio_file" accept="audio/*"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                    <p class="text-xs text-gray-500 mt-1">Upload new audio to replace current one</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multilingual Content - Bemba -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🇿🇲 Bemba Translation</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Title (Bemba)
+                    </label>
+                    <input type="text" name="title_bem" value="{{ lesson.title_bem }}"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Content (Bemba)
+                    </label>
+                    <textarea name="content_bem" rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">{{ lesson.content_bem }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Video File (Bemba)
+                    </label>
+                    {% if lesson.video_file_bem %}
+                    <div class="mb-2">
+                        <a href="{{ lesson.video_file_bem.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                            🎬 View Current Bemba Video
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="video_file_bem" accept="video/*"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Audio File (Bemba)
+                    </label>
+                    {% if lesson.audio_file_bem %}
+                    <div class="mb-2">
+                        <a href="{{ lesson.audio_file_bem.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                            🎵 View Current Bemba Audio
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="audio_file_bem" accept="audio/*"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                </div>
+            </div>
+        </div>
+
+        <!-- Multilingual Content - Nyanja -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🇿🇲 Nyanja Translation</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Title (Nyanja)
+                    </label>
+                    <input type="text" name="title_ny" value="{{ lesson.title_ny }}"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Content (Nyanja)
+                    </label>
+                    <textarea name="content_ny" rows="4"
+                              class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">{{ lesson.content_ny }}</textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Video File (Nyanja)
+                    </label>
+                    {% if lesson.video_file_ny %}
+                    <div class="mb-2">
+                        <a href="{{ lesson.video_file_ny.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                            🎬 View Current Nyanja Video
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="video_file_ny" accept="video/*"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Audio File (Nyanja)
+                    </label>
+                    {% if lesson.audio_file_ny %}
+                    <div class="mb-2">
+                        <a href="{{ lesson.audio_file_ny.url }}" target="_blank" class="text-blue-600 hover:text-blue-800 text-sm">
+                            🎵 View Current Nyanja Audio
+                        </a>
+                    </div>
+                    {% endif %}
+                    <input type="file" name="audio_file_ny" accept="audio/*"
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                </div>
+            </div>
+        </div>
+
+        <!-- Publishing Options -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">🔒 Publishing Options</h2>
+            
+            <div class="space-y-3">
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" name="is_published" {% if lesson.is_published %}checked{% endif %} 
+                           class="w-5 h-5 text-green-600 rounded">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Published (visible to enrolled students)
+                    </span>
+                </label>
+
+                <label class="flex items-center space-x-3">
+                    <input type="checkbox" name="is_preview" {% if lesson.is_preview %}checked{% endif %}
+                           class="w-5 h-5 text-blue-600 rounded">
+                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Allow preview (visible without enrollment)
+                    </span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end space-x-4">
+            <a href="{% url 'admin_dashboard:module_edit' lesson.module.id %}" 
+               class="px-6 py-3 border border-gray-300 dark:border-zinc-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                Cancel
+            </a>
+            <button type="submit" 
+                    class="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition font-medium">
+                Save Changes
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<script>
+// Show/hide media upload fields based on content type
+document.getElementById('content_type').addEventListener('change', function() {
+    const videoUpload = document.getElementById('video_upload');
+    const audioUpload = document.getElementById('audio_upload');
+    const mediaSection = document.getElementById('media_section');
+    
+    if (this.value === 'video') {
+        videoUpload.style.display = 'block';
+        audioUpload.style.display = 'none';
+        mediaSection.style.display = 'block';
+    } else if (this.value === 'audio') {
+        videoUpload.style.display = 'none';
+        audioUpload.style.display = 'block';
+        mediaSection.style.display = 'block';
+    } else {
+        mediaSection.style.display = 'none';
+    }
+});
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const contentType = document.getElementById('content_type').value;
+    const videoUpload = document.getElementById('video_upload');
+    const audioUpload = document.getElementById('audio_upload');
+    const mediaSection = document.getElementById('media_section');
+    
+    if (contentType === 'video') {
+        videoUpload.style.display = 'block';
+        audioUpload.style.display = 'none';
+        mediaSection.style.display = 'block';
+    } else if (contentType === 'audio') {
+        videoUpload.style.display = 'none';
+        audioUpload.style.display = 'block';
+        mediaSection.style.display = 'block';
+    } else {
+        mediaSection.style.display = 'none';
+    }
+});
+</script>
+
+{% endblock %}

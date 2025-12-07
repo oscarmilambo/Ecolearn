@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Report Details - {{ report.reference_number }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <a href="{% url 'reporting:my_reports' %}" class="inline-flex items-center text-green-600 hover:text-green-700 dark:text-green-400 mb-4 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Back to My Reports
+            </a>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-zinc-900 dark:text-white mb-2">
+                        Report Details
+                    </h1>
+                    <p class="text-lg text-zinc-600 dark:text-zinc-300">
+                        Reference: <span class="font-mono font-semibold text-green-600 dark:text-green-400">{{ report.reference_number }}</span>
+                    </p>
+                </div>
+                {% if user.is_staff %}
+                <a href="{% url 'reporting:update_report' report.id %}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white font-semibold rounded-xl hover:from-green-700 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                    Update Report
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Main Content -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Status Card -->
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg overflow-hidden">
+                    <div class="{% if report.status == 'resolved' %}bg-gradient-to-r from-green-500 to-emerald-500{% elif report.status == 'in_progress' %}bg-gradient-to-r from-orange-500 to-yellow-500{% elif report.status == 'verified' %}bg-gradient-to-r from-blue-500 to-indigo-500{% elif report.status == 'pending' %}bg-gradient-to-r from-yellow-500 to-amber-500{% else %}bg-gradient-to-r from-red-500 to-rose-500{% endif %} px-8 py-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium opacity-90 mb-1">Current Status</p>
+                                <h2 class="text-3xl font-bold">{{ report.get_status_display }}</h2>
+                            </div>
+                            <div class="text-6xl opacity-20">
+                                {% if report.status == 'resolved' %}✓{% elif report.status == 'in_progress' %}⚙{% elif report.status == 'verified' %}✔{% elif report.status == 'pending' %}⏳{% else %}✗{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline -->
+                    <div class="p-8">
+                        <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
+                            <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Timeline
+                        </h3>
+                        <div class="relative">
+                            <div class="absolute left-4 top-0 bottom-0 w-0.5 bg-zinc-200 dark:bg-zinc-700"></div>
+                            
+                            <div class="space-y-6">
+                                <!-- Reported -->
+                                <div class="relative flex items-start">
+                                    <div class="absolute left-0 w-8 h-8 bg-green-500 rounded-full flex items-center justify-center ring-4 ring-white dark:ring-zinc-800">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-12">
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">Report Submitted</p>
+                                        <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ report.reported_at|date:"F d, Y H:i" }}</p>
+                                    </div>
+                                </div>
+
+                                <!-- Verified -->
+                                {% if report.verified_at %}
+                                <div class="relative flex items-start">
+                                    <div class="absolute left-0 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center ring-4 ring-white dark:ring-zinc-800">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-12">
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">Report Verified</p>
+                                        <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ report.verified_at|date:"F d, Y H:i" }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- In Progress -->
+                                {% if report.status == 'in_progress' or report.resolved_at %}
+                                <div class="relative flex items-start">
+                                    <div class="absolute left-0 w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center ring-4 ring-white dark:ring-zinc-800">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-12">
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">Cleanup In Progress</p>
+                                        <p class="text-sm text-zinc-600 dark:text-zinc-400">Team assigned</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Resolved -->
+                                {% if report.resolved_at %}
+                                <div class="relative flex items-start">
+                                    <div class="absolute left-0 w-8 h-8 bg-green-600 rounded-full flex items-center justify-center ring-4 ring-white dark:ring-zinc-800">
+                                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                        </svg>
+                                    </div>
+                                    <div class="ml-12">
+                                        <p class="text-sm font-semibold text-zinc-900 dark:text-white">Report Resolved</p>
+                                        <p class="text-sm text-zinc-600 dark:text-zinc-400">{{ report.resolved_at|date:"F d, Y H:i" }}</p>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Photos -->
+                {% if report.photo1 or report.photo2 or report.photo3 %}
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-8">
+                    <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        Evidence Photos
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {% if report.photo1 %}
+                        <a href="{{ report.photo1.url }}" target="_blank" class="group relative overflow-hidden rounded-xl">
+                            <img src="{{ report.photo1.url }}" alt="Photo 1" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300">
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                <svg class="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                                </svg>
+                            </div>
+                        </a>
+                        {% endif %}
+                        {% if report.photo2 %}
+                        <a href="{{ report.photo2.url }}" target="_blank" class="group relative overflow-hidden rounded-xl">
+                            <img src="{{ report.photo2.url }}" alt="Photo 2" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300">
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                <svg class="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                                </svg>
+                            </div>
+                        </a>
+                        {% endif %}
+                        {% if report.photo3 %}
+                        <a href="{{ report.photo3.url }}" target="_blank" class="group relative overflow-hidden rounded-xl">
+                            <img src="{{ report.photo3.url }}" alt="Photo 3" class="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300">
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all flex items-center justify-center">
+                                <svg class="w-12 h-12 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"/>
+                                </svg>
+                            </div>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Updates -->
+                {% if updates %}
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-8">
+                    <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"/>
+                        </svg>
+                        Official Updates
+                    </h3>
+                    <div class="space-y-4">
+                        {% for update in updates %}
+                        <div class="border-l-4 border-green-500 bg-zinc-50 dark:bg-zinc-700/50 rounded-r-xl p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm font-semibold text-zinc-900 dark:text-white">
+                                        {{ update.updated_by.get_full_name|default:update.updated_by.username }}
+                                    </span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                        Official
+                                    </span>
+                                </div>
+                                <span class="text-sm text-zinc-500 dark:text-zinc-400">
+                                    {{ update.created_at|date:"M d, Y H:i" }}
+                                </span>
+                            </div>
+                            <p class="text-zinc-700 dark:text-zinc-300">{{ update.update_text }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 sticky top-8 space-y-6">
+                    <h3 class="text-xl font-bold text-zinc-900 dark:text-white mb-4 flex items-center">
+                        <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Report Information
+                    </h3>
+
+                    <!-- Location -->
+                    <div>
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1 block">Location</label>
+                        <p class="text-zinc-900 dark:text-white font-medium">{{ report.location_description }}</p>
+                        {% if report.address %}
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ report.address }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Coordinates -->
+                    <div>
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1 block">Coordinates</label>
+                        <p class="text-zinc-900 dark:text-white font-mono text-sm">
+                            {{ report.latitude }}, {{ report.longitude }}
+                        </p>
+                        <a href="https://www.google.com/maps?q={{ report.latitude }},{{ report.longitude }}" target="_blank" class="inline-flex items-center text-sm text-green-600 hover:text-green-700 dark:text-green-400 mt-1">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                            </svg>
+                            View on Map
+                        </a>
+                    </div>
+
+                    <!-- Severity -->
+                    <div>
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1 block">Severity Level</label>
+                        <div class="flex items-center">
+                            {% if report.severity == 'critical' %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                    🔴 Critical
+                                </span>
+                            {% elif report.severity == 'high' %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                    🟠 High
+                                </span>
+                            {% elif report.severity == 'medium' %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                    🟡 Medium
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                    🟢 Low
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Waste Type -->
+                    {% if report.waste_type %}
+                    <div>
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1 block">Waste Type</label>
+                        <p class="text-zinc-900 dark:text-white">{{ report.waste_type }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Volume -->
+                    {% if report.estimated_volume %}
+                    <div>
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1 block">Estimated Volume</label>
+                        <p class="text-zinc-900 dark:text-white">{{ report.estimated_volume }}</p>
+                    </div>
+                    {% endif %}
+
+                    <!-- Reporter -->
+                    <div>
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1 block">Reported By</label>
+                        <p class="text-zinc-900 dark:text-white">
+                            {% if report.is_anonymous %}
+                                Anonymous Citizen
+                            {% else %}
+                                {{ report.reporter.get_full_name|default:report.reporter.username }}
+                            {% endif %}
+                        </p>
+                    </div>
+
+                    <!-- Authority -->
+                    {% if report.authority_name %}
+                    <div class="pt-6 border-t border-zinc-200 dark:border-zinc-700">
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1 block">Forwarded To</label>
+                        <p class="text-zinc-900 dark:text-white font-medium">{{ report.authority_name }}</p>
+                        {% if report.authority_contact %}
+                        <p class="text-sm text-zinc-600 dark:text-zinc-400 mt-1">{{ report.authority_contact }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Description -->
+                    <div class="pt-6 border-t border-zinc-200 dark:border-zinc-700">
+                        <label class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-2 block">Description</label>
+                        <p class="text-zinc-700 dark:text-zinc-300 text-sm leading-relaxed">{{ report.description }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

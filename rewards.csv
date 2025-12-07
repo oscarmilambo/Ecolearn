@@ -1,0 +1,9 @@
+name,description,reward_type,points_cost,stock_quantity,is_available
+K20 MTN Airtime,MTN airtime voucher for your phone,airtime,200,50,1
+K20 Airtel Airtime,Airtel airtime voucher for your phone,airtime,200,50,1
+K20 Zamtel Airtime,Zamtel airtime voucher for your phone,airtime,200,30,1
+EcoLearn Certificate,Official environmental achievement certificate,certificate,100,999,1
+Recycling Champion Badge,Digital badge displayed on your profile,badge,150,999,1
+EcoLearn T-Shirt,Official EcoLearn branded t-shirt,merchandise,500,25,1
+Reusable Shopping Bag Set,Set of 3 eco-friendly shopping bags,merchandise,300,40,1
+Home Compost Starter Kit,Wire mesh gloves and composting guide,merchandise,600,15,1

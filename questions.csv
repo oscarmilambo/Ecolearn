@@ -1,0 +1,41 @@
+quiz_id,question_text,question_type,points,order
+1,How many tons of waste does Lusaka generate daily?,multiple_choice,1,1
+1,Which compound has the highest population density in Lusaka?,multiple_choice,1,2
+1,What percentage of compound waste is organic?,multiple_choice,1,3
+2,How long do plastic bags take to decompose?,multiple_choice,1,4
+7,Where is Chunga Recycling Center located?,multiple_choice,1,5
+1,What is the main health risk from uncollected waste?,multiple_choice,1,6
+1,Which market in Lusaka generates most waste?,multiple_choice,1,7
+2,What should you do with used cooking oil?,multiple_choice,1,8
+4,How often should compounds organize cleanups?,multiple_choice,1,9
+8,What is the fine for illegal dumping in Lusaka?,multiple_choice,1,10
+5,Nshima leftovers can be composted,true_false,1,11
+2,All plastics are recyclable in Zambia,true_false,1,12
+2,Burning plastic is safe outdoors,true_false,1,13
+1,Lusaka City Council collects waste weekly in compounds,true_false,1,14
+5,Composting reduces household waste by 30%,true_false,1,15
+3,E-waste should go in regular bins,true_false,1,16
+4,Kalingalinga has community cleanup groups,true_false,1,17
+2,Glass bottles cannot be recycled,true_false,1,18
+6,Wet waste includes food scraps and peels,true_false,1,19
+5,Batteries can be composted,true_false,1,20
+1,Name one compound in Lusaka with waste challenges,text,2,21
+2,What does 3Rs stand for?,text,2,22
+5,List two types of organic waste,text,2,23
+7,Name a recycling center in Lusaka,text,1,24
+6,What color bin is for recyclables?,text,1,25
+5,Which waste decomposes fastest?,multiple_choice,1,26
+4,Best day for compound cleanups?,multiple_choice,1,27
+1,What attracts rats to waste piles?,multiple_choice,1,28
+6,How to store recyclables at home?,multiple_choice,1,29
+1,Main cause of blocked drains in Kanyama?,multiple_choice,1,30
+1,Cholera spreads through contaminated?,multiple_choice,1,31
+5,Best material for compost bin?,multiple_choice,1,32
+5,How long does composting take in Zambia?,multiple_choice,1,33
+6,What to do with broken glass?,multiple_choice,1,34
+8,Who manages waste collection in Lusaka?,multiple_choice,1,35
+2,Recycling plastic saves which resource?,multiple_choice,1,36
+5,What grows well in compost soil?,multiple_choice,1,37
+5,Best time to water compost?,multiple_choice,1,38
+5,What makes compost smell bad?,multiple_choice,1,39
+4,How to involve youth in cleanups?,multiple_choice,1,40

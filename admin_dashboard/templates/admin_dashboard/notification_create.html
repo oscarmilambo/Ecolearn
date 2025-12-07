@@ -1,0 +1,215 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Send Notification Campaign" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'admin_dashboard:notification_management' %}" class="hover:text-zm-green">{% trans "Notifications" %}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">{% trans "Send Campaign" %}</span>
+    </nav>
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+            <i class="fas fa-paper-plane text-blue-500 mr-2"></i>{% trans "Send Notification Campaign" %}
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">{% trans "Send bulk notifications via SMS, WhatsApp, or Email" %}</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Form -->
+        <div class="lg:col-span-2 bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Campaign Title" %} <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="title" required
+                           placeholder="{% trans 'e.g., Community Cleanup Reminder' %}"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Message" %} <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="message" rows="5" required
+                              placeholder="{% trans 'Enter your notification message...' %}"
+                              class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green"
+                              maxlength="160"></textarea>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <span id="charCount">0</span>/160 {% trans "characters (SMS limit)" %}
+                    </p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Channels" %} <span class="text-red-500">*</span>
+                    </label>
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer">
+                            <input type="checkbox" name="channels" value="sms" class="w-5 h-5 text-zm-green rounded">
+                            <span class="flex-1 text-gray-900 dark:text-white">
+                                <i class="fas fa-sms text-blue-500 mr-2"></i>SMS
+                            </span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer">
+                            <input type="checkbox" name="channels" value="whatsapp" class="w-5 h-5 text-zm-green rounded">
+                            <span class="flex-1 text-gray-900 dark:text-white">
+                                <i class="fab fa-whatsapp text-green-500 mr-2"></i>WhatsApp
+                            </span>
+                        </label>
+                        <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-300 dark:border-zinc-600 hover:bg-gray-50 dark:hover:bg-zinc-700 cursor-pointer">
+                            <input type="checkbox" name="channels" value="email" class="w-5 h-5 text-zm-green rounded">
+                            <span class="flex-1 text-gray-900 dark:text-white">
+                                <i class="fas fa-envelope text-purple-500 mr-2"></i>Email
+                            </span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Priority Level" %}
+                    </label>
+                    <select name="priority" class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white">
+                        <option value="normal">{% trans "Normal" %}</option>
+                        <option value="high">{% trans "High Priority" %}</option>
+                        <option value="urgent">{% trans "Urgent" %}</option>
+                    </select>
+                </div>
+
+                <hr class="border-gray-200 dark:border-zinc-700">
+
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">{% trans "Target Audience" %}</h3>
+                    
+                    <label class="flex items-center space-x-3 p-3 rounded-lg border border-gray-300 dark:border-zinc-600 mb-4">
+                        <input type="checkbox" name="target_all" id="targetAll" class="w-5 h-5 text-zm-green rounded">
+                        <span class="text-gray-900 dark:text-white font-medium">
+                            <i class="fas fa-users mr-2"></i>{% trans "Send to All Users" %}
+                        </span>
+                    </label>
+
+                    <div id="targetFilters" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {% trans "Locations" %}
+                            </label>
+                            <select name="locations" multiple class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white" size="4">
+                                {% for location in locations %}
+                                <option value="{{ location }}">{{ location }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {% trans "Languages" %}
+                            </label>
+                            <div class="space-y-2">
+                                {% for lang_code, lang_name in language_choices %}
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" name="languages" value="{{ lang_code }}" class="w-4 h-4 text-zm-green rounded">
+                                    <span class="text-gray-900 dark:text-white">{{ lang_name }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {% trans "User Roles" %}
+                            </label>
+                            <div class="space-y-2">
+                                {% for role_code, role_name in role_choices %}
+                                <label class="flex items-center space-x-2">
+                                    <input type="checkbox" name="roles" value="{{ role_code }}" class="w-4 h-4 text-zm-green rounded">
+                                    <span class="text-gray-900 dark:text-white">{{ role_name }}</span>
+                                </label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-zinc-700">
+                    <a href="{% url 'admin_dashboard:notification_management' %}" 
+                       class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-times mr-2"></i>{% trans "Cancel" %}
+                    </a>
+                    <button type="submit" class="bg-zm-green hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition"
+                            onclick="return confirm('{% trans "Send this notification campaign?" %}');">
+                        <i class="fas fa-paper-plane mr-2"></i>{% trans "Send Campaign" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Sidebar -->
+        <div class="space-y-6">
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-blue-900 dark:text-blue-200 mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>{% trans "Best Practices" %}
+                </h3>
+                <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Keep messages under 160 characters for SMS" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Use clear, actionable language" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Include relevant links or codes" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Avoid sending during quiet hours (22:00-07:00)" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Test with small group first" %}</li>
+                </ul>
+            </div>
+
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-green-900 dark:text-green-200 mb-4">
+                    <i class="fas fa-chart-line mr-2"></i>{% trans "Target Metrics" %}
+                </h3>
+                <div class="space-y-3 text-sm text-green-700 dark:text-green-300">
+                    <div>
+                        <p class="font-semibold">{% trans "Engagement Goal" %}</p>
+                        <p>40-50% delivery rate</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">{% trans "Best Channels" %}</p>
+                        <p>SMS & WhatsApp for Zambia</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold">{% trans "Optimal Time" %}</p>
+                        <p>9:00 AM - 6:00 PM</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-yellow-900 dark:text-yellow-200 mb-4">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>{% trans "Important" %}
+                </h3>
+                <p class="text-sm text-yellow-700 dark:text-yellow-300">
+                    {% trans "Bulk notifications will be sent immediately. Make sure to review your message and target audience before sending." %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Character counter
+document.querySelector('textarea[name="message"]').addEventListener('input', function() {
+    document.getElementById('charCount').textContent = this.value.length;
+});
+
+// Toggle target filters
+document.getElementById('targetAll').addEventListener('change', function() {
+    document.getElementById('targetFilters').style.opacity = this.checked ? '0.5' : '1';
+    document.getElementById('targetFilters').style.pointerEvents = this.checked ? 'none' : 'auto';
+});
+</script>
+{% endblock %}

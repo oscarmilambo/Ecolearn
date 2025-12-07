@@ -1,0 +1,182 @@
+{% load static %}
+
+<!-- Social Share Buttons Component -->
+<div class="share-buttons-container" x-data="shareButtons()">
+    <div class="flex items-center space-x-2">
+        <span class="text-sm text-gray-600 font-medium">Share:</span>
+        
+        <!-- WhatsApp -->
+        <button @click="share('whatsapp')" 
+                class="share-btn whatsapp-btn"
+                title="Share on WhatsApp">
+            <i class="fab fa-whatsapp"></i>
+        </button>
+        
+        <!-- Facebook -->
+        <button @click="share('facebook')" 
+                class="share-btn facebook-btn"
+                title="Share on Facebook">
+            <i class="fab fa-facebook-f"></i>
+        </button>
+        
+        <!-- Twitter -->
+        <button @click="share('twitter')" 
+                class="share-btn twitter-btn"
+                title="Share on Twitter">
+            <i class="fab fa-twitter"></i>
+        </button>
+        
+        <!-- LinkedIn -->
+        <button @click="share('linkedin')" 
+                class="share-btn linkedin-btn"
+                title="Share on LinkedIn">
+            <i class="fab fa-linkedin-in"></i>
+        </button>
+        
+        <!-- Email -->
+        <button @click="share('email')" 
+                class="share-btn email-btn"
+                title="Share via Email">
+            <i class="fas fa-envelope"></i>
+        </button>
+        
+        <!-- Copy Link -->
+        <button @click="copyLink()" 
+                class="share-btn copy-btn"
+                :title="copied ? 'Copied!' : 'Copy Link'">
+            <i class="fas" :class="copied ? 'fa-check' : 'fa-link'"></i>
+        </button>
+    </div>
+    
+    <!-- Share Count (optional) -->
+    {% if show_count %}
+    <div class="mt-2 text-xs text-gray-500">
+        <i class="fas fa-share-alt mr-1"></i>
+        <span x-text="shareCount"></span> shares
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.share-buttons-container {
+    padding: 0.5rem 0;
+}
+
+.share-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-center;
+    color: white;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.whatsapp-btn {
+    background: linear-gradient(135deg, #25D366, #128C7E);
+}
+
+.facebook-btn {
+    background: linear-gradient(135deg, #1877F2, #0C63D4);
+}
+
+.twitter-btn {
+    background: linear-gradient(135deg, #1DA1F2, #0C85D0);
+}
+
+.linkedin-btn {
+    background: linear-gradient(135deg, #0A66C2, #004182);
+}
+
+.email-btn {
+    background: linear-gradient(135deg, #EA4335, #C5221F);
+}
+
+.copy-btn {
+    background: linear-gradient(135deg, #6B7280, #4B5563);
+}
+
+.share-btn:active {
+    transform: translateY(0);
+}
+</style>
+
+<script>
+function shareButtons() {
+    return {
+        shareUrls: {{ share_urls|safe }},
+        shareCount: {{ share_count|default:0 }},
+        copied: false,
+        
+        share(platform) {
+            const url = this.shareUrls[platform];
+            if (!url) {
+                console.error('Share URL not found for platform:', platform);
+                return;
+            }
+            
+            // Open share URL in new window
+            const width = 600;
+            const height = 500;
+            const left = (screen.width - width) / 2;
+            const top = (screen.height - height) / 2;
+            
+            window.open(
+                url,
+                'share',
+                `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no`
+            );
+            
+            // Track share
+            this.trackShare(platform);
+        },
+        
+        copyLink() {
+            const url = this.shareUrls.share_data?.url || window.location.href;
+            
+            navigator.clipboard.writeText(url).then(() => {
+                this.copied = true;
+                setTimeout(() => {
+                    this.copied = false;
+                }, 2000);
+                
+                // Track copy
+                this.trackShare('copy');
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        },
+        
+        trackShare(platform) {
+            // Send tracking request to backend
+            fetch('{% url "community:track_share" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    content_type: '{{ content_type }}',
+                    object_id: {{ object_id }},
+                    platform: platform
+                })
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      this.shareCount++;
+                  }
+              })
+              .catch(err => console.error('Share tracking failed:', err));
+        }
+    }
+}
+</script>

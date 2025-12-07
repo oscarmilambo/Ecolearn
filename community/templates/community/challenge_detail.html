@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}{{ challenge.title }} - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Back Button -->
+        <a href="{% url 'community:challenges_list' %}" class="inline-flex items-center text-green-600 hover:text-green-700 mb-6 font-semibold">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Challenges
+        </a>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Main Content (Left Column) -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Challenge Header -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                    {% if challenge.image %}
+                    <div class="h-64 bg-cover bg-center" style="background-image: url('{{ challenge.image.url }}');">
+                        <div class="h-full bg-gradient-to-t from-black/70 to-transparent flex items-end p-6">
+                            <div>
+                                <h1 class="text-3xl md:text-4xl font-bold text-white mb-2">{{ challenge.title }}</h1>
+                                <span class="bg-yellow-400 text-gray-900 px-4 py-2 rounded-full text-sm font-bold">
+                                    {{ challenge.reward_points }} Points Reward
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="h-64 bg-gradient-to-br from-green-400 to-blue-500 flex items-center justify-center">
+                        <div class="text-center text-white">
+                            <i class="fas fa-trophy text-8xl mb-4"></i>
+                            <h1 class="text-3xl font-bold">{{ challenge.title }}</h1>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="p-6">
+                        <p class="text-gray-700 text-lg mb-6">{{ challenge.description }}</p>
+
+                        <!-- Progress -->
+                        <div class="mb-6">
+                            <div class="flex justify-between text-sm font-semibold mb-2">
+                                <span class="text-gray-700">Community Progress</span>
+                                <span class="text-green-600">{{ challenge.current_progress }}/{{ challenge.target_goal }} bags</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div class="bg-gradient-to-r from-green-400 to-blue-500 h-4 rounded-full transition-all duration-500" 
+                                     style="width: {{ challenge.progress_percentage }}%">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Challenge Info -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="text-center p-4 bg-green-50 rounded-xl">
+                                <i class="fas fa-calendar-start text-green-500 text-2xl mb-2"></i>
+                                <p class="text-xs text-gray-600">Start Date</p>
+                                <p class="font-bold text-gray-900">{{ challenge.start_date|date:"M d" }}</p>
+                            </div>
+                            <div class="text-center p-4 bg-red-50 rounded-xl">
+                                <i class="fas fa-calendar-times text-red-500 text-2xl mb-2"></i>
+                                <p class="text-xs text-gray-600">End Date</p>
+                                <p class="font-bold text-gray-900">{{ challenge.end_date|date:"M d" }}</p>
+                            </div>
+                            <div class="text-center p-4 bg-blue-50 rounded-xl">
+                                <i class="fas fa-users text-blue-500 text-2xl mb-2"></i>
+                                <p class="text-xs text-gray-600">Participants</p>
+                                <p class="font-bold text-gray-900">{{ challenge.participants.count }}</p>
+                            </div>
+                            <div class="text-center p-4 bg-yellow-50 rounded-xl">
+                                <i class="fas fa-coins text-yellow-500 text-2xl mb-2"></i>
+                                <p class="text-xs text-gray-600">Points/Bag</p>
+                                <p class="font-bold text-gray-900">30 pts</p>
+                            </div>
+                        </div>
+
+                        <!-- Join/Submit Actions -->
+                        {% if not user_participation %}
+                        <form method="post" action="{% url 'community:join_challenge' challenge.id %}">
+                            {% csrf_token %}
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-xl font-bold text-xl hover:from-green-600 hover:to-blue-600 transition-all duration-300 shadow-lg">
+                                🎯 Join This Challenge
+                            </button>
+                        </form>
+                        {% else %}
+                        <!-- Submit Proof Form -->
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 p-6 rounded-xl border-2 border-green-200">
+                            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                                <i class="fas fa-camera text-green-500 mr-2"></i>
+                                Submit Your Proof
+                            </h3>
+                            
+                            <form method="post" action="{% url 'community:submit_challenge_proof' challenge.id %}" 
+                                  enctype="multipart/form-data" class="space-y-4">
+                                {% csrf_token %}
+                                
+                                <!-- Before Photo -->
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                                        📸 Before Photo (Required)
+                                    </label>
+                                    <input type="file" name="before_photo" accept="image/*" required
+                                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none">
+                                </div>
+
+                                <!-- After Photo -->
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                                        📸 After Photo (Optional)
+                                    </label>
+                                    <input type="file" name="after_photo" accept="image/*"
+                                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none">
+                                </div>
+
+                                <!-- Bags Collected -->
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                                        🗑️ Number of Bags Collected
+                                    </label>
+                                    <input type="number" name="bags_collected" min="1" required
+                                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none text-lg font-semibold"
+                                           placeholder="Enter number of bags">
+                                    <p class="text-sm text-gray-600 mt-1">💰 You'll earn 30 points per bag after approval</p>
+                                </div>
+
+                                <!-- Description -->
+                                <div>
+                                    <label class="block text-sm font-bold text-gray-700 mb-2">
+                                        📝 Description (Optional)
+                                    </label>
+                                    <textarea name="description" rows="3"
+                                              class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-green-500 focus:outline-none"
+                                              placeholder="Tell us about your cleanup activity..."></textarea>
+                                </div>
+
+                                <!-- Submit Button -->
+                                <button type="submit" 
+                                        class="w-full bg-gradient-to-r from-green-500 to-blue-500 text-white py-4 rounded-xl font-bold text-lg hover:from-green-600 hover:to-blue-600 transition-all duration-300 shadow-lg">
+                                    ✅ Submit Proof
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- User's Submissions -->
+                {% if user_proofs %}
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">📋 Your Submissions</h3>
+                    <div class="space-y-4">
+                        {% for proof in user_proofs %}
+                        <div class="border-2 rounded-xl p-4 {% if proof.status == 'approved' %}border-green-300 bg-green-50{% elif proof.status == 'rejected' %}border-red-300 bg-red-50{% else %}border-yellow-300 bg-yellow-50{% endif %}">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <span class="inline-block px-3 py-1 rounded-full text-sm font-bold
+                                        {% if proof.status == 'approved' %}bg-green-500 text-white
+                                        {% elif proof.status == 'rejected' %}bg-red-500 text-white
+                                        {% else %}bg-yellow-500 text-gray-900{% endif %}">
+                                        {{ proof.get_status_display }}
+                                    </span>
+                                    <p class="text-sm text-gray-600 mt-1">{{ proof.submitted_at|date:"M d, Y - g:i A" }}</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-2xl font-bold text-gray-900">{{ proof.bags_collected }}</p>
+                                    <p class="text-xs text-gray-600">bags</p>
+                                </div>
+                            </div>
+                            
+                            {% if proof.status == 'approved' %}
+                            <p class="text-green-700 font-semibold">✅ Earned {{ proof.points_awarded }} points!</p>
+                            {% elif proof.status == 'rejected' and proof.admin_notes %}
+                            <p class="text-red-700 text-sm">❌ {{ proof.admin_notes }}</p>
+                            {% endif %}
+                            
+                            <div class="grid grid-cols-2 gap-2 mt-3">
+                                <img src="{{ proof.before_photo.url }}" alt="Before" class="w-full h-32 object-cover rounded-lg">
+                                {% if proof.after_photo %}
+                                <img src="{{ proof.after_photo.url }}" alt="After" class="w-full h-32 object-cover rounded-lg">
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Share Buttons -->
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">📢 Share This Challenge</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <!-- WhatsApp Share -->
+                        <a href="https://wa.me/?text=Join%20me%20in%20the%20{{ challenge.title|urlencode }}%20challenge!%20{{ request.build_absolute_uri }}" 
+                           target="_blank"
+                           class="flex items-center justify-center bg-green-500 text-white py-4 rounded-xl font-bold text-lg hover:bg-green-600 transition-all duration-300 shadow-md">
+                            <i class="fab fa-whatsapp text-2xl mr-2"></i>
+                            WhatsApp
+                        </a>
+                        
+                        <!-- Facebook Share -->
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.build_absolute_uri|urlencode }}" 
+                           target="_blank"
+                           class="flex items-center justify-center bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition-all duration-300 shadow-md">
+                            <i class="fab fa-facebook text-2xl mr-2"></i>
+                            Facebook
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard (Right Column) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-24">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-trophy text-yellow-500 mr-2"></i>
+                        Leaderboard
+                    </h3>
+
+                    {% if leaderboard %}
+                    <div class="space-y-3">
+                        {% for participant in leaderboard %}
+                        <div class="flex items-center p-3 rounded-xl transition-all duration-300
+                            {% if forloop.counter == 1 %}bg-gradient-to-r from-yellow-100 to-yellow-200 border-2 border-yellow-400
+                            {% elif forloop.counter == 2 %}bg-gradient-to-r from-gray-100 to-gray-200 border-2 border-gray-400
+                            {% elif forloop.counter == 3 %}bg-gradient-to-r from-orange-100 to-orange-200 border-2 border-orange-400
+                            {% else %}bg-gray-50 hover:bg-gray-100{% endif %}">
+                            
+                            <!-- Rank -->
+                            <div class="w-10 h-10 flex items-center justify-center rounded-full font-bold text-lg mr-3
+                                {% if forloop.counter == 1 %}bg-yellow-500 text-white
+                                {% elif forloop.counter == 2 %}bg-gray-400 text-white
+                                {% elif forloop.counter == 3 %}bg-orange-500 text-white
+                                {% else %}bg-gray-300 text-gray-700{% endif %}">
+                                {% if forloop.counter <= 3 %}
+                                    <i class="fas fa-crown"></i>
+                                {% else %}
+                                    {{ forloop.counter }}
+                                {% endif %}
+                            </div>
+
+                            <!-- User Info -->
+                            <div class="flex-1">
+                                <p class="font-bold text-gray-900">
+                                    {{ participant.user.get_full_name|default:participant.user.username }}
+                                    {% if participant.user == user %}
+                                        <span class="text-green-600">(You)</span>
+                                    {% endif %}
+                                </p>
+                                <p class="text-sm text-gray-600">{{ participant.contribution }} bags</p>
+                            </div>
+
+                            <!-- Points -->
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-green-600">{{ participant.contribution|multiply:30 }}</p>
+                                <p class="text-xs text-gray-600">points</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- User's Rank (if not in top 15) -->
+                    {% if user_participation and user_rank > 15 %}
+                    <div class="mt-6 pt-6 border-t-2 border-gray-200">
+                        <p class="text-sm text-gray-600 mb-2">Your Rank:</p>
+                        <div class="flex items-center p-3 bg-blue-50 rounded-xl border-2 border-blue-300">
+                            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-blue-500 text-white font-bold text-lg mr-3">
+                                {{ user_rank }}
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-gray-900">You</p>
+                                <p class="text-sm text-gray-600">{{ user_participation.contribution }} bags</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-xl font-bold text-green-600">{{ user_participation.contribution|multiply:30 }}</p>
+                                <p class="text-xs text-gray-600">points</p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% else %}
+                    <p class="text-gray-500 text-center py-8">No participants yet. Be the first!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

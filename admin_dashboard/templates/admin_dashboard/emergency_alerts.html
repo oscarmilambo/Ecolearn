@@ -1,0 +1,257 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Emergency Health Alerts" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+                <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>{% trans "Emergency Health Alerts" %}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">{% trans "Manage cholera, flooding, and health hazard alerts" %}</p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'admin_dashboard:priority_reports' %}" 
+               class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-medium transition">
+                <i class="fas fa-flag mr-2"></i>{% trans "Priority Reports" %}
+            </a>
+            <a href="{% url 'admin_dashboard:alert_create' %}" 
+               class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-lg font-medium transition">
+                <i class="fas fa-plus mr-2"></i>{% trans "Create Alert" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-red-100 text-sm font-medium">{% trans "Total Alerts" %}</p>
+                    <h3 class="text-4xl font-bold mt-2">{{ total_alerts }}</h3>
+                </div>
+                <i class="fas fa-exclamation-triangle text-5xl opacity-20"></i>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-orange-100 text-sm font-medium">{% trans "Active Alerts" %}</p>
+                    <h3 class="text-4xl font-bold mt-2">{{ active_alerts }}</h3>
+                </div>
+                <i class="fas fa-broadcast-tower text-5xl opacity-20"></i>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">{% trans "Critical Alerts" %}</p>
+                    <h3 class="text-4xl font-bold mt-2">{{ critical_alerts }}</h3>
+                </div>
+                <i class="fas fa-skull-crossbones text-5xl opacity-20"></i>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">{% trans "Recent (30 days)" %}</p>
+                    <h3 class="text-4xl font-bold mt-2">{{ recent_alerts }}</h3>
+                </div>
+                <i class="fas fa-calendar-alt text-5xl opacity-20"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{% trans "Alert Type" %}</label>
+                <select name="type" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white">
+                    <option value="">{% trans "All Types" %}</option>
+                    {% for code, name in alert_type_choices %}
+                    <option value="{{ code }}" {% if alert_type_filter == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{% trans "Severity" %}</label>
+                <select name="severity" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white">
+                    <option value="">{% trans "All Severities" %}</option>
+                    {% for code, name in severity_choices %}
+                    <option value="{{ code }}" {% if severity_filter == code %}selected{% endif %}>{{ name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{% trans "Status" %}</label>
+                <select name="status" class="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white">
+                    <option value="">{% trans "All Statuses" %}</option>
+                    <option value="active" {% if status_filter == 'active' %}selected{% endif %}>{% trans "Active" %}</option>
+                    <option value="expired" {% if status_filter == 'expired' %}selected{% endif %}>{% trans "Expired" %}</option>
+                </select>
+            </div>
+            <div class="flex items-end space-x-2">
+                <button type="submit" class="bg-zm-green hover:bg-green-600 text-white px-6 py-2 rounded-lg font-medium transition flex-1">
+                    <i class="fas fa-filter mr-2"></i>{% trans "Filter" %}
+                </button>
+                <a href="{% url 'admin_dashboard:emergency_alerts' %}" 
+                   class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Alerts List -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                <i class="fas fa-list mr-2"></i>{% trans "Health Alerts" %}
+            </h3>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Alert" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Type" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Severity" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Location" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Status" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Created" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Actions" %}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for alert in alerts %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                        <td class="px-6 py-4">
+                            <div>
+                                <p class="font-semibold text-gray-900 dark:text-white">{{ alert.title }}</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ alert.message|truncatewords:15 }}</p>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if alert.alert_type == 'cholera' %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                <i class="fas fa-virus mr-1"></i>{{ alert.get_alert_type_display }}
+                            </span>
+                            {% elif alert.alert_type == 'flooding' %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <i class="fas fa-water mr-1"></i>{{ alert.get_alert_type_display }}
+                            </span>
+                            {% elif alert.alert_type == 'hazardous_waste' %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                <i class="fas fa-skull-crossbones mr-1"></i>{{ alert.get_alert_type_display }}
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>{{ alert.get_alert_type_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if alert.severity == 'critical' %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                <i class="fas fa-exclamation-circle mr-1"></i>{{ alert.get_severity_display }}
+                            </span>
+                            {% elif alert.severity == 'high' %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>{{ alert.get_severity_display }}
+                            </span>
+                            {% elif alert.severity == 'medium' %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                <i class="fas fa-exclamation mr-1"></i>{{ alert.get_severity_display }}
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <i class="fas fa-info-circle mr-1"></i>{{ alert.get_severity_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+                            {{ alert.location }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if alert.is_active %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <i class="fas fa-broadcast-tower mr-1"></i>{% trans "Active" %}
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200">
+                                <i class="fas fa-pause-circle mr-1"></i>{% trans "Inactive" %}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                            {{ alert.created_at|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex space-x-2">
+                                <a href="{% url 'admin_dashboard:alert_detail' alert.id %}" 
+                                   class="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% if alert.is_active %}
+                                <a href="{% url 'admin_dashboard:alert_send' alert.id %}" 
+                                   class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                                    <i class="fas fa-paper-plane"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <i class="fas fa-exclamation-triangle text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                            <p class="text-gray-500 dark:text-gray-400">{% trans "No emergency alerts found" %}</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Alert Type Breakdown -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-chart-pie mr-2"></i>{% trans "Alert Types" %}
+            </h3>
+            <div class="space-y-3">
+                {% for type in alert_types %}
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">{{ type.alert_type|title }}</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        {{ type.count }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-thermometer-half mr-2"></i>{% trans "Severity Levels" %}
+            </h3>
+            <div class="space-y-3">
+                {% for severity in severity_stats %}
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-600 dark:text-gray-400">{{ severity.severity|title }}</span>
+                    <span class="px-3 py-1 rounded-full text-xs font-medium {% if severity.severity == 'critical' %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% elif severity.severity == 'high' %}bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200{% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200{% endif %}">
+                        {{ severity.count }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

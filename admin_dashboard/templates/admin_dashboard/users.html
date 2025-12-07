@@ -1,0 +1,275 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static i18n %}
+
+{% block page_title %}User Management{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6 p-6">
+    
+    <!-- Header with Export -->
+    <div class="flex justify-between items-center">
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
+        <a href="{% url 'admin_dashboard:export_users' %}" 
+           class="bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-green-700 transition flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>Export to Excel</span>
+        </a>
+    </div>
+
+    <!-- Key Metrics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <!-- Total Users -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Total Users</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ total_users }}</p>
+                    <p class="text-xs text-gray-500 mt-1">Target: {{ target_users }} in 3 months</p>
+                </div>
+                <div class="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-blue-600 dark:text-blue-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                    </svg>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ progress_to_target }}%"></div>
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">{{ progress_to_target }}% of target</p>
+            </div>
+        </div>
+
+        <!-- New Users (Last 3 Months) -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">New Users (90 days)</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ users_last_3_months }}</p>
+                </div>
+                <div class="bg-green-100 dark:bg-green-900 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-green-600 dark:text-green-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Users -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 dark:text-gray-400 font-medium">Active Users (30 days)</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white mt-2">{{ active_users }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ active_users|floatformat:0 }} / {{ total_users }} active</p>
+                </div>
+                <div class="bg-purple-100 dark:bg-purple-900 p-3 rounded-full">
+                    <svg class="w-8 h-8 text-purple-600 dark:text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Demographics Link -->
+        <div class="bg-gradient-to-br from-orange-500 to-pink-500 rounded-xl shadow-lg p-6 text-white">
+            <p class="text-sm font-medium opacity-90">View Detailed</p>
+            <p class="text-2xl font-bold mt-2">Demographics</p>
+            <a href="{% url 'admin_dashboard:user_demographics' %}" 
+               class="inline-block mt-4 bg-white text-orange-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition">
+                View Report →
+            </a>
+        </div>
+    </div>
+
+    <!-- Location Demographics (Kalingalinga, Kanyama, Chawama) -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">User Distribution by Location</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% for location in location_stats|slice:":3" %}
+            <div class="bg-gray-50 dark:bg-zinc-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">{{ location.location|default:"Unknown" }}</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ location.count }}</p>
+                    </div>
+                    <div class="text-3xl">📍</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Filter Users</h2>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <!-- Search -->
+            <input type="text" name="search" value="{{ search_query }}" 
+                   placeholder="Search by name, email, phone..." 
+                   class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+            
+            <!-- Location Filter -->
+            <select name="location" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                <option value="">All Locations</option>
+                <option value="Kalingalinga" {% if location_filter == 'Kalingalinga' %}selected{% endif %}>Kalingalinga</option>
+                <option value="Kanyama" {% if location_filter == 'Kanyama' %}selected{% endif %}>Kanyama</option>
+                <option value="Chawama" {% if location_filter == 'Chawama' %}selected{% endif %}>Chawama</option>
+            </select>
+            
+            <!-- Language Filter -->
+            <select name="language" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                <option value="">All Languages</option>
+                {% for lang_code, lang_name in language_choices %}
+                <option value="{{ lang_code }}" {% if language_filter == lang_code %}selected{% endif %}>{{ lang_name }}</option>
+                {% endfor %}
+            </select>
+            
+            <!-- Status Filter -->
+            <select name="status" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-700 text-gray-900 dark:text-white">
+                <option value="">All Status</option>
+                <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
+            
+            <!-- Submit -->
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-medium">
+                Apply Filters
+            </button>
+        </form>
+    </div>
+
+    <!-- Registration Trends Chart -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Registration Trends (Last 6 Months)</h2>
+        <div class="h-64 flex items-end justify-between space-x-2">
+            {% for trend in registration_trends %}
+            <div class="flex-1 flex flex-col items-center">
+                <div class="w-full bg-green-500 rounded-t-lg hover:bg-green-600 transition" 
+                     style="height: {% if trend.count > 0 %}{{ trend.count|floatformat:0 }}%{% else %}5%{% endif %}; min-height: 20px;"
+                     title="{{ trend.count }} users">
+                </div>
+                <p class="text-xs text-gray-600 dark:text-gray-400 mt-2 transform -rotate-45 origin-top-left">{{ trend.month }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">All Users ({{ users.count }})</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">User</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Contact</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Location</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Language</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Role</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Registered</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Last Login</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for user in users %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                        <!-- User Info -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
+                                    {{ user.get_full_name|slice:":1"|upper|default:user.username|slice:":1"|upper }}
+                                </div>
+                                <div class="ml-3">
+                                    <div class="text-sm font-semibold text-gray-900 dark:text-white">
+                                        {{ user.get_full_name|default:user.username }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">{{ user.email|default:"No email" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Contact -->
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ user.phone_number|default:"—" }}
+                        </td>
+                        
+                        <!-- Location -->
+                        <td class="px-6 py-4 text-sm text-gray-900 dark:text-white">
+                            {{ user.location|default:"—" }}
+                        </td>
+                        
+                        <!-- Language -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                {% if user.preferred_language == 'en' %}bg-blue-100 text-blue-800{% endif %}
+                                {% if user.preferred_language == 'bem' %}bg-orange-100 text-orange-800{% endif %}
+                                {% if user.preferred_language == 'ny' %}bg-purple-100 text-purple-800{% endif %}">
+                                {{ user.get_preferred_language_display }}
+                            </span>
+                        </td>
+                        
+                        <!-- Role -->
+                        <td class="px-6 py-4">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
+                                {{ user.get_role_display }}
+                            </span>
+                        </td>
+                        
+                        <!-- Registration Date -->
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                            {{ user.date_joined|date:"d M Y" }}
+                        </td>
+                        
+                        <!-- Last Login -->
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-300">
+                            {% if user.last_login %}
+                                {{ user.last_login|date:"d M Y" }}
+                            {% else %}
+                                <span class="text-gray-400">Never</span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Status -->
+                        <td class="px-6 py-4">
+                            {% if user.is_active %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    ✓ Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    ✗ Inactive
+                                </span>
+                            {% endif %}
+                        </td>
+                        
+                        <!-- Actions -->
+                        <td class="px-6 py-4 text-sm space-x-2">
+                            <a href="{% url 'admin_dashboard:user_detail' user.id %}" 
+                               class="text-blue-600 hover:text-blue-800 font-medium">View</a>
+                            <a href="{% url 'admin_dashboard:toggle_user_status' user.id %}" 
+                               class="text-orange-600 hover:text-orange-800 font-medium">
+                                {% if user.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="px-6 py-12 text-center text-gray-500">
+                            No users found matching your filters.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

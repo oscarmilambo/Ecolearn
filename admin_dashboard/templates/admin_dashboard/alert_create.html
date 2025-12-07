@@ -1,0 +1,229 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Create Emergency Alert" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'admin_dashboard:emergency_alerts' %}" class="hover:text-zm-green">{% trans "Emergency Alerts" %}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">{% trans "Create Alert" %}</span>
+    </nav>
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+            <i class="fas fa-plus-circle text-red-500 mr-2"></i>{% trans "Create Emergency Health Alert" %}
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">{% trans "Create urgent health alerts for cholera, flooding, and hazardous waste" %}</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Form -->
+        <div class="lg:col-span-2 bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "Alert Type" %} <span class="text-red-500">*</span>
+                        </label>
+                        <select name="alert_type" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500">
+                            <option value="">{% trans "Select Alert Type" %}</option>
+                            {% for code, name in alert_types %}
+                            <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "Severity Level" %} <span class="text-red-500">*</span>
+                        </label>
+                        <select name="severity" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500">
+                            <option value="">{% trans "Select Severity" %}</option>
+                            {% for code, name in severity_levels %}
+                            <option value="{{ code }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Alert Title" %} <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="title" required
+                           placeholder="{% trans 'e.g., Cholera Outbreak in Kalingalinga' %}"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Alert Message" %} <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="message" rows="4" required
+                              placeholder="{% trans 'Describe the health hazard and immediate risks...' %}"
+                              class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Location" %} <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="location" required
+                           placeholder="{% trans 'e.g., Kalingalinga Compound, Lusaka' %}"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Affected Areas" %}
+                    </label>
+                    <input type="text" name="affected_areas"
+                           placeholder="{% trans 'e.g., Blocks A, B, C - Market area' %}"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Hygiene Tips & Safety Instructions" %} <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="hygiene_tips" rows="4" required
+                              placeholder="{% trans 'Provide safety instructions and hygiene tips...' %}"
+                              class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Nearest Clinics & Emergency Contacts" %}
+                    </label>
+                    <textarea name="nearest_clinics" rows="3"
+                              placeholder="{% trans 'List nearest clinics and emergency contact numbers...' %}"
+                              class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Alert Expires At" %}
+                    </label>
+                    <input type="datetime-local" name="expires_at"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-red-500">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{% trans "Leave empty for no expiration" %}</p>
+                </div>
+
+                <div class="flex items-center space-x-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                    <input type="checkbox" name="send_immediately" id="sendImmediately" class="w-5 h-5 text-red-600 rounded">
+                    <label for="sendImmediately" class="text-red-800 dark:text-red-200 font-medium">
+                        <i class="fas fa-paper-plane mr-2"></i>{% trans "Send alert immediately after creation" %}
+                    </label>
+                </div>
+
+                <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-zinc-700">
+                    <a href="{% url 'admin_dashboard:emergency_alerts' %}" 
+                       class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-times mr-2"></i>{% trans "Cancel" %}
+                    </a>
+                    <button type="submit" class="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>{% trans "Create Alert" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Sidebar -->
+        <div class="space-y-6">
+            <div class="bg-red-50 dark:bg-red-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-red-900 dark:text-red-200 mb-4">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>{% trans "Alert Types" %}
+                </h3>
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <p class="font-semibold text-red-900 dark:text-red-200">
+                            <i class="fas fa-virus mr-1"></i>{% trans "Cholera Outbreak" %}
+                        </p>
+                        <p class="text-red-700 dark:text-red-300">{% trans "Waterborne disease outbreak" %}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-red-900 dark:text-red-200">
+                            <i class="fas fa-water mr-1"></i>{% trans "Flooding" %}
+                        </p>
+                        <p class="text-red-700 dark:text-red-300">{% trans "Flood warnings and safety" %}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-red-900 dark:text-red-200">
+                            <i class="fas fa-skull-crossbones mr-1"></i>{% trans "Hazardous Waste" %}
+                        </p>
+                        <p class="text-red-700 dark:text-red-300">{% trans "Medical/chemical waste alerts" %}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-red-900 dark:text-red-200">
+                            <i class="fas fa-tint mr-1"></i>{% trans "Water Contamination" %}
+                        </p>
+                        <p class="text-red-700 dark:text-red-300">{% trans "Contaminated water sources" %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-orange-50 dark:bg-orange-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-orange-900 dark:text-orange-200 mb-4">
+                    <i class="fas fa-thermometer-half mr-2"></i>{% trans "Severity Levels" %}
+                </h3>
+                <div class="space-y-3 text-sm">
+                    <div>
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                            {% trans "Critical" %}
+                        </span>
+                        <p class="text-orange-700 dark:text-orange-300 mt-1">{% trans "Immediate life threat" %}</p>
+                    </div>
+                    <div>
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200">
+                            {% trans "High" %}
+                        </span>
+                        <p class="text-orange-700 dark:text-orange-300 mt-1">{% trans "Serious health risk" %}</p>
+                    </div>
+                    <div>
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                            {% trans "Medium" %}
+                        </span>
+                        <p class="text-orange-700 dark:text-orange-300 mt-1">{% trans "Moderate risk" %}</p>
+                    </div>
+                    <div>
+                        <span class="px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            {% trans "Low" %}
+                        </span>
+                        <p class="text-orange-700 dark:text-orange-300 mt-1">{% trans "Precautionary" %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-blue-900 dark:text-blue-200 mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>{% trans "Best Practices" %}
+                </h3>
+                <ul class="space-y-2 text-sm text-blue-700 dark:text-blue-300">
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Be specific about location" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Include clear safety instructions" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Provide emergency contacts" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Use simple, clear language" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Set appropriate severity level" %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set minimum date to now
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const dateString = now.toISOString().slice(0, 16);
+    document.querySelector('input[name="expires_at"]').min = dateString;
+});
+</script>
+{% endblock %}

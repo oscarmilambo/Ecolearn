@@ -1,0 +1,183 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Create New Challenge" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-500 dark:text-gray-400">
+        <a href="{% url 'admin_dashboard:challenge_management' %}" class="hover:text-zm-green">{% trans "Challenges" %}</a>
+        <span class="mx-2">/</span>
+        <span class="text-gray-900 dark:text-white">{% trans "Create New" %}</span>
+    </nav>
+
+    <!-- Header -->
+    <div>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+            <i class="fas fa-plus-circle text-zm-green mr-2"></i>{% trans "Create New Challenge" %}
+        </h2>
+        <p class="text-gray-600 dark:text-gray-400 mt-2">{% trans "Create engaging challenges to motivate community participation" %}</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Form -->
+        <div class="lg:col-span-2 bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Challenge Title" %} <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="title" required
+                           placeholder="{% trans 'e.g., Clean Kalingalinga Campaign' %}"
+                           class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green">
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{% trans "Choose a catchy, motivating title" %}</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        {% trans "Description" %} <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="description" rows="5" required
+                              placeholder="{% trans 'Describe the challenge goals, rules, and what participants need to do...' %}"
+                              class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green"></textarea>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{% trans "Provide clear instructions and expectations" %}</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "Challenge Type" %} <span class="text-red-500">*</span>
+                        </label>
+                        <select name="challenge_type" required
+                                class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green">
+                            <option value="">{% trans "Select Type" %}</option>
+                            {% for type_code, type_name in challenge_types %}
+                            <option value="{{ type_code }}">{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "Challenge Image" %}
+                        </label>
+                        <input type="file" name="image" accept="image/*"
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "Start Date & Time" %} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="datetime-local" name="start_date" required
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "End Date & Time" %} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="datetime-local" name="end_date" required
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "Target Goal" %} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="target_goal" min="1" value="100" required
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{% trans "Number of actions/items to complete" %}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            {% trans "Reward Points" %} <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" name="reward_points" min="1" value="100" required
+                               class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-zinc-600 dark:bg-zinc-700 dark:text-white focus:ring-2 focus:ring-zm-green">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">{% trans "Points awarded upon completion" %}</p>
+                    </div>
+                </div>
+
+                <div class="flex justify-between pt-6 border-t border-gray-200 dark:border-zinc-700">
+                    <a href="{% url 'admin_dashboard:challenge_management' %}" 
+                       class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-times mr-2"></i>{% trans "Cancel" %}
+                    </a>
+                    <button type="submit" class="bg-zm-green hover:bg-green-600 text-white px-8 py-3 rounded-lg font-medium transition">
+                        <i class="fas fa-check mr-2"></i>{% trans "Create Challenge" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Help Sidebar -->
+        <div class="space-y-6">
+            <div class="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-blue-900 dark:text-blue-200 mb-4">
+                    <i class="fas fa-lightbulb mr-2"></i>{% trans "Challenge Types" %}
+                </h3>
+                <div class="space-y-4 text-sm">
+                    <div>
+                        <p class="font-semibold text-blue-900 dark:text-blue-200">
+                            <i class="fas fa-broom mr-1"></i>{% trans "Cleanup Challenge" %}
+                        </p>
+                        <p class="text-blue-700 dark:text-blue-300">{% trans "Community cleanup campaigns" %}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-blue-900 dark:text-blue-200">
+                            <i class="fas fa-recycle mr-1"></i>{% trans "Recycling Challenge" %}
+                        </p>
+                        <p class="text-blue-700 dark:text-blue-300">{% trans "Recycling initiatives" %}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-blue-900 dark:text-blue-200">
+                            <i class="fas fa-graduation-cap mr-1"></i>{% trans "Education Challenge" %}
+                        </p>
+                        <p class="text-blue-700 dark:text-blue-300">{% trans "Complete learning modules" %}</p>
+                    </div>
+                    <div>
+                        <p class="font-semibold text-blue-900 dark:text-blue-200">
+                            <i class="fas fa-flag mr-1"></i>{% trans "Reporting Challenge" %}
+                        </p>
+                        <p class="text-blue-700 dark:text-blue-300">{% trans "Report illegal dumping sites" %}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-green-50 dark:bg-green-900/20 rounded-xl p-6">
+                <h3 class="text-lg font-bold text-green-900 dark:text-green-200 mb-4">
+                    <i class="fas fa-info-circle mr-2"></i>{% trans "Tips" %}
+                </h3>
+                <ul class="space-y-2 text-sm text-green-700 dark:text-green-300">
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Set realistic goals" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Provide clear instructions" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Offer attractive rewards" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Include specific locations" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Monitor progress regularly" %}</li>
+                    <li><i class="fas fa-check mr-2"></i>{% trans "Celebrate achievements" %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const now = new Date();
+    const dateString = now.toISOString().slice(0, 16);
+    document.querySelector('input[name="start_date"]').min = dateString;
+    document.querySelector('input[name="end_date"]').min = dateString;
+    
+    document.querySelector('input[name="start_date"]').addEventListener('change', function() {
+        document.querySelector('input[name="end_date"]').min = this.value;
+    });
+});
+</script>
+{% endblock %}

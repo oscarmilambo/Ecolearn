@@ -1,0 +1,244 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "Notification System Management" %}{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900 dark:text-white">
+                <i class="fas fa-bell text-blue-500 mr-2"></i>{% trans "Notification System" %}
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 mt-1">{% trans "Manage SMS, WhatsApp, and Email notifications" %}</p>
+        </div>
+        <a href="{% url 'admin_dashboard:notification_create' %}" 
+           class="bg-zm-green hover:bg-green-600 text-white px-6 py-3 rounded-lg font-medium transition">
+            <i class="fas fa-paper-plane mr-2"></i>{% trans "Send Campaign" %}
+        </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">{% trans "Total Sent" %}</p>
+                    <h3 class="text-4xl font-bold mt-2">{{ total_sent }}</h3>
+                </div>
+                <i class="fas fa-paper-plane text-5xl opacity-20"></i>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">{% trans "Sent Today" %}</p>
+                    <h3 class="text-4xl font-bold mt-2">{{ sent_today }}</h3>
+                </div>
+                <i class="fas fa-calendar-day text-5xl opacity-20"></i>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">{% trans "Engagement Rate" %}</p>
+                    <h3 class="text-4xl font-bold mt-2">{{ engagement_rate }}%</h3>
+                </div>
+                <i class="fas fa-chart-line text-5xl opacity-20"></i>
+            </div>
+        </div>
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 text-white shadow-lg">
+            <div class="flex justify-between items-start">
+                <div>
+                    <p class="text-orange-100 text-sm font-medium">{% trans "Target: 40-50%" %}</p>
+                    <h3 class="text-2xl font-bold mt-2">
+                        {% if engagement_rate >= 40 %}✅ {% trans "On Track" %}{% else %}📈 {% trans "Growing" %}{% endif %}
+                    </h3>
+                </div>
+                <i class="fas fa-bullseye text-5xl opacity-20"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <a href="{% url 'admin_dashboard:notification_create' %}" 
+           class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition group">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center group-hover:scale-110 transition">
+                    <i class="fas fa-paper-plane text-3xl text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{% trans "Send Campaign" %}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{% trans "Create bulk notification" %}</p>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{% url 'admin_dashboard:notification_history' %}" 
+           class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition group">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center group-hover:scale-110 transition">
+                    <i class="fas fa-history text-3xl text-green-600 dark:text-green-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{% trans "View History" %}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{% trans "Track all notifications" %}</p>
+                </div>
+            </div>
+        </a>
+        
+        <a href="{% url 'admin_dashboard:notification_analytics' %}" 
+           class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition group">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center group-hover:scale-110 transition">
+                    <i class="fas fa-chart-bar text-3xl text-purple-600 dark:text-purple-400"></i>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{% trans "Analytics" %}</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">{% trans "View engagement metrics" %}</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Channel Breakdown -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-chart-pie mr-2"></i>{% trans "Channel Breakdown" %}
+            </h3>
+            <div class="space-y-4">
+                {% for stat in channel_stats %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">
+                            {% if stat.channel == 'sms' %}<i class="fas fa-sms mr-1"></i>SMS
+                            {% elif stat.channel == 'whatsapp' %}<i class="fab fa-whatsapp mr-1"></i>WhatsApp
+                            {% elif stat.channel == 'email' %}<i class="fas fa-envelope mr-1"></i>Email
+                            {% endif %}
+                        </span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ stat.count }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
+                        {% widthratio stat.count total_sent 100 as percentage %}
+                        <div class="bg-zm-green h-2 rounded-full" style="width: {{ percentage }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Status Breakdown -->
+        <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                <i class="fas fa-tasks mr-2"></i>{% trans "Delivery Status" %}
+            </h3>
+            <div class="space-y-4">
+                {% for stat in status_stats %}
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-gray-600 dark:text-gray-400">
+                            {% if stat.status == 'sent' %}<i class="fas fa-check text-blue-500 mr-1"></i>{% trans "Sent" %}
+                            {% elif stat.status == 'delivered' %}<i class="fas fa-check-double text-green-500 mr-1"></i>{% trans "Delivered" %}
+                            {% elif stat.status == 'failed' %}<i class="fas fa-times text-red-500 mr-1"></i>{% trans "Failed" %}
+                            {% elif stat.status == 'pending' %}<i class="fas fa-clock text-yellow-500 mr-1"></i>{% trans "Pending" %}
+                            {% endif %}
+                        </span>
+                        <span class="font-bold text-gray-900 dark:text-white">{{ stat.count }}</span>
+                    </div>
+                    <div class="w-full bg-gray-200 dark:bg-zinc-700 rounded-full h-2">
+                        {% widthratio stat.count total_sent 100 as percentage %}
+                        <div class="{% if stat.status == 'delivered' %}bg-green-500{% elif stat.status == 'sent' %}bg-blue-500{% elif stat.status == 'failed' %}bg-red-500{% else %}bg-yellow-500{% endif %} h-2 rounded-full" style="width: {{ percentage }}%"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Notifications -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700 flex justify-between items-center">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white">
+                <i class="fas fa-clock mr-2"></i>{% trans "Recent Notifications" %}
+            </h3>
+            <a href="{% url 'admin_dashboard:notification_history' %}" class="text-zm-green hover:text-green-600 font-medium">
+                {% trans "View All" %} <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "User" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Channel" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Message" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Status" %}</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">{% trans "Sent" %}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for notif in recent_notifications %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700">
+                        <td class="px-6 py-4">
+                            <a href="{% url 'admin_dashboard:user_detail' notif.user.id %}" class="text-zm-green hover:text-green-600 font-medium">
+                                {{ notif.user.get_full_name|default:notif.user.username }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if notif.channel == 'sms' %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <i class="fas fa-sms mr-1"></i>SMS
+                            </span>
+                            {% elif notif.channel == 'whatsapp' %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <i class="fab fa-whatsapp mr-1"></i>WhatsApp
+                            </span>
+                            {% elif notif.channel == 'email' %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                <i class="fas fa-envelope mr-1"></i>Email
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 dark:text-gray-400">
+                            {{ notif.message|truncatewords:10 }}
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if notif.status == 'delivered' %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                <i class="fas fa-check-double mr-1"></i>{% trans "Delivered" %}
+                            </span>
+                            {% elif notif.status == 'sent' %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                <i class="fas fa-check mr-1"></i>{% trans "Sent" %}
+                            </span>
+                            {% elif notif.status == 'failed' %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                <i class="fas fa-times mr-1"></i>{% trans "Failed" %}
+                            </span>
+                            {% else %}
+                            <span class="px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                <i class="fas fa-clock mr-1"></i>{% trans "Pending" %}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">
+                            {{ notif.sent_at|timesince }} ago
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                            {% trans "No notifications sent yet" %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

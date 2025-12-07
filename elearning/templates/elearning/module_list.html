@@ -1,0 +1,517 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load elearning_extras %}
+{% block title %}Learning Modules - EcoLearn{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/custom.css' %}">
+<style>
+    /* Custom utility class definition for the requested color */
+    .bg-custom-green {
+        background-color: #22C55E;
+    }
+    .from-custom-green-500 {
+        /* A slightly lighter shade for the gradient start */
+        --tw-gradient-from: #22C55E;
+        --tw-gradient-to: #22C55E;
+        --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(34, 197, 94, 0));
+    }
+    .to-custom-green-700 {
+        /* A slightly darker shade for the gradient end */
+        --tw-gradient-to: #15803d; /* approximate green-700 for gradient end */
+    }
+
+    .module-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .module-card:hover {
+        transform: translateY(-8px);
+    }
+    .category-card {
+        transition: all 0.2s ease;
+    }
+    .category-card:hover {
+        transform: scale(1.05);
+    }
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    .tag-cloud {
+        animation: float 3s ease-in-out infinite;
+    }
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+    .shimmer {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-green-50 to-blue-50">
+    <div class="bg-gradient-to-r from-eco-green to-green-600 text-white py-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold mb-4 animate-fade-in">
+                    <i class="fas fa-graduation-cap mr-3"></i>
+                    Environmental Learning Hub
+                </h1>
+                <p class="text-xl text-green-100 mb-8">Master waste management and sustainability through interactive courses</p>
+                
+                <form method="get" class="max-w-3xl mx-auto">
+                    <div class="relative">
+                        <input 
+                            type="text" 
+                            name="q" 
+                            value="{{ search_query|default:'' }}"
+                            placeholder="Search for modules, topics, or skills..." 
+                            class="w-full px-6 py-4 rounded-full text-gray-800 shadow-2xl focus:outline-none focus:ring-4 focus:ring-green-300 pr-32"
+                        >
+                        <button type="submit" class="absolute right-2 top-2 bg-eco-dark text-white px-6 py-2 rounded-full hover:bg-green-800 transition-colors">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+                <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold">{{ stats.total_modules }}</div>
+                    <div class="text-sm text-green-100">Modules</div>
+                </div>
+                <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold">{{ stats.total_students|default:0 }}</div>
+                    <div class="text-sm text-green-100">Students</div>
+                </div>
+                <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold">{{ stats.total_completions|default:0 }}</div>
+                    <div class="text-sm text-green-100">Certificates</div>
+                </div>
+                <div class="bg-white bg-opacity-20 backdrop-blur-sm rounded-lg p-4 text-center">
+                    <div class="text-3xl font-bold">3.8<span class="text-xl">★</span></div>
+                    <div class="text-sm text-green-100">Avg Rating</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="mb-12">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">
+                    <i class="fas fa-th-large text-eco-green mr-2"></i>
+                    Browse by Category
+                </h2>
+                {% if selected_category %}
+                    <a href="{% url 'elearning:module_list' %}" class="text-eco-green hover:text-eco-dark transition-colors">
+                        <i class="fas fa-times-circle mr-1"></i>Clear Filter
+                    </a>
+                {% endif %}
+            </div>
+            
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+                <a href="{% url 'elearning:module_list' %}" 
+                   class="category-card group p-6 bg-white {% if not selected_category %}ring-4 ring-eco-green bg-eco-light{% else %}hover:shadow-xl{% endif %} rounded-2xl shadow-md transition-all">
+                    <div class="text-center">
+                        <div class="w-20 h-20 mx-auto mb-3 rounded-full bg-gradient-to-br from-eco-light to-eco-green flex items-center justify-center">
+                            <i class="fas fa-th-large text-2xl {% if not selected_category %}text-eco-dark{% else %}text-eco-green group-hover:text-eco-dark{% endif %}"></i>
+                        </div>
+                        <h4 class="font-bold {% if not selected_category %}text-eco-dark{% else %}text-gray-700 group-hover:text-eco-dark{% endif %}">
+                            All Modules
+                        </h4>
+                        <p class="text-sm text-gray-500 mt-1">{{ stats.total_modules }} available</p>
+                    </div>
+                </a>
+                
+                {% for category in categories %}
+                <a href="{% url 'elearning:module_list' %}?category={{ category.id }}" 
+                   class="category-card group p-6 bg-white {% if selected_category and selected_category.id == category.id %}ring-4 ring-eco-green bg-eco-light{% else %}hover:shadow-xl{% endif %} rounded-2xl shadow-md transition-all">
+                    <div class="text-center">
+                        <div class="w-20 h-20 mx-auto mb-3 rounded-full flex items-center justify-center" 
+                              style="background: linear-gradient(135deg, {{ category.color|default:'#10B981' }}33, {{ category.color|default:'#10B981' }}66);">
+                            <i class="{{ category.icon_class }} text-2xl" style="color: {{ category.color|default:'#10B981' }};"></i>
+                        </div>
+                        <h4 class="font-bold {% if selected_category and selected_category.id == category.id %}text-eco-dark{% else %}text-gray-700 group-hover:text-eco-dark{% endif %}">
+                            {% if user_language == 'bem' and category.name_bem %}
+                                {{ category.name_bem }}
+                            {% elif user_language == 'ny' and category.name_ny %}
+                                {{ category.name_ny }}
+                            {% else %}
+                                {{ category.name }}
+                            {% endif %}
+                        </h4>
+                        <p class="text-sm text-gray-500 mt-1">{{ category.module_count }} modules</p>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-4 mb-8 bg-white p-4 rounded-xl shadow-md">
+            <div class="flex flex-wrap gap-2">
+                <a href="?{{ request.GET.urlencode }}&difficulty=beginner" 
+                class="px-4 py-2 rounded-lg {% if current_difficulty == 'beginner' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    <i class="fas fa-seedling mr-1"></i>Beginner
+                </a>
+                <a href="?{{ request.GET.urlencode }}&difficulty=intermediate" 
+                class="px-4 py-2 rounded-lg {% if current_difficulty == 'intermediate' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    <i class="fas fa-chart-line mr-1"></i>Intermediate
+                </a>
+                <a href="?{{ request.GET.urlencode }}&difficulty=advanced" 
+                class="px-4 py-2 rounded-lg {% if current_difficulty == 'advanced' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %} transition-colors">
+                    <i class="fas fa-trophy mr-1"></i>Advanced
+                </a>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <label class="text-gray-700 font-medium">Sort by:</label>
+                <select onchange="window.location.href='?sort=' + this.value + '{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}'" 
+                        class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-eco-green">
+                    <option value="featured" {% if sort_by == 'featured' %}selected{% endif %}>Featured</option>
+                    <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Highest Rated</option>
+                </select>
+            </div>
+        </div>
+
+        {% if stats.featured_modules and not selected_category %}
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-star text-yellow-500 mr-2"></i>
+                Featured Courses
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for module in stats.featured_modules %}
+                    <div class="relative bg-gradient-to-br from-custom-green-500 to-custom-green-700 rounded-2xl overflow-hidden shadow-xl group">
+                        <div class="absolute top-4 right-4 bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-bold">
+                            <i class="fas fa-star mr-1"></i>Featured
+                        </div>
+                        {% if module.thumbnail %}
+                            <img src="{{ module.thumbnail.url }}" alt="{{ module.title }}" class="w-full h-48 object-cover opacity-90">
+                        {% else %}
+                            <div class="w-full h-48 bg-gradient-to-br from-white/30 to-white/10 flex items-center justify-center">
+                                <i class="fas fa-leaf text-white text-6xl opacity-50"></i>
+                            </div>
+                        {% endif %}
+                        <div class="p-6 text-white">
+                            <h3 class="text-xl font-bold mb-2">{{ module.title }}</h3>
+                            <p class="text-white/90 text-sm mb-4">{{ module.description|truncatewords:15 }}</p>
+                            <a href="{% url 'elearning:module_detail' module.slug %}" 
+                                class="inline-block bg-white text-[#22C55E] px-6 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors">
+                                Explore Now <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                {% if selected_category %}
+                    <i class="{{ selected_category.icon_class }} text-eco-green mr-2"></i>
+                    {% if user_language == 'bem' and selected_category.name_bem %}
+                        {{ selected_category.name_bem }}
+                    {% elif user_language == 'ny' and selected_category.name_ny %}
+                        {{ selected_category.name_ny }}
+                    {% else %}
+                        {{ selected_category.name }}
+                    {% endif %}
+                    Modules
+                {% else %}
+                    All Learning Modules
+                {% endif %}
+                <span class="text-gray-500 text-lg ml-2">({{ modules.count }})</span>
+            </h2>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {% for module in modules %}
+                    <div class="module-card bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl" data-category="{{ module.category.id }}">
+                        <div class="relative h-56 overflow-hidden group">
+                            {% comment %} Updated the placeholder image for better contrast and instruction {% endcomment %}
+                            {% if module.thumbnail %}
+                                <img src="{{ module.thumbnail.url }}" alt="{{ module.title }}" 
+                                    class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                            {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-green-300 via-green-200 to-green-400 flex items-center justify-center">
+                                    
+                                    <i class="fas fa-image text-green-700 text-6xl opacity-70"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div class="absolute bottom-4 left-4 right-4">
+                                    <div class="flex items-center gap-2 text-white text-sm">
+                                        <span class="flex items-center bg-white/20 backdrop-blur-sm px-2 py-1 rounded">
+                                            <i class="fas fa-eye mr-1"></i>{{ module.views_count }}
+                                        </span>
+                                        <span class="flex items-center bg-white/20 backdrop-blur-sm px-2 py-1 rounded">
+                                            <i class="fas fa-users mr-1"></i>{{ module.enrollments_count }}
+                                        </span>
+                                        {% if module.is_featured %}
+                                        <span class="flex items-center bg-white/20 backdrop-blur-sm px-2 py-1 rounded">
+                                            <i class="fas fa-star mr-1"></i>FEATURED
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if module.is_premium %}
+                                <div class="absolute top-4 right-4 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+                                    <i class="fas fa-crown mr-1"></i>PREMIUM
+                                </div>
+                            {% endif %}
+                            
+                            {% if module.is_featured %}
+                                <div class="absolute top-4 left-4 bg-gradient-to-r from-custom-green-500 to-custom-green-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-pulse">
+                                    <i class="fas fa-star mr-1"></i>FEATURED
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold" 
+                                        style="background-color: {{ module.category.color|default:'#10B981' }}22; color: {{ module.category.color|default:'#10B981' }};">
+                                    <i class="{{ module.category.icon_class }} mr-1"></i>
+                                    {% if user_language == 'bem' and module.category.name_bem %}
+                                        {{ module.category.name_bem }}
+                                    {% elif user_language == 'ny' and module.category.name_ny %}
+                                        {{ module.category.name_ny }}
+                                    {% else %}
+                                        {{ module.category.name }}
+                                    {% endif %}
+                                </span>
+                                <span class="text-sm text-gray-500 flex items-center">
+                                    <i class="fas fa-clock mr-1"></i>{{ module.duration_minutes }} min
+                                </span>
+                            </div>
+                            
+                            <h3 class="text-xl font-bold text-gray-800 mb-2 line-clamp-2 hover:text-eco-green transition-colors">
+                                {% if user_language == 'bem' and module.title_bem %}
+                                    {{ module.title_bem }}
+                                {% elif user_language == 'ny' and module.title_ny %}
+                                    {{ module.title_ny }}
+                                {% else %}
+                                    {{ module.title }}
+                                {% endif %}
+                            </h3>
+                            
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                                {% if user_language == 'bem' and module.description_bem %}
+                                    {{ module.description_bem|truncatewords:20 }}
+                                {% elif user_language == 'ny' and module.description_ny %}
+                                    {{ module.description_ny|truncatewords:20 }}
+                                {% else %}
+                                    {{ module.description|truncatewords:20 }}
+                                {% endif %}
+                            </p>
+                            
+                            {% if module.tags.all %}
+                                <div class="flex flex-wrap gap-1 mb-4">
+                                    {% for tag in module.tags.all|slice:":3" %}
+                                        <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
+                                            #{{ tag.name }}
+                                        </span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="flex items-center justify-between mb-4 pb-4 border-b border-gray-100">
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-semibold px-2 py-1 rounded
+                                        {% if module.difficulty == 'beginner' %}bg-green-100 text-green-700
+                                        {% elif module.difficulty == 'intermediate' %}bg-yellow-100 text-yellow-700
+                                        {% else %}bg-red-100 text-red-700{% endif %}">
+                                        {% if module.difficulty == 'beginner' %}
+                                            <i class="fas fa-seedling mr-1"></i>
+                                        {% elif module.difficulty == 'intermediate' %}
+                                            <i class="fas fa-chart-line mr-1"></i>
+                                        {% else %}
+                                            <i class="fas fa-trophy mr-1"></i>
+                                        {% endif %}
+                                        {{ module.get_difficulty_display }}
+                                    </span>
+                                    
+                                    <span class="text-xs bg-eco-light text-eco-dark px-2 py-1 rounded font-semibold">
+                                        <i class="fas fa-coins mr-1"></i>{{ module.points_reward }} pts
+                                    </span>
+                                </div>
+                                
+                                <div class="flex items-center text-yellow-500">
+                                    <i class="fas fa-star mr-1"></i>
+                                    <span class="text-sm font-semibold text-gray-700">{{ module.average_rating|floatformat:1 }}</span>
+                                </div>
+                            </div>
+                            
+                            {% if user.is_authenticated and module.id in user_enrollments %}
+                                <div class="mb-4">
+                                    <div class="flex items-center justify-between mb-1">
+                                        <span class="text-xs font-medium text-gray-600">Your Progress</span>
+                                        <span class="text-xs font-bold text-eco-green">{{ user_progress|get_item:module.id }}%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
+                                        <div class="bg-gradient-to-r from-eco-green to-green-600 h-2.5 rounded-full transition-all duration-500" 
+                                            style="width: {{ user_progress|get_item:module.id }}%"></div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            <a href="{% url 'elearning:module_detail' module.slug %}" 
+                            class="block w-full text-center py-3 rounded-xl font-semibold transition-all duration-300
+                            {% if user.is_authenticated and module.id in user_enrollments %}
+                                {% if user_progress|get_item:module.id == 100 %}
+                                    bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg
+                                {% else %}
+                                    bg-gradient-to-r from-eco-green to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg
+                                {% endif %}
+                            {% else %}
+                                bg-gradient-to-r from-eco-green to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl
+                            {% endif %}">
+                            {% if user.is_authenticated and module.id in user_enrollments %}
+                                    {% if user_progress|get_item:module.id == 100 %}
+                                        <i class="fas fa-check-circle mr-2"></i>Completed - Review
+                                    {% else %}
+                                        <i class="fas fa-play-circle mr-2"></i>Continue Learning
+                                    {% endif %}
+                                {% else %}
+                                    <i class="fas fa-rocket mr-2"></i>Start Learning
+                                {% endif %}
+                            </a>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div class="col-span-full">
+                        <div class="text-center py-16 bg-white rounded-2xl shadow-md">
+                            <div class="mb-6">
+                                <i class="fas fa-search text-gray-300 text-6xl mb-4"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-600 mb-2">No modules found</h3>
+                            <p class="text-gray-500 mb-6">
+                                {% if search_query %}
+                                    No results for "{{ search_query }}". Try different keywords.
+                                {% else %}
+                                    Check back later for new learning content in this category.
+                                {% endif %}
+                            </p>
+                            <a href="{% url 'elearning:module_list' %}" 
+                                class="inline-block bg-eco-green text-white px-6 py-3 rounded-full hover:bg-eco-dark transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i>View All Modules
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {% if tags and not selected_category %}
+        <div class="mb-12 bg-white rounded-2xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-tags text-eco-green mr-2"></i>
+                Popular Topics
+            </h2>
+            <div class="flex flex-wrap gap-3">
+                {% for tag in tags %}
+                    <a href="?tag={{ tag.slug }}" 
+                        class="inline-flex items-center px-4 py-2 bg-gray-50 hover:bg-eco-light text-gray-700 hover:text-eco-dark rounded-full transition-all hover:shadow-md group">
+                        <i class="fas fa-hashtag mr-1 text-eco-green"></i>
+                        <span class="font-medium">{{ tag.name }}</span>
+                        <span class="ml-2 text-xs bg-eco-green text-white px-2 py-0.5 rounded-full">{{ tag.module_count }}</span>
+                    </a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <div class="bg-gradient-to-br from-custom-green-500 to-custom-green-700 rounded-3xl p-8 shadow-2xl text-white mb-12">
+            <div class="flex flex-col md:flex-row items-center gap-8">
+                <div class="flex-shrink-0">
+                    <div class="w-32 h-32 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                        <i class="fas fa-route text-6xl text-white"></i>
+                    </div>
+                </div>
+                <div class="flex-1 text-center md:text-left">
+                    <h2 class="text-3xl font-bold mb-4">
+                        Your Personalized Learning Path
+                    </h2>
+                    <p class="text-white/90 text-lg mb-6">
+                        We've created a customized learning journey based on your interests and progress. 
+                        Follow the path to master environmental sustainability step by step.
+                    </p>
+                    <a href="{% url 'elearning:learning_path' %}" 
+                        class="inline-block bg-white text-[#22C55E] px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl">
+                        <i class="fas fa-compass mr-2"></i>View My Learning Path
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-8 pt-8 border-t border-white/20">
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                            <span class="font-bold">1</span>
+                        </div>
+                        <span class="text-sm">Waste Segregation</span>
+                    </div>
+                    <div class="flex items-center text-white/50">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                            <span class="font-bold">2</span>
+                        </div>
+                        <span class="text-sm">Recycling Methods</span>
+                    </div>
+                    <div class="flex items-center text-white/50">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                            <span class="font-bold">3</span>
+                        </div>
+                        <span class="text-sm">Composting Basics</span>
+                    </div>
+                    <div class="flex items-center text-white/50">
+                        <i class="fas fa-arrow-right"></i>
+                    </div>
+                    <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-2">
+                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                            <span class="font-bold">4</span>
+                        </div>
+                        <span class="text-sm">Sustainability</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="bg-custom-green rounded-3xl p-8 shadow-2xl text-white">
+            <div class="text-center">
+                <div class="inline-block bg-white/20 backdrop-blur-sm rounded-full p-6 mb-4">
+                    <i class="fas fa-trophy text-6xl text-white"></i>
+                </div>
+                <h2 class="text-3xl font-bold mb-4">Compete with Fellow Learners</h2>
+                <p class="text-white/90 text-lg mb-6 max-w-2xl mx-auto">
+                    Complete modules, earn points, and climb the leaderboard. See how you rank against other environmental champions!
+                </p>
+                <a href="{% url 'elearning:leaderboard' %}" 
+                    class="inline-block bg-white text-[#22C55E] px-8 py-3 rounded-full font-bold hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl">
+                    <i class="fas fa-ranking-star mr-2"></i>View Leaderboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

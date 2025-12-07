@@ -1,0 +1,6 @@
+name,slug,description,order,is_active,icon_class,color
+Waste Management Basics,waste-management-basics,Learn about waste collection and management in Zambian communities,1,1,fas fa-trash,#28a745
+Recycling Techniques,recycling-techniques,Discover recycling techniques and centers in Lusaka,2,1,fas fa-recycle,#17a2b8
+Home Composting,home-composting,Turn organic waste into valuable compost,3,1,fas fa-leaf,#6f42c1
+Electronic Waste,electronic-waste,Safe disposal of electronic waste,4,1,fas fa-mobile-alt,#dc3545
+Community Leadership,community-leadership,Organize and lead community cleanup initiatives,5,1,fas fa-users,#ffc107

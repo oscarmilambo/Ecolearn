@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reporting Statistics{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-zinc-50 dark:bg-zinc-900 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-4xl font-bold text-zinc-900 dark:text-white mb-2">
+                Reporting Statistics
+            </h1>
+            <p class="text-lg text-zinc-600 dark:text-zinc-300">
+                Track illegal dumping reports and cleanup progress across the community
+            </p>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border-t-4 border-blue-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Total Reports</p>
+                        <p class="text-3xl font-bold text-zinc-900 dark:text-white">{{ total_reports }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border-t-4 border-yellow-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Pending</p>
+                        <p class="text-3xl font-bold text-zinc-900 dark:text-white">{{ pending_reports }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border-t-4 border-green-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Resolved</p>
+                        <p class="text-3xl font-bold text-zinc-900 dark:text-white">{{ resolved_reports }}</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-6 border-t-4 border-purple-500">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm font-medium text-zinc-500 dark:text-zinc-400 mb-1">Success Rate</p>
+                        <p class="text-3xl font-bold text-zinc-900 dark:text-white">
+                            {% if total_reports > 0 %}
+                                {{ resolved_reports|floatformat:0|add:"0"|mul:100|div:total_reports|floatformat:0 }}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex items-center justify-center">
+                        <svg class="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Status Distribution -->
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Reports by Status
+                </h2>
+                <div class="space-y-4">
+                    {% for stat in status_stats %}
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                {{ stat.status|title }}
+                            </span>
+                            <span class="text-sm font-semibold text-zinc-900 dark:text-white">
+                                {{ stat.count }}
+                            </span>
+                        </div>
+                        <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-3 overflow-hidden">
+                            <div class="{% if stat.status == 'resolved' %}bg-green-500{% elif stat.status == 'in_progress' %}bg-orange-500{% elif stat.status == 'verified' %}bg-blue-500{% elif stat.status == 'pending' %}bg-yellow-500{% else %}bg-red-500{% endif %} h-3 rounded-full transition-all duration-500" 
+                                 style="width: {% if total_reports > 0 %}{{ stat.count|floatformat:0|add:"0"|mul:100|div:total_reports }}%{% else %}0%{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Severity Distribution -->
+            <div class="bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-8">
+                <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    Reports by Severity
+                </h2>
+                <div class="space-y-4">
+                    {% for stat in severity_stats %}
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                {% if stat.severity == 'critical' %}🔴 Critical
+                                {% elif stat.severity == 'high' %}🟠 High
+                                {% elif stat.severity == 'medium' %}🟡 Medium
+                                {% else %}🟢 Low{% endif %}
+                            </span>
+                            <span class="text-sm font-semibold text-zinc-900 dark:text-white">
+                                {{ stat.count }}
+                            </span>
+                        </div>
+                        <div class="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-3 overflow-hidden">
+                            <div class="{% if stat.severity == 'critical' %}bg-red-600{% elif stat.severity == 'high' %}bg-orange-500{% elif stat.severity == 'medium' %}bg-yellow-500{% else %}bg-green-500{% endif %} h-3 rounded-full transition-all duration-500" 
+                                 style="width: {% if total_reports > 0 %}{{ stat.count|floatformat:0|add:"0"|mul:100|div:total_reports }}%{% else %}0%{% endif %}">
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Trends -->
+        {% if recent_stats %}
+        <div class="mt-8 bg-white dark:bg-zinc-800 rounded-2xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/>
+                </svg>
+                30-Day Trend
+            </h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+                    <thead>
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Pending</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Resolved</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">Avg Resolution (days)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-zinc-200 dark:divide-zinc-700">
+                        {% for stat in recent_stats %}
+                        <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-white">
+                                {{ stat.date|date:"M d, Y" }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-zinc-900 dark:text-white">
+                                {{ stat.total_reports }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-yellow-600 dark:text-yellow-400">
+                                {{ stat.pending_reports }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 dark:text-green-400">
+                                {{ stat.resolved_reports }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-600 dark:text-zinc-400">
+                                {{ stat.average_resolution_days|floatformat:1 }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Call to Action -->
+        <div class="mt-8 bg-gradient-to-r from-green-600 to-blue-600 rounded-2xl shadow-xl p-8 text-white text-center">
+            <h3 class="text-2xl font-bold mb-2">Help Keep Our Community Clean</h3>
+            <p class="text-lg mb-6 opacity-90">Report illegal dumping in your area and make a difference</p>
+            <a href="{% url 'reporting:report_dumping' %}" class="inline-flex items-center px-8 py-3 bg-white text-green-600 font-semibold rounded-xl hover:bg-zinc-100 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Submit a Report
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Add animation on scroll
+document.addEventListener('DOMContentLoaded', function() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    });
+
+    document.querySelectorAll('.bg-white, .bg-gradient-to-r').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transform = 'translateY(20px)';
+        el.style.transition = 'all 0.5s ease-out';
+        observer.observe(el);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static i18n elearning_extras %}
+
+{% block title %}{% get_translated_field module 'title' %} - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-7xl">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+            <!-- Breadcrumb -->
+            <nav aria-label="breadcrumb" class="mb-6">
+                <ol class="flex flex-wrap items-center space-x-2 text-sm text-gray-600">
+                    <li><a href="{% url 'home' %}" class="hover:text-eco-green transition-colors">{% translate "Home" %}</a></li>
+                    <li><span class="text-gray-400">/</span></li>
+                    <li><a href="{% url 'elearning:module_list' %}" class="hover:text-eco-green transition-colors">{% translate "Modules" %}</a></li>
+                    <li><span class="text-gray-400">/</span></li>
+                    <li><a href="{% url 'elearning:category_detail' module.category.slug %}" class="hover:text-eco-green transition-colors">{% get_translated_field module.category 'name' %}</a></li>
+                    <li><span class="text-gray-400">/</span></li>
+                    <li class="text-gray-900 font-medium" aria-current="page">{% get_translated_field module 'title' %}</li>
+                </ol>
+            </nav>
+
+            <!-- Module Title and Description -->
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">
+                {% get_translated_field module 'title' %}
+            </h1>
+            
+            <p class="text-lg text-gray-700 mb-6">
+                {% get_translated_field module 'description' %}
+            </p>
+
+            <!-- Module Meta -->
+            <div class="flex flex-wrap items-center gap-4 mb-8 text-sm text-gray-600">
+                <span class="bg-eco-light text-eco-dark px-3 py-1 rounded-full font-medium">
+                    {{ module.get_difficulty_display }}
+                </span>
+                <span><i class="fas fa-star text-yellow-400 mr-1"></i> {{ module.average_rating|floatformat:1 }} ({{ module.enrollments_count }} {% translate "Enrolled" %})</span>
+                {% if module.is_premium %}
+                    <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full font-medium">
+                        <i class="fas fa-lock mr-1"></i> {% translate "Premium" %}
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Progress/Enroll Card -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+                {% if request.user.is_authenticated %}
+                    {% if is_enrolled %}
+                        <h2 class="text-xl font-semibold mb-4">{% translate "Your Progress" %}</h2>
+                        <div class="w-full bg-gray-200 rounded-full h-4 mb-2">
+                            <div class="bg-eco-green h-4 rounded-full" style="width: {{ enrollment.progress_percentage }}%;"></div>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-4">
+                            {{ completed_lesson_ids|length }} of {{ total_lessons }} lessons completed ({{ enrollment.progress_percentage }}%)
+                        </p>
+                        {% if lessons %}
+                            <a href="{% url 'elearning:lesson_detail' module.slug lessons.0.slug %}" class="bg-eco-green text-white px-4 py-2 rounded-md hover:bg-eco-dark transition-colors inline-flex items-center">
+                                <i class="fas fa-play mr-2"></i> {% translate "Continue Learning" %}
+                            </a>
+                        {% endif %}
+                    {% else %}
+                        <h2 class="text-xl font-semibold mb-4">{% translate "Ready to Start?" %}</h2>
+                        <p class="text-gray-600 mb-4">{% translate "Enroll now to access all lessons and track your progress." %}</p>
+                        <form method="post" action="{% url 'elearning:enroll_module' module.slug %}">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-eco-green text-white px-4 py-2 rounded-md hover:bg-eco-dark transition-colors inline-flex items-center">
+                                <i class="fas fa-book-open mr-2"></i> {% translate "Enroll Now" %}
+                            </button>
+                        </form>
+                    {% endif %}
+                {% else %}
+                    <h2 class="text-xl font-semibold mb-4">{% translate "Get Started" %}</h2>
+                    <p class="text-gray-600 mb-4">{% translate "Please log in to enroll in this module and track your progress." %}</p>
+                    <a href="{% url 'accounts:login' %}?next={{ request.path }}" class="bg-eco-green text-white px-4 py-2 rounded-md hover:bg-eco-dark transition-colors inline-flex items-center">
+                        <i class="fas fa-sign-in-alt mr-2"></i> {% translate "Log In to Enroll" %}
+                    </a>
+                {% endif %}
+            </div>
+
+            <!-- Lessons List -->
+            <h2 class="text-2xl font-semibold mb-4">{% translate "Module Lessons" %} ({{ total_lessons }})</h2>
+            <div class="space-y-3">
+                {% for lesson in lessons %}
+                <a href="{% if is_enrolled or lesson.is_preview %}{% url 'elearning:lesson_detail' module.slug lesson.slug %}{% else %}#{% endif %}"
+                class="{% if not is_enrolled and not lesson.is_preview %}pointer-events-none opacity-50{% endif %} block bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow flex justify-between items-center">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full font-medium text-sm">{{ lesson.order }}</span>
+                        <span class="font-medium text-gray-900">
+                            {% get_translated_field lesson 'title' %}
+                        </span>
+                        {% if lesson.is_preview %}
+                            <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">{% translate "Preview" %}</span>
+                        {% endif %}
+                    </div>
+                    <span class="text-sm text-gray-500 flex items-center space-x-2">
+                        {% if lesson.id in completed_lesson_ids %}
+                            <i class="fas fa-check-circle text-eco-green"></i> <span>{% translate "Completed" %}</span>
+                        {% elif not is_enrolled and not lesson.is_preview %}
+                            <i class="fas fa-lock text-gray-400"></i> <span>{% translate "Enroll Required" %}</span>
+                        {% else %}
+                            <i class="fas fa-clock text-gray-400"></i> <span>{{ lesson.duration_minutes }} min</span>
+                        {% endif %}
+                    </span>
+                </a>
+                {% empty %}
+                <div class="bg-white rounded-lg shadow-sm p-6 text-center text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-3"></i>
+                    <p>{% translate "No lessons available yet." %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Module Thumbnail/Video -->
+            <div class="bg-white rounded-xl shadow-md mb-6 overflow-hidden">
+                {% if module.thumbnail %}
+                    <img src="{{ module.thumbnail.url }}" alt="{% get_translated_field module 'title' %} thumbnail" class="w-full h-auto">
+                {% elif module.video_url %}
+                    <div class="aspect-video">
+                        <iframe src="{{ module.video_url }}" class="w-full h-full" allowfullscreen></iframe>
+                    </div>
+                {% endif %}
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold mb-3">{% translate "Module Details" %}</h3>
+                    <dl class="space-y-2 text-sm text-gray-600">
+                        <div class="flex justify-between">
+                            <dt><i class="fas fa-tag mr-2"></i>{% translate "Category" %}</dt>
+                            <dd><a href="{% url 'elearning:category_detail' module.category.slug %}" class="text-eco-green hover:underline">{% get_translated_field module.category 'name' %}</a></dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt><i class="fas fa-hourglass-half mr-2"></i>{% translate "Duration" %}</dt>
+                            <dd>{{ module.duration_minutes }} min</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt><i class="fas fa-chart-line mr-2"></i>{% translate "Difficulty" %}</dt>
+                            <dd>{{ module.get_difficulty_display }}</dd>
+                        </div>
+                        {% if module.waste_stream %}
+                        <div class="flex justify-between">
+                            <dt><i class="fas fa-recycle mr-2"></i>{% translate "Waste Stream" %}</dt>
+                            <dd>{{ module.get_waste_stream_display }}</dd>
+                        </div>
+                        {% endif %}
+                        <div class="flex justify-between">
+                            <dt><i class="fas fa-eye mr-2"></i>{% translate "Views" %}</dt>
+                            <dd>{{ module.views_count }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt><i class="fas fa-trophy mr-2"></i>{% translate "Reward" %}</dt>
+                            <dd>{{ module.points_reward }} Points</dd>
+                        </div>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Tags -->
+            {% if module.tags.all %}
+            <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+                <h3 class="text-lg font-semibold mb-3">{% translate "Topics Covered" %}</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for tag in module.tags.all %}
+                        <a href="{% url 'elearning:tag_detail' tag.slug %}" class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm hover:bg-blue-200 transition-colors">{% get_translated_field tag 'name' %}</a>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-12">
+        <div class="lg:col-span-2">
+            <!-- Reviews -->
+            <h2 class="text-2xl font-semibold mb-4">{% translate "Student Reviews" %}</h2>
+            
+            {% if user_review or request.user.is_authenticated %}
+                <div class="bg-white rounded-xl shadow-md p-6 mb-6 border border-eco-green/20">
+                    {% if user_review %}
+                        <h3 class="text-lg font-semibold mb-3 text-eco-green">{% translate "Your Review" %}</h3>
+                        <div class="flex items-center mb-3">
+                            {% for i in "12345"|make_list %}
+                                <i class="fas fa-star {% if forloop.counter <= user_review.rating %}text-yellow-400{% else %}text-gray-300{% endif %} mr-1"></i>
+                            {% endfor %}
+                        </div>
+                        <p class="text-gray-700 mb-4">{{ user_review.review_text }}</p>
+                        <small class="text-gray-500">{% translate "Posted" %} {{ user_review.created_at|timesince }} ago</small>
+                        
+                        <form method="post" action="{% url 'elearning:edit_review' module.slug %}" class="mt-4">
+                            {% csrf_token %}
+                            <textarea name="review_text" class="w-full p-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:border-eco-green" rows="3">{{ user_review.review_text }}</textarea>
+                            <div class="flex items-center justify-between">
+                                <select name="rating" class="p-2 border border-gray-300 rounded-md focus:outline-none focus:border-eco-green">
+                                    {% for i in "54321"|make_list %}
+                                        <option value="{{ i }}" {% if user_review.rating == i|add:0 %}selected{% endif %}>{{ i }} {% if i == "1" %}Star{% else %}Stars{% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="bg-eco-green text-white px-4 py-2 rounded-md hover:bg-eco-dark transition-colors">{% translate "Update Review" %}</button>
+                            </div>
+                        </form>
+                    {% elif request.user.is_authenticated and is_enrolled %}
+                        <h3 class="text-lg font-semibold mb-3">{% translate "Leave a Review" %}</h3>
+                        <form method="post" action="{% url 'elearning:submit_review' module.slug %}">
+                            {% csrf_token %}
+                            <textarea name="review_text" class="w-full p-2 border border-gray-300 rounded-md mb-2 focus:outline-none focus:border-eco-green" placeholder="{% translate 'Tell us what you thought...' %}" rows="3"></textarea>
+                            <div class="flex items-center justify-between">
+                                <select name="rating" class="p-2 border border-gray-300 rounded-md focus:outline-none focus:border-eco-green">
+                                    <option value="5">5 {% translate "Stars" %}</option>
+                                    <option value="4">4 {% translate "Stars" %}</option>
+                                    <option value="3">3 {% translate "Stars" %}</option>
+                                    <option value="2">2 {% translate "Stars" %}</option>
+                                    <option value="1">1 {% translate "Star" %}</option>
+                                </select>
+                                <button type="submit" class="bg-eco-green text-white px-4 py-2 rounded-md hover:bg-eco-dark transition-colors">{% translate "Submit Review" %}</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            {% endif %}
+
+            <div class="space-y-4">
+                {% for review in reviews %}
+                <div class="bg-white rounded-xl shadow-md p-4">
+                    <div class="flex justify-between items-start mb-2">
+                        <h4 class="font-medium text-gray-900">{{ review.user.username }}</h4>
+                        <div class="flex">
+                            {% for i in "12345"|make_list %}
+                                <i class="fas fa-star {% if forloop.counter <= review.rating %}text-yellow-400{% else %}text-gray-300{% endif %} mr-1"></i>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <p class="text-gray-700 mb-2">{{ review.review_text }}</p>
+                    <small class="text-gray-500">{% translate "Posted" %} {{ review.created_at|timesince }} ago</small>
+                </div>
+                {% empty %}
+                    {% if not user_review %}
+                        <div class="bg-white rounded-xl shadow-md p-6 text-center text-gray-500">
+                            {% translate "No reviews yet. Be the first to review this module!" %}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="lg:col-span-1">
+            {% if similar_modules %}
+            <h2 class="text-2xl font-semibold mb-4">{% translate "More in" %} {% get_translated_field module.category 'name' %}</h2>
+            <div class="space-y-4">
+                {% for related_module in similar_modules %}
+                    <a href="{% url 'elearning:module_detail' related_module.slug %}" class="block bg-white rounded-xl shadow-md p-4 hover:shadow-lg transition-shadow">
+                        <h3 class="font-medium text-gray-900 mb-2">{% get_translated_field related_module 'title' %}</h3>
+                        <p class="text-sm text-gray-600">{{ related_module.get_difficulty_display }} | {{ related_module.duration_minutes }} min</p>
+                    </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

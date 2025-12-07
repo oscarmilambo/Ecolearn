@@ -1,0 +1,85 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}System Overview{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-zm-green">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+                <p class="text-4xl font-bold mt-2">{{ total_users }}</p>
+                <p class="text-xs text-zm-green mt-1">Target: 500 in 3 months</p>
+            </div>
+            <i class="fas fa-users text-zm-green text-3xl opacity-80"></i>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-blue-600">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Completion Rate</p>
+                <p class="text-4xl font-bold mt-2">{{ module_completion_rate }}%</p>
+                <p class="text-xs text-green-600 mt-1">Target: 60%</p>
+            </div>
+            <i class="fas fa-check-circle text-blue-600 text-3xl opacity-80"></i>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-zm-red">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Dumping Reports</p>
+                <p class="text-4xl font-bold mt-2">{{ total_reports }}</p>
+                <p class="text-xs text-zm-red mt-1">Target: 100 in 6 months</p>
+            </div>
+            <i class="fas fa-exclamation-triangle text-zm-red text-3xl opacity-80"></i>
+        </div>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6 border-l-4 border-zm-yellow">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-sm text-gray-600 dark:text-gray-400">ROI (Year 1)</p>
+                <p class="text-4xl font-bold mt-2">{{ roi }}%</p>
+                <p class="text-xs text-yellow-600 mt-1">Target: 156%</p>
+            </div>
+            <i class="fas fa-coins text-zm-yellow text-3xl opacity-80"></i>
+        </div>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold mb-4">User Growth</h3>
+        <canvas id="userChart"></canvas>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h3 class="text-xl font-bold mb-4">Illegal Dumping Heatmap (Lusaka)</h3>
+        <div id="map" class="h-96 rounded-lg"></div>
+    </div>
+</div>
+
+<script>
+    new Chart(document.getElementById('userChart'), {
+        type: 'line',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'New Users',
+                data: [65, 120, 280, 410, 580, 750],
+                borderColor: '#22c55e',
+                backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    const map = L.map('map').setView([-15.4167, 28.2833], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+    // Add real reports here via context
+</script>
+{% endblock %}

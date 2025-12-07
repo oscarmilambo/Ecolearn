@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+
+{% block title %}Report Illegal Dumping - EcoLearn{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <div class="text-center mb-8">
+            <i class="fas fa-exclamation-triangle text-red-500 text-4xl mb-4"></i>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Report Illegal Dumping</h1>
+            <p class="text-gray-600">Help keep our communities clean by reporting illegal waste dumping sites</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Anonymous Reporting -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    {{ form.is_anonymous }}
+                    <label for="{{ form.is_anonymous.id_for_label }}" class="ml-2 text-sm text-gray-700">
+                        Report anonymously (your identity will not be shared)
+                    </label>
+                </div>
+            </div>
+
+            <!-- Contact Information -->
+            <div id="contact-section">
+                <label for="{{ form.reporter_contact.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Contact Information (Optional)
+                </label>
+                {{ form.reporter_contact }}
+                <p class="mt-1 text-xs text-gray-500">
+                    Provide contact details if you want updates on this report
+                </p>
+            </div>
+
+            <!-- Location Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label for="{{ form.location_description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Location Description *
+                    </label>
+                    {{ form.location_description }}
+                    {% if form.location_description.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.location_description.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.latitude.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Latitude *
+                    </label>
+                    {{ form.latitude }}
+                    {% if form.latitude.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.latitude.errors.0 }}</div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.longitude.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Longitude *
+                    </label>
+                    {{ form.longitude }}
+                    {% if form.longitude.errors %}
+                        <div class="mt-1 text-sm text-red-600">{{ form.longitude.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Map for location selection -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">
+                    Select Location on Map
+                </label>
+                <div id="map" class="h-64 rounded-lg border border-gray-300"></div>
+                <div class="flex space-x-2">
+                    <button type="button" onclick="getCurrentLocation()" class="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors">
+                        <i class="fas fa-location-arrow mr-2"></i>Use Current Location
+                    </button>
+                    <button type="button" onclick="clearLocation()" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition-colors">
+                        Clear Selection
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report Details -->
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    Description *
+                </label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                    <div class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="{{ form.severity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Severity Level
+                    </label>
+                    {{ form.severity }}
+                </div>
+
+                <div>
+                    <label for="{{ form.waste_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Type of Waste
+                    </label>
+                    {{ form.waste_type }}
+                </div>
+
+                <div>
+                    <label for="{{ form.estimated_volume.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Estimated Volume
+                    </label>
+                    {{ form.estimated_volume }}
+                </div>
+            </div>
+
+            <!-- Photo Upload -->
+            <div class="space-y-4">
+                <label class="block text-sm font-medium text-gray-700">
+                    Photos * (At least one photo is required)
+                </label>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label for="{{ form.photo1.id_for_label }}" class="block text-sm text-gray-600 mb-1">
+                            Photo 1 (Required)
+                        </label>
+                        {{ form.photo1 }}
+                        {% if form.photo1.errors %}
+                            <div class="mt-1 text-sm text-red-600">{{ form.photo1.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.photo2.id_for_label }}" class="block text-sm text-gray-600 mb-1">
+                            Photo 2 (Optional)
+                        </label>
+                        {{ form.photo2 }}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.photo3.id_for_label }}" class="block text-sm text-gray-600 mb-1">
+                            Photo 3 (Optional)
+                        </label>
+                        {{ form.photo3 }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex justify-end space-x-4">
+                <a href="{% url 'reporting:reports_map' %}" class="px-6 py-3 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                    <i class="fas fa-paper-plane mr-2"></i>Submit Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+let map;
+let marker;
+
+// Initialize map
+function initMap() {
+    // Center on Lusaka, Zambia
+    map = L.map('map').setView([-15.3875, 28.3228], 12);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Add click event to map
+    map.on('click', function(e) {
+        setLocation(e.latlng.lat, e.latlng.lng);
+    });
+}
+
+// Set location on map and form
+function setLocation(lat, lng) {
+    // Remove existing marker
+    if (marker) {
+        map.removeLayer(marker);
+    }
+    
+    // Add new marker
+    marker = L.marker([lat, lng]).addTo(map);
+    
+    // Update form fields
+    document.getElementById('id_latitude').value = lat.toFixed(6);
+    document.getElementById('id_longitude').value = lng.toFixed(6);
+}
+
+// Get current location
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(function(position) {
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            
+            map.setView([lat, lng], 15);
+            setLocation(lat, lng);
+        }, function(error) {
+            alert('Error getting location: ' + error.message);
+        });
+    } else {
+        alert('Geolocation is not supported by this browser.');
+    }
+}
+
+// Clear location selection
+function clearLocation() {
+    if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+    }
+    document.getElementById('id_latitude').value = '';
+    document.getElementById('id_longitude').value = '';
+}
+
+// Initialize map when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+    
+    // Handle anonymous checkbox
+    const anonymousCheckbox = document.getElementById('id_is_anonymous');
+    const contactSection = document.getElementById('contact-section');
+    
+    function toggleContactSection() {
+        if (anonymousCheckbox.checked) {
+            contactSection.style.display = 'none';
+        } else {
+            contactSection.style.display = 'block';
+        }
+    }
+    
+    anonymousCheckbox.addEventListener('change', toggleContactSection);
+    toggleContactSection(); // Initial state
+});
+</script>
+{% endblock %}

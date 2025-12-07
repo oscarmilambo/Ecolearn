@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{{ quiz.title }} - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-6">
+        <ol class="flex flex-wrap items-center space-x-2 text-sm text-gray-600">
+            <li><a href="{% url 'home' %}" class="hover:text-eco-green transition-colors">{% translate "Home" %}</a></li>
+            <li><span class="text-gray-400">/</span></li>
+            <li><a href="{% url 'elearning:module_list' %}" class="hover:text-eco-green transition-colors">{% translate "Modules" %}</a></li>
+            <li><span class="text-gray-400">/</span></li>
+            <li><a href="{% url 'elearning:module_detail' quiz.lesson.module.slug %}" class="hover:text-eco-green transition-colors">{{ quiz.lesson.module.title }}</a></li>
+            <li><span class="text-gray-400">/</span></li>
+            <li><a href="{% url 'elearning:lesson_detail' quiz.lesson.module.slug quiz.lesson.slug %}" class="hover:text-eco-green transition-colors">{{ quiz.lesson.title }}</a></li>
+            <li><span class="text-gray-400">/</span></li>
+            <li class="text-gray-900 font-medium" aria-current="page">{{ quiz.title }}</li>
+        </ol>
+    </nav>
+
+    <!-- Quiz Header -->
+    <div class="bg-white rounded-xl shadow-md p-6 mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-4">
+            {% if user_language == 'bem' and quiz.title_bem %}
+                {{ quiz.title_bem }}
+            {% elif user_language == 'ny' and quiz.title_ny %}
+                {{ quiz.title_ny }}
+            {% else %}
+                {{ quiz.title }}
+            {% endif %}
+        </h1>
+        
+        <p class="text-gray-700 mb-6">
+            {% if user_language == 'bem' and quiz.description_bem %}
+                {{ quiz.description_bem }}
+            {% elif user_language == 'ny' and quiz.description_ny %}
+                {{ quiz.description_ny }}
+            {% else %}
+                {{ quiz.description }}
+            {% endif %}
+        </p>
+        
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <p class="font-medium text-gray-900">{% translate "Questions" %}</p>
+                <p class="text-gray-600">{{ quiz.questions.count }}</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <p class="font-medium text-gray-900">{% translate "Passing Score" %}</p>
+                <p class="text-gray-600">{{ quiz.passing_score }}%</p>
+            </div>
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <p class="font-medium text-gray-900">{% translate "Attempts Left" %}</p>
+                <p class="text-gray-600">{{ attempts_left }}</p>
+            </div>
+            {% if quiz.time_limit_minutes > 0 %}
+            <div class="bg-gray-50 p-3 rounded-lg">
+                <p class="font-medium text-gray-900">{% translate "Time Limit" %}</p>
+                <p class="text-gray-600">{{ quiz.time_limit_minutes }} min</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quiz Form -->
+    <form method="POST" class="bg-white rounded-xl shadow-md p-6">
+        {% csrf_token %}
+        {% for question in questions %}
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                {% if user_language == 'bem' and question.question_text_bem %}
+                    {{ question.question_text_bem }}
+                {% elif user_language == 'ny' and question.question_text_ny %}
+                    {{ question.question_text_ny }}
+                {% else %}
+                    {{ question.question_text }}
+                {% endif %}
+            </h2>
+            
+            {% if question.question_type == 'multiple_choice' %}
+                <div class="space-y-3">
+                    {% for answer in question.answers.all %}
+                    <label class="flex items-start p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                        <input type="radio" name="question_{{ question.id }}" value="{{ answer.id }}" class="mt-1 form-radio text-eco-green focus:ring-eco-green h-5 w-5">
+                        <span class="ml-3 text-gray-800">
+                            {% if user_language == 'bem' and answer.answer_text_bem %}
+                                {{ answer.answer_text_bem }}
+                            {% elif user_language == 'ny' and answer.answer_text_ny %}
+                                {{ answer.answer_text_ny }}
+                            {% else %}
+                                {{ answer.answer_text }}
+                            {% endif %}
+                        </span>
+                    </label>
+                    {% endfor %}
+                </div>
+            {% elif question.question_type == 'true_false' %}
+                <div class="space-y-3">
+                    <label class="flex items-start p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                        <input type="radio" name="question_{{ question.id }}" value="true" class="mt-1 form-radio text-eco-green focus:ring-eco-green h-5 w-5">
+                        <span class="ml-3 text-gray-800">{% translate "True" %}</span>
+                    </label>
+                    <label class="flex items-start p-4 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors">
+                        <input type="radio" name="question_{{ question.id }}" value="false" class="mt-1 form-radio text-eco-green focus:ring-eco-green h-5 w-5">
+                        <span class="ml-3 text-gray-800">{% translate "False" %}</span>
+                    </label>
+                </div>
+            {% elif question.question_type == 'text' %}
+                <textarea name="question_{{ question.id }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-eco-green" rows="4" placeholder="{% translate 'Enter your answer here...' %}"></textarea>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <div class="flex justify-end">
+            <button type="submit" class="bg-eco-green text-white px-6 py-3 rounded-lg hover:bg-eco-dark transition-colors font-medium inline-flex items-center">
+                <i class="fas fa-check mr-2"></i> {% translate "Submit Quiz" %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

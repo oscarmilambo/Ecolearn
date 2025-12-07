@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Points & Rewards - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-coins text-eco-green mr-2"></i>
+                My Points & Rewards
+            </h1>
+            <p class="text-gray-600">Earn points for environmental actions and redeem them for rewards!</p>
+        </div>
+
+        <!-- Points Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <!-- Total Points -->
+            <div class="bg-gradient-to-br from-eco-green to-eco-dark rounded-lg shadow-lg p-6 text-white">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-semibold">Total Points</h3>
+                    <i class="fas fa-star text-3xl opacity-50"></i>
+                </div>
+                <p class="text-4xl font-bold">{{ user_points.total_points|default:0 }}</p>
+                <p class="text-sm text-eco-light mt-2">All-time earnings</p>
+            </div>
+
+            <!-- Available Points -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900">Available Points</h3>
+                    <i class="fas fa-coins text-3xl text-eco-green"></i>
+                </div>
+                <p class="text-4xl font-bold text-eco-green">{{ user_points.available_points|default:0 }}</p>
+                <p class="text-sm text-gray-500 mt-2">Ready to redeem</p>
+            </div>
+
+            <!-- Redeemed Points -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-lg font-semibold text-gray-900">Redeemed</h3>
+                    <i class="fas fa-gift text-3xl text-orange-500"></i>
+                </div>
+                <p class="text-4xl font-bold text-orange-500">{{ user_points.redeemed_points|default:0 }}</p>
+                <p class="text-sm text-gray-500 mt-2">Points spent</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Recent Transactions -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-history text-eco-green mr-2"></i>
+                        Recent Transactions
+                    </h2>
+                    
+                    {% if recent_transactions %}
+                        <div class="space-y-3">
+                            {% for transaction in recent_transactions %}
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 rounded-full flex items-center justify-center mr-3
+                                        {% if transaction.points > 0 %}bg-green-100{% else %}bg-red-100{% endif %}">
+                                        <i class="fas {% if transaction.points > 0 %}fa-plus text-green-600{% else %}fa-minus text-red-600{% endif %}"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900">{{ transaction.description }}</p>
+                                        <p class="text-sm text-gray-500">{{ transaction.created_at|date:"M d, Y - g:i A" }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-bold {% if transaction.points > 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                                        {% if transaction.points > 0 %}+{% endif %}{{ transaction.points }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-12">
+                            <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                            <p class="text-gray-500">No transactions yet</p>
+                            <p class="text-sm text-gray-400 mt-2">Start earning points by completing activities!</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- My Redemptions -->
+                <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-gift text-eco-green mr-2"></i>
+                        My Redemptions
+                    </h2>
+                    
+                    {% if redemptions %}
+                        <div class="space-y-3">
+                            {% for redemption in redemptions %}
+                            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ redemption.reward.name }}</p>
+                                    <p class="text-sm text-gray-500">{{ redemption.redeemed_at|date:"M d, Y" }}</p>
+                                </div>
+                                <span class="px-3 py-1 text-xs font-semibold rounded-full
+                                    {% if redemption.status == 'pending' %}bg-yellow-100 text-yellow-800
+                                    {% elif redemption.status == 'approved' %}bg-green-100 text-green-800
+                                    {% elif redemption.status == 'delivered' %}bg-blue-100 text-blue-800
+                                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                    {{ redemption.get_status_display }}
+                                </span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-gift text-gray-300 text-4xl mb-3"></i>
+                            <p class="text-gray-500">No redemptions yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Available Rewards Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-lg shadow-md p-6 sticky top-24">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4">
+                        <i class="fas fa-star text-eco-green mr-2"></i>
+                        Available Rewards
+                    </h2>
+                    
+                    {% if available_rewards %}
+                        <div class="space-y-4">
+                            {% for reward in available_rewards|slice:":5" %}
+                            <div class="border border-gray-200 rounded-lg p-4 hover:border-eco-green transition-colors">
+                                {% if reward.image %}
+                                <img src="{{ reward.image.url }}" alt="{{ reward.name }}" class="w-full h-32 object-cover rounded-lg mb-3">
+                                {% endif %}
+                                <h3 class="font-semibold text-gray-900 mb-1">{{ reward.name }}</h3>
+                                <p class="text-sm text-gray-600 mb-3">{{ reward.description|truncatewords:10 }}</p>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-eco-green font-bold">{{ reward.points_cost }} pts</span>
+                                    <a href="{% url 'gamification:rewards_catalog' %}" 
+                                       class="text-sm text-eco-green hover:text-eco-dark font-medium">
+                                        View →
+                                    </a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <a href="{% url 'gamification:rewards_catalog' %}" 
+                           class="block w-full mt-4 text-center bg-eco-green text-white px-4 py-2 rounded-lg hover:bg-eco-dark transition-colors">
+                            View All Rewards
+                        </a>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-lock text-gray-300 text-4xl mb-3"></i>
+                            <p class="text-gray-500 text-sm">Earn more points to unlock rewards!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- How to Earn Points -->
+        <div class="mt-8 bg-gradient-to-r from-eco-green to-eco-dark rounded-lg p-6 text-white">
+            <h2 class="text-2xl font-bold mb-4">
+                <i class="fas fa-lightbulb mr-2"></i>
+                How to Earn Points
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                    <i class="fas fa-graduation-cap text-3xl mb-2"></i>
+                    <h3 class="font-semibold mb-1">Complete Modules</h3>
+                    <p class="text-sm text-eco-light">Earn points by finishing learning modules</p>
+                </div>
+                <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                    <i class="fas fa-flag text-3xl mb-2"></i>
+                    <h3 class="font-semibold mb-1">Report Dumping</h3>
+                    <p class="text-sm text-eco-light">Get points for reporting illegal dumping</p>
+                </div>
+                <div class="bg-white bg-opacity-10 rounded-lg p-4">
+                    <i class="fas fa-users text-3xl mb-2"></i>
+                    <h3 class="font-semibold mb-1">Join Events</h3>
+                    <p class="text-sm text-eco-light">Participate in community cleanup events</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

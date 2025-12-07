@@ -1,0 +1,116 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Advanced Illegal Dumping Reports{% endblock %}
+
+{% block page_title %}Comprehensive Illegal Dumping Management{% endblock %}
+
+{% block content %}
+
+<div class="space-y-8">
+
+    <div class="bg-blue-100 dark:bg-blue-900 border-l-4 border-blue-500 text-blue-900 dark:text-blue-100 p-4 rounded-xl shadow-lg">
+        <h3 class="text-xl font-semibold flex items-center mb-2">
+            <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 21h7a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            Admin Roles in Illegal Dumping Management
+        </h3>
+        <ul class="list-disc list-inside space-y-1 ml-4 text-sm">
+            <li>**Verification & Triage:** Reviewing and authenticating new reports (e.g., **{{ status_counts.pending|default:"0" }}** pending).</li>
+            <li>**Resource Allocation:** Dispatching clean-up crews and enforcement.</li>
+            <li>**Forwarding Reports:** Ensuring reports are forwarded to authorities (via email/API).</li>
+            <li>**Case Closure:** Finalizing remediation and closing cases.</li>
+        </ul>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-zinc-800 p-5 rounded-xl shadow-lg border-t-4 border-red-500">
+            <p class="text-3xl font-bold">{{ status_counts.pending|default:"0" }}</p>
+            <p class="text-zinc-500 dark:text-zinc-400">🚨 Pending Review</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-800 p-5 rounded-xl shadow-lg border-t-4 border-orange-500">
+            <p class="text-3xl font-bold">{{ status_counts.in_progress|default:"0" }}</p>
+            <p class="text-zinc-500 dark:text-zinc-400">⚙️ In Progress</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-800 p-5 rounded-xl shadow-lg border-t-4 border-green-500">
+            <p class="text-3xl font-bold">{{ status_counts.resolved|default:"0" }}</p>
+            <p class="text-zinc-500 dark:text-zinc-400">✅ Resolved Cases</p>
+        </div>
+        <div class="bg-white dark:bg-zinc-800 p-5 rounded-xl shadow-lg border-t-4 border-purple-500">
+            {% with total_reports=status_counts.pending|default:0|add:status_counts.verified|default:0|add:status_counts.in_progress|default:0|add:status_counts.resolved|default:0 %}
+                <p class="text-3xl font-bold">{{ total_reports }}</p>
+                <p class="text-zinc-500 dark:text-zinc-400">Total Reports</p>
+            {% endwith %}
+        </div>
+    </div>
+    
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4">📍 Dumping Hotspot Visualization</h2>
+        <div id="reportMap" class="h-96 rounded-lg border border-zinc-200 dark:border-zinc-700"></div>
+    </div>
+
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4 text-red-600">Reports Pending Review ({{ pending_reports|length }})</h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+                <thead class="bg-zinc-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Ref No.</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Location</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Severity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Reported On</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-zinc-800 divide-y divide-zinc-200 dark:divide-zinc-700">
+                    {% for report in pending_reports %}
+                    <tr class="hover:bg-zinc-50 dark:hover:bg-zinc-700">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">{{ report.reference_number }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{{ report.location_description|truncatechars:30 }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm {% if report.severity == 'High' %}text-red-600 font-bold{% endif %}">
+                            {{ report.get_severity_display }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">{{ report.reported_at|date:"Y-m-d H:i" }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <a href="{% url 'reporting:update_report' report.id %}" class="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 font-medium">
+                                Review & Verify
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-zinc-500 dark:text-zinc-400">All reports reviewed!</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    </div>
+
+<script>
+    const reportMap = L.map('reportMap').setView([-15.4167, 28.2833], 11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(reportMap);
+
+    // --- Dynamic Marker Logic ---
+    // You need to pass verified report locations (lat, lon) from your view for mapping.
+    // Example: Assumes context.map_report_locs is a list of objects like 
+    // [{lat: -15.4, lon: 28.3, ref: 'ABC-123', status: 'verified'}]
+    
+    /*
+    // Placeholder for map markers:
+    {% if context.map_report_locs %}
+        const report_locs = JSON.parse('{{ context.map_report_locs|safe }}'); 
+        
+        report_locs.forEach(function(loc) {
+            L.marker([loc.lat, loc.lon])
+                .addTo(reportMap)
+                .bindPopup("<b>Report: " + loc.ref + "</b><br>Status: " + loc.status + 
+                        "<br><a href='{% url 'reporting:report_detail' 99999 %}'>Details</a>".replace('99999', loc.id));
+        });
+    {% endif %}
+    */
+</script>
+
+{% endblock %}

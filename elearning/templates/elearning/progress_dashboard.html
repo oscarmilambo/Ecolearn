@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+...
+
+{% block title %}{% translate "Learning Progress - EcoLearn" %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <style>
+            .text-eco-green { color: #10B981; } /* Tailwind Green 500 */
+            .bg-eco-green { background-color: #10B981; }
+            .hover\:bg-eco-dark:hover { background-color: #059669; } /* Tailwind Green 600 */
+        </style>
+
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">
+                <i class="fas fa-chart-line text-eco-green mr-3"></i>
+                {% translate "Your Learning Progress" %}
+            </h1>
+            <p class="text-gray-600 mt-2">{% translate "Track your environmental education journey and achievements" %}</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-yellow-100">
+                        <i class="fas fa-star text-yellow-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">{% translate "Total Points" %}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ profile.points|default:0 }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-green-100">
+                        <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">{% translate "Completed" %}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ completed }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-blue-100">
+                        <i class="fas fa-play-circle text-blue-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">{% translate "In Progress" %}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ in_progress }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex items-center">
+                    <div class="p-3 rounded-full bg-purple-100">
+                        <i class="fas fa-certificate text-purple-600 text-xl"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">{% translate "Certificates" %}</p>
+                        <p class="text-2xl font-bold text-gray-900">{{ certificates|length }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">{% translate "Overall Progress" %}</h2>
+            <div class="flex items-center">
+                <div class="flex-1">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>{% translate "Completion Rate" %}</span>
+                        <span>{{ completion_rate|floatformat:1 }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div class="bg-gradient-to-r from-eco-green to-eco-dark h-3 rounded-full transition-all duration-500" 
+                            style="width: {{ completion_rate|floatformat:0 }}%"></div>
+                    </div>
+                </div>
+                <div class="ml-6 text-right">
+                    <p class="text-2xl font-bold text-eco-green">{{ completed }}/{{ total_enrolled }}</p>
+                    <p class="text-sm text-gray-600">{% translate "Modules" %}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6 border-b pb-3">
+                    <i class="fas fa-book-open text-eco-green mr-2"></i>
+                    {% translate "My Enrolled Modules" %}
+                </h2>
+                
+                {% if enrollments %}
+                    <div class="space-y-3" id="module-accordion">
+                        {% for enrollment in enrollments %}
+                        {% with module=enrollment.module lessons=enrollment.module.lessons.all|dictsort:"order" %}
+                        
+                        <div class="module-item border border-gray-200 rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg">
+                            
+                            <div class="module-header flex items-center justify-between p-4 cursor-pointer bg-gray-50 hover:bg-gray-100"
+                                data-target="#collapse-{{ module.id }}">
+                                
+                                <div class="flex items-center flex-1 min-w-0">
+                                    {% if enrollment.completed_at %}
+                                        <i class="fas fa-check-circle text-green-500 mr-3 text-lg"></i>
+                                    {% elif enrollment.progress_percentage > 0 %}
+                                        <i class="fas fa-tasks text-blue-500 mr-3 text-lg"></i>
+                                    {% else %}
+                                        <i class="fas fa-hourglass-start text-gray-400 mr-3 text-lg"></i>
+                                    {% endif %}
+                                    <h3 class="font-medium text-gray-900 truncate">{{ module.title }}</h3>
+                                </div>
+                                
+                                <div class="flex items-center ml-4">
+                                    <div class="w-24 bg-gray-200 rounded-full h-2 mr-3">
+                                        <div class="bg-eco-green h-2 rounded-full" style="width: {{ enrollment.progress_percentage }}%"></div>
+                                    </div>
+                                    <span class="text-sm font-semibold text-gray-700 w-10 text-right">{{ enrollment.progress_percentage }}%</span>
+                                    
+                                    <i class="fas fa-chevron-down text-gray-500 ml-4 transition-transform duration-300 accordion-icon"></i>
+                                </div>
+                            </div>
+
+                            <div id="collapse-{{ module.id }}" class="module-content hidden p-4 bg-white border-t border-gray-200">
+                                
+                                <div class="space-y-2">
+                                    {% for lesson in lessons %}
+                                    {% comment %} Using the custom tag (you must implement get_item) or rely on a property on the enrollment/lesson {% endcomment %}
+                                    {% with is_completed=progress_map|get_item:lesson.id %} 
+                                    
+                                    <div class="lesson-quiz-item flex items-center p-3 rounded-md transition-colors {% if is_completed %}bg-green-50{% else %}hover:bg-gray-50{% endif %}">
+                                        
+                                        <a href="{% url 'elearning:lesson_detail' module_slug=module.slug lesson_slug=lesson.slug %}" class="flex-1 min-w-0 flex items-center">
+                                            <i class="fas {% if is_completed %}fa-check-circle text-green-600{% else %}fa-circle text-gray-400{% endif %} mr-3 text-sm"></i>
+                                            <span class="text-sm font-medium text-gray-800 hover:text-eco-green">{{ lesson.order }}. {{ lesson.title }}</span>
+                                        </a>
+
+                                        {% if lesson.quiz %}
+                                            <a href="{% url 'elearning:quiz_take' quiz_id=lesson.quiz.id %}" class="ml-4 px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap bg-yellow-400 text-gray-900 hover:bg-yellow-500" 
+                                                title="Take Quiz">
+                                                <i class="fas fa-question mr-1"></i>
+                                                Quiz
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                    {% endwith %}
+                                    {% empty %}
+                                    <p class="text-gray-500 italic text-sm p-3">{% translate "No lessons found for this module." %}</p>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="mt-4 text-right">
+                                    <a href="{% url 'elearning:module_detail' slug=module.slug %}" 
+                                        class="text-sm text-eco-green hover:text-eco-dark font-medium">
+                                        {% if enrollment.completed_at %}{% translate "Review Module" %}{% else %}{% translate "Go to Module" %}{% endif %} →
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endwith %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8 bg-gray-50 rounded-lg">
+                        <i class="fas fa-book-open text-gray-400 text-4xl mb-4"></i>
+                        <p class="text-gray-600 mb-4">{% translate "You are not enrolled in any modules." %}</p>
+                        <a href="{% url 'elearning:module_list' %}" 
+                            class="inline-flex items-center px-4 py-2 bg-eco-green text-white rounded-md hover:bg-eco-dark transition-colors">
+                            <i class="fas fa-play mr-2"></i>{% translate "Start Learning" %}
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="space-y-8">
+                
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-3">
+                        <i class="fas fa-certificate text-eco-green mr-2"></i>
+                        {% translate "Your Certificates" %}
+                    </h2>
+                    
+                    {% if certificates %}
+                        <div class="space-y-4">
+                            {% for certificate in certificates|slice:":3" %}
+                                <div class="border border-gray-200 rounded-lg p-3 hover:border-eco-green transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex-1 min-w-0">
+                                            <h3 class="font-medium text-gray-900 truncate">{{ certificate.module.title }}</h3>
+                                            <p class="text-xs text-gray-600 mt-1">
+                                                <i class="fas fa-calendar mr-1"></i>
+                                                {% translate "Earned on" %} {{ certificate.issued_at|date:"M d, Y" }}
+                                            </p>
+                                        </div>
+                                        <div class="ml-4">
+                                            <a href="{% url 'elearning:download_certificate' certificate.certificate_id %}" 
+                                                class="inline-flex items-center px-3 py-1 bg-eco-green text-white text-sm rounded-md hover:bg-eco-dark transition-colors">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="mt-4 text-center">
+                            <a href="{% url 'elearning:certificates' %}" 
+                                class="text-eco-green hover:text-eco-dark font-medium text-sm">
+                                {% translate "View All Certificates" %} →
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-certificate text-gray-400 text-3xl mb-3"></i>
+                            <p class="text-sm text-gray-500">{% translate "No certificates earned yet." %}</p>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-4 border-b pb-3">
+                        <i class="fas fa-trophy text-eco-green mr-2"></i>
+                        {% translate "Learning Achievements" %}
+                    </h2>
+                    
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="text-center p-2 {% if completed >= 1 %}bg-green-50 border-green-200{% else %}bg-gray-50 border-gray-200{% endif %} border rounded-lg">
+                            <div class="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center {% if completed >= 1 %}bg-green-100{% else %}bg-gray-100{% endif %}">
+                                <i class="fas fa-seedling {% if completed >= 1 %}text-green-600{% else %}text-gray-400{% endif %} text-xl"></i>
+                            </div>
+                            <h3 class="font-medium text-xs {% if completed >= 1 %}text-green-900{% else %}text-gray-600{% endif %}">{% translate "First Steps" %}</h3>
+                            <p class="text-xs {% if completed >= 1 %}text-green-700{% else %}text-gray-500{% endif %}">1 {% translate "Module" %}</p>
+                        </div>
+
+                        <div class="text-center p-2 {% if completed >= 3 %}bg-blue-50 border-blue-200{% else %}bg-gray-50 border-gray-200{% endif %} border rounded-lg">
+                            <div class="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center {% if completed >= 3 %}bg-blue-100{% else %}bg-gray-100{% endif %}">
+                                <i class="fas fa-fire {% if completed >= 3 %}text-blue-600{% else %}text-gray-400{% endif %} text-xl"></i>
+                            </div>
+                            <h3 class="font-medium text-xs {% if completed >= 3 %}text-blue-900{% else %}text-gray-600{% endif %}">{% translate "Streak" %}</h3>
+                            <p class="text-xs {% if completed >= 3 %}text-blue-700{% else %}text-gray-500{% endif %}">3 {% translate "Modules" %}</p>
+                        </div>
+
+                        <div class="text-center p-2 {% if completed >= 5 %}bg-purple-50 border-purple-200{% else %}bg-gray-50 border-gray-200{% endif %} border rounded-lg">
+                            <div class="w-10 h-10 mx-auto mb-2 rounded-full flex items-center justify-center {% if completed >= 5 %}bg-purple-100{% else %}bg-gray-100{% endif %}">
+                                <i class="fas fa-crown {% if completed >= 5 %}text-purple-600{% else %}text-gray-400{% endif %} text-xl"></i>
+                            </div>
+                            <h3 class="font-medium text-xs {% if completed >= 5 %}text-purple-900{% else %}text-gray-600{% endif %}">{% translate "Expert" %}</h3>
+                            <p class="text-xs {% if completed >= 5 %}text-purple-700{% else %}text-gray-500{% endif %}">5 {% translate "Modules" %}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Simple JavaScript for Tailwind accordion functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const headers = document.querySelectorAll('.module-header');
+        
+        headers.forEach(header => {
+            header.addEventListener('click', function() {
+                const targetId = this.getAttribute('data-target');
+                const content = document.querySelector(targetId);
+                const icon = this.querySelector('.accordion-icon');
+
+                if (content.classList.contains('hidden')) {
+                    // Close all other open modules in the same section
+                    document.querySelectorAll('.module-content').forEach(c => c.classList.add('hidden'));
+                    document.querySelectorAll('.accordion-icon').forEach(i => i.classList.remove('rotate-180'));
+                    
+                    // Open the clicked module
+                    content.classList.remove('hidden');
+                    icon.classList.add('rotate-180');
+                    this.parentElement.classList.add('shadow-xl', 'ring-2', 'ring-eco-green');
+                } else {
+                    // Close the current module
+                    content.classList.add('hidden');
+                    icon.classList.remove('rotate-180');
+                    this.parentElement.classList.remove('shadow-xl', 'ring-2', 'ring-eco-green');
+                }
+            });
+            
+            // Optional: Auto-open the first 'in-progress' module
+            if (header.querySelector('.fa-tasks')) {
+                header.click();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+{% load static elearning_extras i18n %}
+
+{% block title %}{% get_translated_field lesson 'title' %} - {% get_translated_field module 'title' %} | EcoLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .lesson-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+    }
+
+    .breadcrumb {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+        color: #6b7280;
+        font-size: 0.875rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .breadcrumb a {
+        color: #3b82f6;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .lesson-header {
+        background: white;
+        padding: 2rem;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 2rem;
+    }
+
+    .lesson-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+
+    .lesson-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        align-items: center;
+        color: #6b7280;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .badge {
+        padding: 0.375rem 0.875rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .badge-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .lesson-content {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .main-content {
+        background: white;
+        padding: 2.5rem;
+        border-radius: 16px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .content-text {
+        line-height: 1.8;
+        color: #374151;
+        font-size: 1.0625rem;
+    }
+
+    .content-text h2 {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        color: #1f2937;
+    }
+
+    .content-text h3 {
+        font-size: 1.375rem;
+        font-weight: 600;
+        margin-top: 1.5rem;
+        margin-bottom: 0.75rem;
+        color: #1f2937;
+    }
+
+    .content-text p {
+        margin-bottom: 1.25rem;
+    }
+
+    .content-text ul, .content-text ol {
+        margin-bottom: 1.25rem;
+        padding-left: 1.75rem;
+    }
+
+    .content-text li {
+        margin-bottom: 0.5rem;
+    }
+
+    .media-container {
+        margin: 2rem 0;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #000;
+    }
+
+    video, audio {
+        width: 100%;
+        border-radius: 12px;
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 2rem;
+        height: fit-content;
+    }
+
+    .lesson-progress-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+    }
+
+    .progress-title {
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .complete-btn {
+        width: 100%;
+        padding: 0.875rem;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .complete-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .complete-btn:disabled {
+        background: #d1d5db;
+        cursor: not-allowed;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .nav-btn {
+        flex: 1;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        transition: all 0.3s ease;
+    }
+
+    .nav-btn-prev {
+        background: #f3f4f6;
+        color: #374151;
+        border: 2px solid #e5e7eb;
+    }
+
+    .nav-btn-prev:hover {
+        border-color: #10b981;
+        background: #d1fae5;
+    }
+
+    .nav-btn-next {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .nav-btn-next:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    }
+
+    .language-indicator {
+        background: #fef3c7;
+        border-left: 4px solid #f59e0b;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: 8px;
+    }
+
+    @media (max-width: 768px) {
+        .lesson-content {
+            grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+            position: static;
+        }
+
+        .lesson-title {
+            font-size: 1.75rem;
+        }
+
+        .navigation-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="lesson-container">
+    <!-- Breadcrumb -->
+    <nav class="breadcrumb">
+        <a href="{% url 'elearning:module_list' %}">
+            <i class="fas fa-home"></i> Courses
+        </a>
+        <span>/</span>
+        <a href="{% url 'elearning:module_detail' module.slug %}">
+            {% get_translated_field module 'title' %}
+        </a>
+        <span>/</span>
+        <span>{% get_translated_field lesson 'title' %}</span>
+    </nav>
+
+    <!-- Language Indicator -->
+    {% if user_language != 'en' %}
+    <div class="language-indicator">
+        <strong><i class="fas fa-language"></i> Language:</strong>
+        {% if user_language == 'bem' %}Bemba (Chibemba)
+        {% elif user_language == 'ny' %}Nyanja (Chinyanja)
+        {% else %}{{ user_language|upper }}{% endif %}
+        - 
+        <a href="{% url 'set_language' 'en' %}?next={{ request.path }}" style="color: #f59e0b; text-decoration: underline;">
+            Switch to English
+        </a>
+    </div>
+    {% endif %}
+
+    <!-- Lesson Header -->
+    <div class="lesson-header">
+        <h1 class="lesson-title">
+            {% get_translated_field lesson 'title' %}
+        </h1>
+        <div class="lesson-meta">
+            <span class="meta-item">
+                <i class="fas {{ lesson.content_type|content_type_icon }}"></i>
+                {{ lesson.content_type|title }}
+            </span>
+            <span class="meta-item">
+                <i class="far fa-clock"></i>
+                {{ lesson.duration_minutes|duration_format }}
+            </span>
+            {% if lesson_progress and lesson_progress.is_completed %}
+                <span class="badge badge-success">
+                    <i class="fas fa-check-circle"></i> Completed
+                </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Lesson Content and Sidebar -->
+    <div class="lesson-content">
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Video Content -->
+            {% if lesson.content_type == 'video' %}
+                {% get_translated_media lesson 'video' as video_file %}
+                {% if video_file %}
+                <div class="media-container">
+                    <video controls controlsList="nodownload">
+                        <source src="{{ video_file.url }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                {% else %}
+                <div style="background: #fef3c7; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                    <i class="fas fa-video text-4xl text-yellow-600 mb-3"></i>
+                    <p class="text-gray-700">
+                        Video not available in {{ user_language|upper }}.
+                        <a href="{% url 'set_language' 'en' %}?next={{ request.path }}" class="text-blue-600 underline">
+                            Switch to English
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Audio Content -->
+            {% if lesson.content_type == 'audio' %}
+                {% get_translated_media lesson 'audio' as audio_file %}
+                {% if audio_file %}
+                <div class="media-container" style="background: #f3f4f6; padding: 2rem; text-align: center;">
+                    <i class="fas fa-headphones" style="font-size: 3rem; color: #10b981; margin-bottom: 1rem;"></i>
+                    <audio controls controlsList="nodownload" style="width: 100%; max-width: 500px;">
+                        <source src="{{ audio_file.url }}" type="audio/mpeg">
+                        Your browser does not support the audio tag.
+                    </audio>
+                </div>
+                {% else %}
+                <div style="background: #fef3c7; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                    <i class="fas fa-headphones text-4xl text-yellow-600 mb-3"></i>
+                    <p class="text-gray-700">
+                        Audio not available in {{ user_language|upper }}.
+                        <a href="{% url 'set_language' 'en' %}?next={{ request.path }}" class="text-blue-600 underline">
+                            Switch to English
+                        </a>
+                    </p>
+                </div>
+                {% endif %}
+            {% endif %}
+
+            <!-- Text Content -->
+            <div class="content-text">
+                {% get_translated_field lesson 'content' as lesson_content %}
+                {{ lesson_content|safe }}
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="navigation-buttons">
+                {% if prev_lesson %}
+                <a href="{% url 'elearning:lesson_detail' module.slug prev_lesson.slug %}" 
+                   class="nav-btn nav-btn-prev">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Previous: {% get_translated_field prev_lesson 'title' %}</span>
+                </a>
+                {% else %}
+                <div class="nav-btn nav-btn-prev" style="opacity: 0.3; cursor: not-allowed;">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>First Lesson</span>
+                </div>
+                {% endif %}
+
+                {% if next_lesson %}
+                <a href="{% url 'elearning:lesson_detail' module.slug next_lesson.slug %}" 
+                   class="nav-btn nav-btn-next">
+                    <span>Next: {% get_translated_field next_lesson 'title' %}</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+                {% else %}
+                <div class="nav-btn nav-btn-next" style="opacity: 0.7;">
+                    <span>Last Lesson</span>
+                    <i class="fas fa-check"></i>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <!-- Progress Card -->
+            {% if request.user.is_authenticated and enrollment %}
+            <div class="lesson-progress-card">
+                <div class="progress-title">
+                    <i class="fas fa-chart-line"></i>
+                    Your Progress
+                </div>
+                <div style="margin-bottom: 1rem; text-align: center; font-size: 1.5rem; font-weight: 700; color: #10b981;">
+                    {{ enrollment.progress_percentage }}%
+                </div>
+                
+                {% if not lesson_progress.is_completed %}
+                <form method="POST" action="{% url 'elearning:complete_lesson' lesson.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="complete-btn">
+                        <i class="fas fa-check"></i>
+                        Mark as Complete
+                    </button>
+                </form>
+                {% else %}
+                <button class="complete-btn" disabled>
+                    <i class="fas fa-check-circle"></i>
+                    Completed
+                </button>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Module Info -->
+            <div class="lesson-progress-card">
+                <div class="progress-title">
+                    <i class="fas fa-book"></i>
+                    Module Info
+                </div>
+                <div style="color: #6b7280; font-size: 0.875rem; line-height: 1.6;">
+                    <p><strong>Module:</strong> {% get_translated_field module 'title' %}</p>
+                    <p><strong>Total Lessons:</strong> {{ module.lessons.count }}</p>
+                    <p><strong>Difficulty:</strong> {{ module.get_difficulty_display }}</p>
+                </div>
+                <a href="{% url 'elearning:module_detail' module.slug %}" 
+                style="display: inline-block; margin-top: 1rem; color: #3b82f6; text-decoration: none; font-weight: 600;">
+                    <i class="fas fa-arrow-left"></i> Back to Module
+                </a>
+            </div>
+        </aside>
+    </div>
+</div>
+{% endblock %}

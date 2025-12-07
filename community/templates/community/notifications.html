@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-8">
+    <div class="max-w-4xl mx-auto px-3 sm:px-6">
+        
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 flex items-center">
+                        <i class="fas fa-bell text-eco-green mr-2 sm:mr-3"></i>
+                        Notifications
+                    </h1>
+                    <p class="text-sm text-gray-600 mt-1">Stay updated with your activities</p>
+                </div>
+                <div class="flex gap-2">
+                    <form method="post" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" name="mark_all_read" class="bg-eco-green text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-eco-dark transition-colors text-sm font-medium">
+                            <i class="fas fa-check-double mr-1"></i>
+                            <span class="hidden sm:inline">Mark All Read</span>
+                            <span class="sm:hidden">All Read</span>
+                        </button>
+                    </form>
+                    <a href="/accounts/notifications/preferences/" class="bg-gray-100 text-gray-700 px-3 sm:px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium">
+                        <i class="fas fa-cog"></i>
+                        <span class="hidden sm:inline ml-1">Settings</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow-sm p-3 sm:p-4 mb-4 overflow-x-auto">
+            <div class="flex gap-2 min-w-max sm:min-w-0">
+                <a href="?type=all" class="px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap {% if filter_type == 'all' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}">
+                    <i class="fas fa-list mr-1"></i>All ({{ all_count }})
+                </a>
+                <a href="?type=events" class="px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap {% if filter_type == 'events' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}" title="Event Reminders">
+                    <i class="fas fa-calendar mr-1"></i>Events ({{ events_count }})
+                </a>
+                <a href="?type=challenges" class="px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap {% if filter_type == 'challenges' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}" title="Challenge Updates">
+                    <i class="fas fa-trophy mr-1"></i>Challenges ({{ challenges_count }})
+                </a>
+                <a href="?type=forum" class="px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap {% if filter_type == 'forum' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}" title="Forum Replies">
+                    <i class="fas fa-comments mr-1"></i>Forum ({{ forum_count }})
+                </a>
+                <a href="?type=rewards" class="px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap {% if filter_type == 'rewards' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}" title="Reward Updates">
+                    <i class="fas fa-gift mr-1"></i>Rewards ({{ rewards_count }})
+                </a>
+                <a href="?type=community" class="px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap {% if filter_type == 'community' %}bg-eco-green text-white{% else %}bg-gray-100 text-gray-700 hover:bg-gray-200{% endif %}" title="Community News">
+                    <i class="fas fa-bullhorn mr-1"></i>News ({{ community_count }})
+                </a>
+            </div>
+        </div>
+
+        <!-- Notifications List -->
+        {% if page_obj %}
+            <div class="space-y-3">
+                {% for notification in page_obj %}
+                    <a href="{% if notification.url %}{{ notification.url }}{% else %}#{% endif %}" 
+                       class="block bg-white rounded-lg shadow-sm hover:shadow-md transition-all {% if not notification.is_read %}border-l-4 border-eco-green{% endif %}">
+                        <div class="p-4">
+                            <div class="flex items-start gap-3">
+                                <!-- Icon -->
+                                <div class="flex-shrink-0">
+                                    {% if notification.notification_type == 'challenge_update' %}
+                                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-trophy text-yellow-600 text-lg"></i>
+                                        </div>
+                                    {% elif notification.notification_type == 'forum_reply' %}
+                                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-comments text-blue-600 text-lg"></i>
+                                        </div>
+                                    {% elif notification.notification_type == 'event_reminder' %}
+                                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-calendar text-purple-600 text-lg"></i>
+                                        </div>
+                                    {% elif notification.notification_type == 'emergency' %}
+                                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-exclamation-triangle text-red-600 text-lg"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="w-10 h-10 sm:w-12 sm:h-12 bg-eco-light rounded-full flex items-center justify-center">
+                                            <i class="fas fa-bell text-eco-green text-lg"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Content -->
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <h3 class="text-base sm:text-lg font-semibold text-gray-800 {% if not notification.is_read %}font-bold{% endif %}">
+                                            {{ notification.title }}
+                                        </h3>
+                                        {% if notification.is_read %}
+                                            <i class="fas fa-check-circle text-eco-green text-lg flex-shrink-0"></i>
+                                        {% else %}
+                                            <span class="w-2 h-2 bg-eco-green rounded-full flex-shrink-0 mt-2"></span>
+                                        {% endif %}
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1 line-clamp-2">
+                                        {{ notification.message }}
+                                    </p>
+                                    <div class="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                                        <span>
+                                            <i class="fas fa-clock mr-1"></i>
+                                            {{ notification.created_at|timesince }} ago
+                                        </span>
+                                        {% if not notification.is_read %}
+                                            <span class="text-eco-green font-semibold">
+                                                <i class="fas fa-circle text-xs mr-1"></i>New
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </a>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+                <div class="mt-6 flex justify-center">
+                    <nav class="flex items-center gap-1 sm:gap-2">
+                        {% if page_obj.has_previous %}
+                            <a href="?type={{ filter_type }}&page=1" class="px-2 sm:px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-sm">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                            <a href="?type={{ filter_type }}&page={{ page_obj.previous_page_number }}" class="px-2 sm:px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-sm">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        {% endif %}
+
+                        <span class="px-3 sm:px-4 py-2 bg-eco-green text-white rounded-lg text-sm font-medium">
+                            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+                        </span>
+
+                        {% if page_obj.has_next %}
+                            <a href="?type={{ filter_type }}&page={{ page_obj.next_page_number }}" class="px-2 sm:px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-sm">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                            <a href="?type={{ filter_type }}&page={{ page_obj.paginator.num_pages }}" class="px-2 sm:px-3 py-2 bg-white rounded-lg shadow-sm hover:bg-gray-50 transition-colors text-sm">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        {% endif %}
+                    </nav>
+                </div>
+            {% endif %}
+        {% else %}
+            <!-- Empty State -->
+            <div class="bg-white rounded-lg shadow-sm p-8 sm:p-12 text-center">
+                <div class="w-16 h-16 sm:w-24 sm:h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                    <i class="fas fa-bell-slash text-gray-400 text-3xl sm:text-4xl"></i>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-2">No Notifications</h3>
+                <p class="text-sm sm:text-base text-gray-600 mb-6">You're all caught up! Check back later for updates.</p>
+                <a href="{% url 'accounts:dashboard' %}" class="inline-block bg-eco-green text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg hover:bg-eco-dark transition-colors text-sm sm:text-base">
+                    <i class="fas fa-home mr-2"></i>Back to Dashboard
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+<div class="relative group">
+    <button class="flex items-center space-x-1 focus:outline-none">
+        <span class="text-sm font-medium">
+            {% if request.LANGUAGE_CODE == 'en' %}
+                <i class="fas fa-language"></i> EN
+            {% elif request.LANGUAGE_CODE == 'bem' %}
+                <i class="fas fa-language"></i> BEM
+            {% else %}
+                <i class="fas fa-language"></i> NY
+            {% endif %}
+        </span>
+        <i class="fas fa-chevron-down text-xs"></i>
+    </button>
+    
+    <div class="absolute right-0 mt-2 w-32 bg-white rounded-md shadow-lg py-1 z-50 hidden group-hover:block">
+        <a href="{% url 'set_language' 'en' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.LANGUAGE_CODE == 'en' %}bg-gray-100 font-medium{% endif %}">
+            <i class="fas fa-check mr-2 {% if request.LANGUAGE_CODE != 'en' %}invisible{% endif %}"></i>
+            English
+        </a>
+        <a href="{% url 'set_language' 'bem' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.LANGUAGE_CODE == 'bem' %}bg-gray-100 font-medium{% endif %}">
+            <i class="fas fa-check mr-2 {% if request.LANGUAGE_CODE != 'bem' %}invisible{% endif %}"></i>
+            Chibemba
+        </a>
+        <a href="{% url 'set_language' 'ny' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 {% if request.LANGUAGE_CODE == 'ny' %}bg-gray-100 font-medium{% endif %}">
+            <i class="fas fa-check mr-2 {% if request.LANGUAGE_CODE != 'ny' %}invisible{% endif %}"></i>
+            Chinyanja
+        </a>
+    </div>
+</div>

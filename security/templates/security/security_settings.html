@@ -1,0 +1,165 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Security Settings" %}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">{% trans "Security Settings" %}</h1>
+    </div>
+
+    <!-- Add/Update Setting -->
+    <div class="bg-white rounded-lg shadow mb-8 p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">{% trans "Add or Update Setting" %}</h2>
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 gap-4 mb-4">
+                <div>
+                    <label for="setting_name" class="block text-sm font-medium text-gray-700 mb-2">
+                        {% trans "Setting Name" %}
+                    </label>
+                    <input type="text" name="setting_name" id="setting_name" required
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="e.g., max_login_attempts">
+                </div>
+                
+                <div>
+                    <label for="setting_value" class="block text-sm font-medium text-gray-700 mb-2">
+                        {% trans "Setting Value (JSON)" %}
+                    </label>
+                    <textarea name="setting_value" id="setting_value" rows="3" required
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 font-mono text-sm"
+                              placeholder='{"value": 5, "enabled": true}'>{"value": "", "enabled": true}</textarea>
+                    <p class="mt-1 text-xs text-gray-500">{% trans "Must be valid JSON format" %}</p>
+                </div>
+                
+                <div>
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-2">
+                        {% trans "Description" %}
+                    </label>
+                    <textarea name="description" id="description" rows="2"
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="{% trans 'Brief description of this setting' %}"></textarea>
+                </div>
+            </div>
+            
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors">
+                {% trans "Save Setting" %}
+            </button>
+        </form>
+    </div>
+
+    <!-- Current Settings -->
+    <div class="bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">
+                {% trans "Current Security Settings" %}
+                <span class="text-sm font-normal text-gray-500">({{ settings_list.count }} {% trans "total" %})</span>
+            </h2>
+        </div>
+        
+        <div class="divide-y divide-gray-200">
+            {% for setting in settings_list %}
+            <div class="p-6 hover:bg-gray-50">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ setting.setting_name }}</h3>
+                        
+                        {% if setting.description %}
+                        <p class="text-sm text-gray-600 mb-3">{{ setting.description }}</p>
+                        {% endif %}
+                        
+                        <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                            <p class="text-xs font-medium text-gray-500 mb-1">{% trans "Value:" %}</p>
+                            <pre class="text-sm font-mono text-gray-900 whitespace-pre-wrap">{{ setting.setting_value|safe }}</pre>
+                        </div>
+                        
+                        <div class="flex items-center gap-4 text-xs text-gray-500">
+                            <span>
+                                {% trans "Updated:" %} {{ setting.updated_at|date:"Y-m-d H:i" }}
+                            </span>
+                            {% if setting.updated_by %}
+                            <span>
+                                {% trans "By:" %} {{ setting.updated_by.username }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <button onclick="editSetting('{{ setting.setting_name }}', {{ setting.setting_value|safe }}, '{{ setting.description|escapejs }}')"
+                            class="ml-4 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        {% trans "Edit" %}
+                    </button>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center text-gray-500">
+                {% trans "No security settings configured yet" %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Common Settings Reference -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mt-8">
+        <h3 class="text-lg font-semibold text-blue-900 mb-3">{% trans "Common Security Settings" %}</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            <div>
+                <p class="font-medium text-blue-900">max_login_attempts</p>
+                <p class="text-blue-700">{% trans "Maximum failed login attempts before lockout" %}</p>
+                <code class="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{"value": 5}</code>
+            </div>
+            <div>
+                <p class="font-medium text-blue-900">session_timeout</p>
+                <p class="text-blue-700">{% trans "Session timeout in minutes" %}</p>
+                <code class="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{"value": 30}</code>
+            </div>
+            <div>
+                <p class="font-medium text-blue-900">password_min_length</p>
+                <p class="text-blue-700">{% trans "Minimum password length" %}</p>
+                <code class="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{"value": 8}</code>
+            </div>
+            <div>
+                <p class="font-medium text-blue-900">require_2fa</p>
+                <p class="text-blue-700">{% trans "Require two-factor authentication" %}</p>
+                <code class="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{"enabled": false}</code>
+            </div>
+            <div>
+                <p class="font-medium text-blue-900">backup_retention_days</p>
+                <p class="text-blue-700">{% trans "Days to keep backup files" %}</p>
+                <code class="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{"value": 30}</code>
+            </div>
+            <div>
+                <p class="font-medium text-blue-900">audit_log_retention_days</p>
+                <p class="text-blue-700">{% trans "Days to keep audit logs" %}</p>
+                <code class="text-xs bg-white px-2 py-1 rounded mt-1 inline-block">{"value": 90}</code>
+            </div>
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mt-6">
+        <a href="{% url 'admin_dashboard:security:dashboard' %}" class="text-blue-600 hover:text-blue-800">
+            ← {% trans "Back to Security Dashboard" %}
+        </a>
+    </div>
+</div>
+
+<script>
+function editSetting(name, value, description) {
+    document.getElementById('setting_name').value = name;
+    document.getElementById('setting_value').value = JSON.stringify(value, null, 2);
+    document.getElementById('description').value = description;
+    
+    // Scroll to form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Focus on value field
+    setTimeout(() => {
+        document.getElementById('setting_value').focus();
+    }, 500);
+}
+</script>
+{% endblock %}
