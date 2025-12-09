@@ -1,62 +1,290 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}About Us | EcoLearn{% endblock %}
+{% block title %}About Us - EcoLearn Zambia{% endblock %}
+
+{% block extra_css %}
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+    .team-card {
+        transition: all 0.3s ease;
+    }
+    .team-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 3px;
+        height: 100%;
+        background: #22c55e;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- About Page Content -->
-<section class="py-16 bg-white">
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-br from-green-50 to-green-100 py-20">
     <div class="max-w-7xl mx-auto px-6">
-        <!-- Hero Section -->
-        <div class="text-center mb-16">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">About EcoLearn</h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                We're on a mission to transform environmental education in Zambia through technology, community, and innovation.
+        <div class="text-center" data-aos="fade-up">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
+                About <span class="text-green-600">EcoLearn</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
+                Transforming environmental education in Zambia through technology, community engagement, and sustainable action
             </p>
         </div>
+    </div>
+</section>
 
-        <!-- Mission & Vision -->
-        <div class="grid md:grid-cols-2 gap-12 mb-16">
-            <div class="bg-green-50 p-8 rounded-2xl shadow-lg">
-                <div class="flex items-center mb-4">
-                    <div class="bg-green-100 p-3 rounded-full mr-4">
-                        <i class="fas fa-bullseye text-green-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-900">Our Mission</h3>
-                </div>
-                <p class="text-gray-600">
-                    To empower every Zambian with the knowledge, skills, and resources needed to build a sustainable future through accessible environmental education.
-                </p>
+<!-- Stats Section -->
+<section class="py-16 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6" data-aos="fade-up">
+            <div class="stat-card text-white p-8 rounded-2xl text-center">
+                <div class="text-4xl font-bold mb-2">1000+</div>
+                <div class="text-green-100">Active Learners</div>
             </div>
-            <div class="bg-blue-50 p-8 rounded-2xl shadow-lg">
-                <div class="flex items-center mb-4">
-                    <div class="bg-blue-100 p-3 rounded-full mr-4">
-                        <i class="fas fa-eye text-blue-600 text-xl"></i>
-                    </div>
-                    <h3 class="text-2xl font-bold text-gray-900">Our Vision</h3>
-                </div>
-                <p class="text-gray-600">
-                    A Zambia where every community actively participates in environmental conservation, creating a greener, healthier nation for generations to come.
-                </p>
+            <div class="stat-card text-white p-8 rounded-2xl text-center">
+                <div class="text-4xl font-bold mb-2">50+</div>
+                <div class="text-green-100">Courses</div>
             </div>
-        </div>
-
-        <!-- Team Section -->
-        <div>
-            <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Meet Our Team</h2>
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="team-card bg-white rounded-2xl shadow-lg overflow-hidden">
-                    <div class="h-48 bg-green-200 flex items-center justify-center">
-                        <i class="fas fa-user text-6xl text-green-600"></i>
-                    </div>
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold text-gray-900 mb-1">Oscar Milambo</h3>
-                        <p class="text-green-600 font-semibold mb-3">Founder & CEO</p>
-                        <p class="text-gray-600">Environmental scientist with 3+ years experience in sustainability education.</p>
-                    </div>
-                </div>
-                <!-- Add more team members -->
+            <div class="stat-card text-white p-8 rounded-2xl text-center">
+                <div class="text-4xl font-bold mb-2">25+</div>
+                <div class="text-green-100">Communities</div>
+            </div>
+            <div class="stat-card text-white p-8 rounded-2xl text-center">
+                <div class="text-4xl font-bold mb-2">95%</div>
+                <div class="text-green-100">Success Rate</div>
             </div>
         </div>
     </div>
 </section>
+
+<!-- Mission & Vision -->
+<section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="grid md:grid-cols-2 gap-12">
+            <div class="bg-white p-10 rounded-3xl shadow-xl" data-aos="fade-right">
+                <div class="flex items-center mb-6">
+                    <div class="bg-green-100 p-4 rounded-full mr-4">
+                        <i class="fas fa-bullseye text-green-600 text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900">Our Mission</h2>
+                </div>
+                <p class="text-gray-700 text-lg leading-relaxed mb-4">
+                    To empower every Zambian with the knowledge, skills, and resources needed to build a sustainable future through accessible environmental education.
+                </p>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                        <span>Provide free, quality environmental education</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                        <span>Foster community-driven environmental action</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-green-600 mt-1 mr-3"></i>
+                        <span>Bridge the gap between knowledge and practice</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="bg-white p-10 rounded-3xl shadow-xl" data-aos="fade-left">
+                <div class="flex items-center mb-6">
+                    <div class="bg-blue-100 p-4 rounded-full mr-4">
+                        <i class="fas fa-eye text-blue-600 text-3xl"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-900">Our Vision</h2>
+                </div>
+                <p class="text-gray-700 text-lg leading-relaxed mb-4">
+                    A Zambia where every community actively participates in environmental conservation, creating a greener, healthier nation for generations to come.
+                </p>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-600 mt-1 mr-3"></i>
+                        <span>Zero waste communities across Zambia</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-600 mt-1 mr-3"></i>
+                        <span>Widespread adoption of renewable energy</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-600 mt-1 mr-3"></i>
+                        <span>Protected ecosystems and wildlife</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Story -->
+<section class="py-20 bg-white">
+    <div class="max-w-5xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Our Story</h2>
+            <p class="text-xl text-gray-600">How EcoLearn came to be</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-50 to-blue-50 p-10 rounded-3xl shadow-xl" data-aos="zoom-in">
+            <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                EcoLearn was born from a simple observation: Zambia's environmental challenges require not just awareness, but action. Founded in 2024, we recognized that traditional environmental education wasn't reaching communities effectively.
+            </p>
+            <p class="text-lg text-gray-700 leading-relaxed mb-6">
+                We saw illegal dumping sites growing, rivers being polluted, and communities lacking the knowledge to make sustainable choices. But we also saw potential – passionate individuals ready to learn, communities eager to change, and a nation rich in natural beauty worth protecting.
+            </p>
+            <p class="text-lg text-gray-700 leading-relaxed">
+                Today, EcoLearn combines cutting-edge e-learning technology with local knowledge, making environmental education accessible in English, Bemba, and Nyanja. We're not just teaching – we're building a movement of environmental champions across Zambia.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Core Values -->
+<section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Our Core Values</h2>
+            <p class="text-xl text-gray-600">The principles that guide everything we do</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-center" data-aos="flip-left" data-aos-delay="100">
+                <div class="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-users text-green-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Community First</h3>
+                <p class="text-gray-600">We believe in the power of communities to drive environmental change from the ground up.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-center" data-aos="flip-left" data-aos-delay="200">
+                <div class="bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-lightbulb text-blue-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Innovation</h3>
+                <p class="text-gray-600">We leverage technology to make environmental education engaging, accessible, and effective.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-center" data-aos="flip-left" data-aos-delay="300">
+                <div class="bg-yellow-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-hand-holding-heart text-yellow-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Sustainability</h3>
+                <p class="text-gray-600">Every action we take considers long-term environmental and social impact.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-center" data-aos="flip-left" data-aos-delay="400">
+                <div class="bg-purple-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-globe-africa text-purple-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Local Context</h3>
+                <p class="text-gray-600">Our content is tailored to Zambian realities, culture, and environmental challenges.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-center" data-aos="flip-left" data-aos-delay="500">
+                <div class="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-hands-helping text-red-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Collaboration</h3>
+                <p class="text-gray-600">We partner with local authorities, NGOs, and communities for greater impact.</p>
+            </div>
+
+            <div class="bg-white p-8 rounded-2xl shadow-lg text-center" data-aos="flip-left" data-aos-delay="600">
+                <div class="bg-indigo-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-chart-line text-indigo-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Measurable Impact</h3>
+                <p class="text-gray-600">We track progress and celebrate real environmental improvements in communities.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Team Section -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Meet Our Team</h2>
+            <p class="text-xl text-gray-600">Passionate individuals driving environmental change</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="team-card bg-white rounded-2xl shadow-lg overflow-hidden" data-aos="fade-up" data-aos-delay="100">
+                <div class="h-64 bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                    <i class="fas fa-user text-8xl text-white opacity-50"></i>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-1">Oscar Milambo</h3>
+                    <p class="text-green-600 font-semibold mb-3">Founder & CEO</p>
+                    <p class="text-gray-600 mb-4">Environmental scientist passionate about sustainability education and community empowerment in Zambia.</p>
+                    <div class="flex space-x-3">
+                        <a href="https://linkedin.com/in/oscar-milambo" target="_blank" rel="noopener noreferrer" class="text-green-600 hover:text-green-700" title="Oscar on LinkedIn"><i class="fab fa-linkedin text-xl"></i></a>
+                        <a href="https://twitter.com/OscarMilambo" target="_blank" rel="noopener noreferrer" class="text-green-600 hover:text-green-700" title="Oscar on Twitter"><i class="fab fa-twitter text-xl"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="team-card bg-white rounded-2xl shadow-lg overflow-hidden" data-aos="fade-up" data-aos-delay="200">
+                <div class="h-64 bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                    <i class="fas fa-user text-8xl text-white opacity-50"></i>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-1">Sarah Mwansa</h3>
+                    <p class="text-blue-600 font-semibold mb-3">Head of Education</p>
+                    <p class="text-gray-600 mb-4">Curriculum developer with expertise in creating engaging, culturally-relevant environmental content.</p>
+                    <div class="flex space-x-3">
+                        <a href="#" class="text-blue-600 hover:text-blue-700"><i class="fab fa-linkedin text-xl"></i></a>
+                        <a href="#" class="text-blue-600 hover:text-blue-700"><i class="fab fa-twitter text-xl"></i></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="team-card bg-white rounded-2xl shadow-lg overflow-hidden" data-aos="fade-up" data-aos-delay="300">
+                <div class="h-64 bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
+                    <i class="fas fa-user text-8xl text-white opacity-50"></i>
+                </div>
+                <div class="p-6">
+                    <h3 class="text-2xl font-bold text-gray-900 mb-1">John Banda</h3>
+                    <p class="text-purple-600 font-semibold mb-3">Community Manager</p>
+                    <p class="text-gray-600 mb-4">Connecting communities across Zambia and facilitating grassroots environmental initiatives.</p>
+                    <div class="flex space-x-3">
+                        <a href="#" class="text-purple-600 hover:text-purple-700"><i class="fab fa-linkedin text-xl"></i></a>
+                        <a href="#" class="text-purple-600 hover:text-purple-700"><i class="fab fa-twitter text-xl"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-20 bg-gradient-to-r from-green-600 to-green-700 text-white">
+    <div class="max-w-4xl mx-auto px-6 text-center" data-aos="zoom-in">
+        <h2 class="text-4xl font-bold mb-6">Join Our Mission</h2>
+        <p class="text-xl mb-8 text-green-100">
+            Be part of Zambia's environmental transformation. Start learning today!
+        </p>
+        <a href="{% url 'accounts:register' %}" class="inline-block bg-white text-green-600 hover:bg-green-50 px-10 py-4 rounded-full text-lg font-bold transition shadow-xl transform hover:scale-105">
+            <i class="fas fa-rocket mr-2"></i>Get Started Free
+        </a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 1000,
+        once: true
+    });
+</script>
 {% endblock %}

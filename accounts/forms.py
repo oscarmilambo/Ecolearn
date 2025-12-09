@@ -1,42 +1,58 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import ValidationError
 from .models import CustomUser, UserProfile
 
 class CustomUserCreationForm(UserCreationForm):
-    email = forms.EmailField(required=True)
-    phone_number = forms.CharField(max_length=20, required=False, help_text="Optional. Enter your phone number.")
-    preferred_language = forms.ChoiceField(
-        choices=CustomUser.LANGUAGE_CHOICES,
-        initial='en',
+    email = forms.EmailField(
         required=True,
-        help_text="Select your preferred language for the platform"
+        widget=forms.EmailInput(attrs={
+            'placeholder': 'your.email@example.com'
+        })
     )
-    location = forms.CharField(max_length=255, required=False, help_text="Optional. Your city or region.")
+    accept_terms = forms.BooleanField(
+        required=True,
+        error_messages={'required': 'You must accept the Terms of Service and Privacy Policy to register.'}
+    )
 
     class Meta:
         model = CustomUser
-        fields = ('username', 'email', 'phone_number', 'preferred_language', 'location', 'password1', 'password2')
+        fields = ('username', 'email', 'password1', 'password2')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Remove validators for username
         self.fields['username'].validators = []
-        self.fields['username'].help_text = "Enter any username you'd like - no restrictions on characters"
+        self.fields['username'].help_text = "Choose a unique username"
+        
+        # Update password help text
+        self.fields['password1'].help_text = "Must be at least 8 characters"
+        self.fields['password2'].help_text = "Enter the same password again"
+        
+        # Add CSS classes
         for field_name, field in self.fields.items():
-            field.widget.attrs.update({
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500'
-            })
+            if field_name != 'accept_terms':
+                field.widget.attrs.update({
+                    'class': 'w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition'
+                })
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
         if CustomUser.objects.filter(username=username).exists():
-            raise forms.ValidationError("This username is already taken. Please choose another.")
+            raise ValidationError("This username is already taken. Please choose another.")
         return username
-
-    def clean_phone_number(self):
-        phone_number = self.cleaned_data.get('phone_number')
-        if phone_number and CustomUser.objects.filter(phone_number=phone_number).exists():
-            raise forms.ValidationError("This phone number is already registered.")
-        return phone_number
+    
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise ValidationError("This email is already registered. Please use another or login.")
+        return email.lower()
+    
+    def clean_password1(self):
+        password = self.cleaned_data.get('password1')
+        if len(password) < 8:
+            raise ValidationError("Password must be at least 8 characters long.")
+        return password
 
 class UserProfileForm(forms.ModelForm):
     class Meta:

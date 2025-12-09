@@ -1,30 +1,370 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Features | EcoLearn{% endblock %}
+{% block title %}Features - EcoLearn Platform{% endblock %}
+
+{% block extra_css %}
+<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+<style>
+    .feature-card {
+        transition: all 0.3s ease;
+    }
+    .feature-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    .feature-icon {
+        transition: transform 0.3s ease;
+    }
+    .feature-card:hover .feature-icon {
+        transform: scale(1.1) rotate(5deg);
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<!-- Features Page Content -->
-<section class="py-16 bg-green-50">
+<!-- Hero Section -->
+<section class="relative bg-gradient-to-br from-green-50 via-blue-50 to-green-50 py-20">
     <div class="max-w-7xl mx-auto px-6">
-        <!-- Hero Section -->
-        <div class="text-center mb-16">
-            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">Platform Features</h1>
-            <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-                Discover how EcoLearn combines cutting-edge technology with environmental education to create meaningful impact.
+        <div class="text-center" data-aos="fade-up">
+            <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-6">
+                Platform <span class="text-green-600">Features</span>
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed">
+                Discover how EcoLearn combines cutting-edge technology with environmental education to create meaningful impact across Zambia
             </p>
-        </div>
-
-        <!-- Main Features -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
-            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg">
-                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
-                    <i class="fas fa-graduation-cap text-green-600 text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-bold text-gray-900 mb-4">Interactive Courses</h3>
-                <p class="text-gray-600 mb-4">Engaging multimedia lessons with quizzes, videos, and practical assignments.</p>
-            </div>
-            <!-- Add more features -->
         </div>
     </div>
 </section>
+
+<!-- Core Learning Features -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Learning Experience</h2>
+            <p class="text-xl text-gray-600">Engaging, interactive, and effective</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-green-500" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-icon bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-book-open text-green-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Interactive Courses</h3>
+                <p class="text-gray-600 mb-4">Engaging multimedia lessons with videos, quizzes, and hands-on activities designed for Zambian context.</p>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-600 mt-1 mr-2"></i>
+                        <span>Video tutorials</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-600 mt-1 mr-2"></i>
+                        <span>Interactive quizzes</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-green-600 mt-1 mr-2"></i>
+                        <span>Practical assignments</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-blue-500" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-icon bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-language text-blue-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Multilingual Support</h3>
+                <p class="text-gray-600 mb-4">Learn in your preferred language - English, Bemba, or Nyanja for inclusive education.</p>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-600 mt-1 mr-2"></i>
+                        <span>English</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-600 mt-1 mr-2"></i>
+                        <span>Chibemba</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-blue-600 mt-1 mr-2"></i>
+                        <span>Chinyanja</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-purple-500" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-icon bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-certificate text-purple-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Certificates</h3>
+                <p class="text-gray-600 mb-4">Earn recognized certificates upon course completion to showcase your environmental expertise.</p>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-purple-600 mt-1 mr-2"></i>
+                        <span>Digital certificates</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-purple-600 mt-1 mr-2"></i>
+                        <span>Shareable credentials</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-purple-600 mt-1 mr-2"></i>
+                        <span>Career advancement</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-yellow-500" data-aos="fade-up" data-aos-delay="400">
+                <div class="feature-icon bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-chart-line text-yellow-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Progress Tracking</h3>
+                <p class="text-gray-600 mb-4">Monitor your learning journey with detailed analytics and personalized recommendations.</p>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-yellow-600 mt-1 mr-2"></i>
+                        <span>Learning dashboard</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-yellow-600 mt-1 mr-2"></i>
+                        <span>Performance metrics</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-yellow-600 mt-1 mr-2"></i>
+                        <span>Personalized paths</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-red-500" data-aos="fade-up" data-aos-delay="500">
+                <div class="feature-icon bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-mobile-alt text-red-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Mobile Friendly</h3>
+                <p class="text-gray-600 mb-4">Access EcoLearn anytime, anywhere on any device - perfect for learning on the go.</p>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-red-600 mt-1 mr-2"></i>
+                        <span>Responsive design</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-red-600 mt-1 mr-2"></i>
+                        <span>Offline access</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-red-600 mt-1 mr-2"></i>
+                        <span>Low data mode</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-8 rounded-2xl shadow-lg border-2 border-transparent hover:border-indigo-500" data-aos="fade-up" data-aos-delay="600">
+                <div class="feature-icon bg-indigo-100 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-robot text-indigo-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">AI Assistant</h3>
+                <p class="text-gray-600 mb-4">Get instant help with our AI-powered assistant for personalized learning support.</p>
+                <ul class="space-y-2 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-indigo-600 mt-1 mr-2"></i>
+                        <span>24/7 availability</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-indigo-600 mt-1 mr-2"></i>
+                        <span>Instant answers</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check text-indigo-600 mt-1 mr-2"></i>
+                        <span>Study guidance</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Community Features -->
+<section class="py-20 bg-gray-50">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Community Engagement</h2>
+            <p class="text-xl text-gray-600">Connect, collaborate, and create impact together</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8">
+            <div class="feature-card bg-white p-10 rounded-2xl shadow-lg" data-aos="fade-right">
+                <div class="feature-icon bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-comments text-green-600 text-4xl"></i>
+                </div>
+                <h3 class="text-3xl font-bold text-gray-900 mb-4">Discussion Forums</h3>
+                <p class="text-gray-600 text-lg mb-6">
+                    Join vibrant discussions with fellow learners, share ideas, ask questions, and inspire environmental action in your community.
+                </p>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-green-600 mt-1 mr-3"></i>
+                        <span>Topic-based discussions</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-green-600 mt-1 mr-3"></i>
+                        <span>Expert moderators</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-green-600 mt-1 mr-3"></i>
+                        <span>Success story sharing</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-10 rounded-2xl shadow-lg" data-aos="fade-left">
+                <div class="feature-icon bg-blue-100 w-20 h-20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-calendar-alt text-blue-600 text-4xl"></i>
+                </div>
+                <h3 class="text-3xl font-bold text-gray-900 mb-4">Community Events</h3>
+                <p class="text-gray-600 text-lg mb-6">
+                    Participate in local cleanup drives, tree planting, workshops, and environmental campaigns organized across Zambia.
+                </p>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-blue-600 mt-1 mr-3"></i>
+                        <span>Cleanup campaigns</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-blue-600 mt-1 mr-3"></i>
+                        <span>Tree planting drives</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-blue-600 mt-1 mr-3"></i>
+                        <span>Educational workshops</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-10 rounded-2xl shadow-lg" data-aos="fade-right">
+                <div class="feature-icon bg-purple-100 w-20 h-20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-trophy text-purple-600 text-4xl"></i>
+                </div>
+                <h3 class="text-3xl font-bold text-gray-900 mb-4">Challenges & Badges</h3>
+                <p class="text-gray-600 text-lg mb-6">
+                    Complete environmental challenges, earn badges, and compete on leaderboards while making real-world impact.
+                </p>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-purple-600 mt-1 mr-3"></i>
+                        <span>Weekly challenges</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-purple-600 mt-1 mr-3"></i>
+                        <span>Achievement badges</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-purple-600 mt-1 mr-3"></i>
+                        <span>Leaderboards</span>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="feature-card bg-white p-10 rounded-2xl shadow-lg" data-aos="fade-left">
+                <div class="feature-icon bg-yellow-100 w-20 h-20 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-map-marked-alt text-yellow-600 text-4xl"></i>
+                </div>
+                <h3 class="text-3xl font-bold text-gray-900 mb-4">Report Dumping</h3>
+                <p class="text-gray-600 text-lg mb-6">
+                    Help keep Zambia clean by reporting illegal dumping sites with photos and location data sent to authorities.
+                </p>
+                <ul class="space-y-3 text-gray-600">
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-yellow-600 mt-1 mr-3"></i>
+                        <span>Photo evidence</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-yellow-600 mt-1 mr-3"></i>
+                        <span>GPS location</span>
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-arrow-right text-yellow-600 mt-1 mr-3"></i>
+                        <span>Track resolution</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Payment & Accessibility -->
+<section class="py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-4xl font-bold text-gray-900 mb-4">Accessibility & Payments</h2>
+            <p class="text-xl text-gray-600">Designed for Zambian users</p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            <div class="feature-card bg-gradient-to-br from-orange-50 to-orange-100 p-8 rounded-2xl shadow-lg" data-aos="zoom-in" data-aos-delay="100">
+                <div class="feature-icon bg-orange-200 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-coins text-orange-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Mobile Money</h3>
+                <p class="text-gray-700 mb-4">Pay for premium content using MTN, Airtel, or Zamtel mobile money - no bank account needed.</p>
+                <div class="flex space-x-3 mt-4">
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-orange-600">MTN</span>
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-orange-600">Airtel</span>
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-orange-600">Zamtel</span>
+                </div>
+            </div>
+
+            <div class="feature-card bg-gradient-to-br from-teal-50 to-teal-100 p-8 rounded-2xl shadow-lg" data-aos="zoom-in" data-aos-delay="200">
+                <div class="feature-icon bg-teal-200 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-bell text-teal-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Smart Notifications</h3>
+                <p class="text-gray-700 mb-4">Stay updated with SMS, email, and in-app notifications about courses, events, and community activities.</p>
+                <div class="flex space-x-3 mt-4">
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-teal-600">SMS</span>
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-teal-600">Email</span>
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-teal-600">Push</span>
+                </div>
+            </div>
+
+            <div class="feature-card bg-gradient-to-br from-pink-50 to-pink-100 p-8 rounded-2xl shadow-lg" data-aos="zoom-in" data-aos-delay="300">
+                <div class="feature-icon bg-pink-200 w-16 h-16 rounded-full flex items-center justify-center mb-6">
+                    <i class="fas fa-shield-alt text-pink-600 text-3xl"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">Secure Platform</h3>
+                <p class="text-gray-700 mb-4">Your data is protected with enterprise-grade security, encryption, and regular backups.</p>
+                <div class="flex space-x-3 mt-4">
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-pink-600">SSL</span>
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-pink-600">Encrypted</span>
+                    <span class="bg-white px-3 py-1 rounded-full text-sm font-semibold text-pink-600">Secure</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action -->
+<section class="py-20 bg-gradient-to-r from-green-600 to-blue-600 text-white">
+    <div class="max-w-4xl mx-auto px-6 text-center" data-aos="zoom-in">
+        <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Experience EcoLearn?</h2>
+        <p class="text-xl mb-8 text-green-100">
+            Join thousands of Zambians learning to protect our environment
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
+            <a href="{% url 'accounts:register' %}" class="inline-block bg-white text-green-600 hover:bg-green-50 px-10 py-4 rounded-full text-lg font-bold transition shadow-xl transform hover:scale-105">
+                <i class="fas fa-rocket mr-2"></i>Start Learning Free
+            </a>
+            <a href="{% url 'contact' %}" class="inline-block bg-transparent border-2 border-white text-white hover:bg-white hover:text-green-600 px-10 py-4 rounded-full text-lg font-bold transition">
+                <i class="fas fa-envelope mr-2"></i>Contact Us
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+<script>
+    AOS.init({
+        duration: 1000,
+        once: true
+    });
+</script>
 {% endblock %}

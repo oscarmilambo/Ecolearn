@@ -13,6 +13,9 @@ reportlab>=4.0.0
 google-generativeai>=0.3.0
 django-import-export>=4.3.14
 
+# Social Authentication
+django-allauth>=0.57.0
+
 # Real-time WebSocket notifications
 channels>=4.0.0
 channels-redis>=4.1.0

@@ -26,6 +26,7 @@ def forum_home(request):
     return render(request, 'community/forum_home.html', context)
 
 
+@login_required
 def category_topics(request, category_id):
     category = get_object_or_404(ForumCategory, id=category_id, is_active=True)
     topics = ForumTopic.objects.filter(category=category).select_related('author')
@@ -42,6 +43,7 @@ def category_topics(request, category_id):
     return render(request, 'community/category_topics.html', context)
 
 
+@login_required
 def topic_detail(request, topic_id):
     topic = get_object_or_404(ForumTopic, id=topic_id)
     replies = topic.replies.select_related('author').order_by('created_at')
@@ -146,6 +148,7 @@ def events_list(request):
     return render(request, 'community/events_list.html', context)
 
 
+@login_required
 def event_detail(request, event_id):
     event = get_object_or_404(CommunityEvent, id=event_id, is_active=True)
     is_registered = False
@@ -211,6 +214,7 @@ def success_stories(request):
     return render(request, 'community/success_stories.html', context)
 
 
+@login_required
 def story_detail(request, story_id):
     story = get_object_or_404(SuccessStory, id=story_id, is_approved=True)
     user_liked = False

@@ -4,6 +4,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from django.shortcuts import render
 
 # Import views from accounts.views (since you don't have ecolearn/views.py)
 from accounts.views import (
@@ -34,8 +35,13 @@ urlpatterns = [
     path('features/', features, name='features'),
     path('contact/', contact, name='contact'),
     
+    # Legal Pages
+    path('terms/', lambda request: render(request, 'pages/terms.html'), name='terms'),
+    path('privacy/', lambda request: render(request, 'pages/privacy.html'), name='privacy'),
+    
     # App URLs
     path('accounts/', include('accounts.urls', namespace='accounts')),
+    path('accounts/', include('allauth.urls')),  # Allauth URLs (Google OAuth)
     path('elearning/', include('elearning.urls')),
     path('community/', include('community.urls')),
     path('reporting/', include('reporting.urls')),
@@ -47,7 +53,7 @@ urlpatterns = [
     path('rewards/', include('gamification.urls', namespace='gamification')),
 ]
 
-# Serve media and static files in development
+# Serve media files in development
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # Static files are automatically served by Django's staticfiles app in DEBUG mode

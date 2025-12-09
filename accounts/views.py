@@ -35,8 +35,17 @@ def features(request):
 
 def contact(request):
     if request.method == 'POST':
-        messages.success(request, 'Thank you! We will get back to you soon.')
-        return redirect('accounts:contact')
+        # Get form data
+        name = request.POST.get('name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone', '')
+        subject = request.POST.get('subject')
+        message = request.POST.get('message')
+        
+        # Here you can add logic to save to database or send email
+        # For now, just show success message
+        messages.success(request, f'Thank you {name}! We received your message and will get back to you soon.')
+        return redirect('contact')  # Fixed: was 'accounts:contact', now just 'contact'
     return render(request, 'pages/contact.html')
 
 
@@ -44,9 +53,9 @@ def contact(request):
 # 2. AUTHENTICATION VIEWS (FUNCTION-BASED — CLEAN & SECURE)
 # ===================================================================
 def login_view(request):
-    """Custom login — used by path('login/', views.login_view, name='login')"""
+    """Custom login with email verification check"""
     if request.user.is_authenticated:
-        return redirect('accounts:dashboard')
+        return redirect('dashboard')
 
     if request.method == 'POST':
         username = request.POST.get('username')
@@ -54,10 +63,15 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
+            # Check if email is verified
+            if not user.is_active:
+                messages.error(request, 'Please verify your email address before logging in. Check your inbox for the verification link.')
+                return render(request, 'accounts/login.html')
+            
             login(request, user)
             messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
             next_url = request.GET.get('next')
-            return redirect(next_url or 'accounts:dashboard')
+            return redirect(next_url or 'dashboard')
         else:
             messages.error(request, 'Invalid username or password.')
     
@@ -69,61 +83,119 @@ def logout_view(request):
     """Secure logout with message"""
     logout(request)
     messages.success(request, 'You have been successfully logged out.')
-    return redirect('accounts:landing')  # Back to beautiful landing page
+    return redirect('home')  # Back to beautiful landing page
+
+
+def registration_success(request):
+    """Show success message after registration"""
+    return render(request, 'accounts/registration_success.html')
+
+
+def verify_email(request, uidb64, token):
+    """Verify user email address"""
+    from django.contrib.auth.tokens import default_token_generator
+    from django.utils.http import urlsafe_base64_decode
+    from django.utils.encoding import force_str
+    
+    try:
+        uid = force_str(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        user = None
+    
+    if user is not None and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.is_verified = True
+        user.save()
+        messages.success(request, 'Your email has been verified! You can now log in.')
+        return redirect('accounts:login')
+    else:
+        messages.error(request, 'The verification link is invalid or has expired.')
+        return redirect('home')
 
 
 def register_view(request):
+    """Enhanced registration with email verification and rate limiting"""
     if request.user.is_authenticated:
-        return redirect('accounts:dashboard')
+        return redirect('dashboard')
 
+    # Rate limiting: Check registration attempts
     if request.method == 'POST':
+        # Simple rate limiting using session
+        attempts_key = 'registration_attempts'
+        attempts_time_key = 'registration_attempts_time'
+        
+        current_time = timezone.now()
+        attempts = request.session.get(attempts_key, 0)
+        last_attempt_time = request.session.get(attempts_time_key)
+        
+        # Reset counter if more than 1 hour has passed
+        if last_attempt_time:
+            from datetime import datetime
+            last_time = datetime.fromisoformat(last_attempt_time)
+            if (current_time - last_time).total_seconds() > 3600:  # 1 hour
+                attempts = 0
+        
+        # Check if rate limit exceeded
+        if attempts >= 5:
+            messages.error(request, 'Too many registration attempts. Please try again in 1 hour.')
+            return render(request, 'accounts/register.html', {'form': CustomUserCreationForm()})
+        
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
+            # Increment attempts
+            request.session[attempts_key] = attempts + 1
+            request.session[attempts_time_key] = current_time.isoformat()
+            
+            # Create user but set as inactive until email verification
             user = form.save(commit=False)
-            user.is_active = True
+            user.is_active = False  # User must verify email first
+            user.email = form.cleaned_data['email'].lower()
             user.save()
+            
+            # Create user profile
             UserProfile.objects.get_or_create(user=user)
             
-            # REAL-TIME ADMIN NOTIFICATION: New user registered
-            try:
-                from community.notifications import notification_service
-                from community.models import Notification
-                from django.db.models import Q
-                
-                # Get all superusers
-                admins = CustomUser.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
-                
-                location = getattr(user, 'location', 'Unknown')
-                phone = getattr(user, 'phone_number', 'Not provided')
-                
-                for admin in admins:
-                    try:
-                        # WhatsApp notification
-                        if admin.phone_number:
-                            whatsapp_message = f"👤 *New User Registered*\n\n*User:* {user.username}\n*Name:* {user.get_full_name() or 'Not provided'}\n*Location:* {location}\n*Phone:* {phone}\n*Email:* {user.email}\n\nWelcome to the community!"
-                            notification_service.send_whatsapp(str(admin.phone_number), whatsapp_message)
-                        
-                        # SMS notification
-                        if admin.phone_number:
-                            sms_message = f"New user registered: {user.username} from {location} ({phone})"
-                            notification_service.send_sms(str(admin.phone_number), sms_message)
-                        
-                        # In-app notification
-                        Notification.objects.create(
-                            user=admin,
-                            notification_type='general',
-                            title=f'New User: {user.username}',
-                            message=f'{user.username} just registered from {location}',
-                            url='/admin-dashboard/users/'
-                        )
-                    except Exception as e:
-                        print(f"Error notifying admin {admin.username}: {e}")
-            except Exception as e:
-                print(f"Error in new user admin notifications: {e}")
+            # Generate email verification token
+            from django.contrib.auth.tokens import default_token_generator
+            from django.utils.http import urlsafe_base64_encode
+            from django.utils.encoding import force_bytes
+            from django.core.mail import send_mail
+            from django.template.loader import render_to_string
             
-            login(request, user)
-            messages.success(request, 'Welcome to EcoLearn Zambia!')
-            return redirect('accounts:dashboard')
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            
+            # Build verification URL
+            verification_url = request.build_absolute_uri(
+                reverse('accounts:verify_email', kwargs={'uidb64': uid, 'token': token})
+            )
+            
+            # Send verification email
+            try:
+                subject = 'Verify your EcoLearn account'
+                message = render_to_string('accounts/verification_email.html', {
+                    'user': user,
+                    'verification_url': verification_url,
+                })
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                    fail_silently=False,
+                    html_message=message
+                )
+            except Exception as e:
+                # Log error but don't fail registration
+                print(f"Email sending failed: {e}")
+            
+            # Redirect to success page
+            return redirect('accounts:registration_success')
+        else:
+            # Increment attempts even on form errors
+            request.session[attempts_key] = attempts + 1
+            request.session[attempts_time_key] = current_time.isoformat()
     else:
         form = CustomUserCreationForm()
     

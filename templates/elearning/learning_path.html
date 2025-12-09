@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static i18n %}
+
+{% block title %}{% trans "My Learning Path" %} - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">
+            <i class="fas fa-route text-eco-green mr-2"></i>
+            {% trans "Your Learning Path" %}
+        </h1>
+        <p class="text-gray-600">{% trans "Personalized recommendations based on your progress and interests" %}</p>
+    </div>
+
+    <!-- Progress Summary -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-xl font-semibold text-gray-800 mb-2">{% trans "Your Progress" %}</h2>
+                <p class="text-gray-600">
+                    {% blocktrans count counter=completed_count %}
+                        You've completed {{ counter }} module
+                    {% plural %}
+                        You've completed {{ counter }} modules
+                    {% endblocktrans %}
+                </p>
+            </div>
+            <div class="text-5xl text-eco-green">
+                <i class="fas fa-trophy"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommended Modules -->
+    {% if recommended_modules %}
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-star text-yellow-500 mr-2"></i>
+            {% trans "Recommended for You" %}
+        </h2>
+        {% if recommended_difficulty %}
+        <p class="text-gray-600 mb-4">
+            {% trans "Based on your skill level:" %} 
+            <span class="font-semibold text-eco-green">{{ recommended_difficulty }}</span>
+        </p>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for module in recommended_modules %}
+            <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                {% if module.thumbnail %}
+                <img src="{{ module.thumbnail.url }}" alt="{{ module.title }}" class="w-full h-48 object-cover">
+                {% else %}
+                <div class="w-full h-48 bg-gradient-to-br from-eco-light to-eco-green flex items-center justify-center">
+                    <i class="fas fa-book-open text-6xl text-white opacity-50"></i>
+                </div>
+                {% endif %}
+                
+                <div class="p-6">
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">{{ module.title }}</h3>
+                    <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ module.description|truncatewords:20 }}</p>
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-eco-light text-eco-dark">
+                            <i class="fas fa-signal mr-1"></i>
+                            {{ module.get_difficulty_display }}
+                        </span>
+                        {% if module.category %}
+                        <span class="text-xs text-gray-500">
+                            <i class="fas fa-tag mr-1"></i>
+                            {{ module.category.name }}
+                        </span>
+                        {% endif %}
+                    </div>
+                    
+                    <a href="{% url 'elearning:module_detail' module.id %}" 
+                       class="block w-full text-center bg-eco-green hover:bg-eco-dark text-white font-semibold py-2 px-4 rounded-lg transition-colors duration-200">
+                        {% trans "Start Learning" %}
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Popular in Your Categories -->
+    {% if popular_in_categories %}
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4">
+            <i class="fas fa-fire text-orange-500 mr-2"></i>
+            {% trans "Popular in Your Categories" %}
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for module in popular_in_categories %}
+            <div class="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden">
+                {% if module.thumbnail %}
+                <img src="{{ module.thumbnail.url }}" alt="{{ module.title }}" class="w-full h-40 object-cover">
+                {% else %}
+                <div class="w-full h-40 bg-gradient-to-br from-orange-100 to-orange-300 flex items-center justify-center">
+                    <i class="fas fa-book text-4xl text-white opacity-50"></i>
+                </div>
+                {% endif %}
+                
+                <div class="p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">{{ module.title }}</h3>
+                    
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs text-gray-500">
+                            <i class="fas fa-users mr-1"></i>
+                            {{ module.enrollments_count|default:0 }}
+                        </span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            {{ module.get_difficulty_display }}
+                        </span>
+                    </div>
+                    
+                    <a href="{% url 'elearning:module_detail' module.id %}" 
+                       class="block w-full text-center bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 px-3 rounded-lg transition-colors duration-200 text-sm">
+                        {% trans "View Module" %}
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Empty State -->
+    {% if not recommended_modules and not popular_in_categories %}
+    <div class="bg-white rounded-lg shadow-md p-12 text-center">
+        <div class="text-6xl text-gray-300 mb-4">
+            <i class="fas fa-compass"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">{% trans "Start Your Learning Journey" %}</h2>
+        <p class="text-gray-600 mb-6">{% trans "Enroll in modules to get personalized recommendations" %}</p>
+        <a href="{% url 'elearning:module_list' %}" 
+           class="inline-block bg-eco-green hover:bg-eco-dark text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200">
+            {% trans "Browse All Modules" %}
+            <i class="fas fa-arrow-right ml-2"></i>
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

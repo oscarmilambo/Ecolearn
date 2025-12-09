@@ -21,7 +21,8 @@ path('dashboard/', views.dashboard_view, name='dashboard'),          # ← YOUR 
 # 2. REGISTRATION & VERIFICATION
 # ===================================================================
 path('register/', views.register_view, name='register'),
-path('verify/', views.verify_view, name='verify'),
+path('registration-success/', views.registration_success, name='registration_success'),
+path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'),
 
 # ===================================================================
 # 3. USER PROFILE & LANGUAGE

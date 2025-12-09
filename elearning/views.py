@@ -36,6 +36,7 @@ def get_user_language(request):
 
 # --- Module and Category Views ---
 
+@login_required
 def module_detail(request, slug):
     """
     Display detailed information about a specific module
@@ -127,6 +128,7 @@ def module_detail(request, slug):
     
     return render(request, 'elearning/module_detail.html', context)
 
+@login_required
 def category_detail(request, slug):
     """
     Displays modules belonging to a specific category - ENHANCED
@@ -157,6 +159,7 @@ def category_detail(request, slug):
     return render(request, 'elearning/category_detail.html', context)
 
 
+@login_required
 def tag_detail(request, slug):
     """
     Displays modules associated with a specific tag - ENHANCED
@@ -218,7 +221,8 @@ def enroll_module(request, slug):
         )
         
     return redirect('elearning:module_detail', slug=slug)
-    
+
+@login_required
 def module_list(request):
     """
     Display list of all available modules with filters
@@ -322,6 +326,7 @@ def module_list(request):
     return render(request, 'elearning/module_list.html', context)
 
 # --- Lesson Views ---
+@login_required
 def lesson_detail(request, module_slug, lesson_slug):
     """
     Displays the content of a specific lesson within a module, 
@@ -927,6 +932,7 @@ def edit_review(request, module_slug):
     messages.success(request, 'Your review has been successfully updated!')
     return redirect('elearning:module_detail', slug=module.slug)
 
+@login_required
 def user_dashboard(request):
     # Fetch all modules, prefetch related lessons and quizzes for efficiency
     modules = Module.objects.prefetch_related('lessons__quiz').filter(is_published=True)

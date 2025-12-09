@@ -90,6 +90,7 @@ def report_dumping(request):
     return render(request, 'reporting/report_dumping.html', context)
 
 
+@login_required
 def report_success(request, reference_number):
     report = get_object_or_404(DumpingReport, reference_number=reference_number)
     context = {
@@ -159,6 +160,7 @@ def my_reports(request):
     return render(request, 'reporting/my_reports.html', context)
 
 
+@login_required
 def report_detail(request, report_id):
     report = get_object_or_404(DumpingReport, id=report_id)
     
@@ -220,6 +222,7 @@ def update_report(request, report_id):
     return render(request, 'reporting/update_report.html', context)
 
 
+@login_required
 def statistics_view(request):
     # Get recent statistics
     recent_stats = ReportStatistics.objects.all()[:30]  # Last 30 days
