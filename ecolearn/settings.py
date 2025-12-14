@@ -324,41 +324,92 @@ SESSION_SAVE_EVERY_REQUEST = True  # Update session expiry on every request
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
 CSRF_COOKIE_HTTPONLY = True
 
-# Logging Configuration for Security
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'verbose': {
-            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
+# Logging Configuration - Production-ready for Render deployment
+def get_logging_config():
+    """
+    Get logging configuration that works in both development and production.
+    Uses file logging in development, console-only in production (Render-compatible).
+    """
+    # Base configuration
+    config = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'verbose': {
+                'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+                'style': '{',
+            },
+            'simple': {
+                'format': '{levelname} {asctime} {message}',
+                'style': '{',
+            },
+            'production': {
+                'format': '[{asctime}] {levelname} {name}: {message}',
+                'style': '{',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
+            },
         },
-        'simple': {
-            'format': '{levelname} {message}',
-            'style': '{',
+        'handlers': {
+            'console': {
+                'level': 'DEBUG' if DEBUG else 'INFO',
+                'class': 'logging.StreamHandler',
+                'formatter': 'simple' if DEBUG else 'production',
+            },
         },
-    },
-    'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'security.log'),
-            'formatter': 'verbose',
+        'loggers': {
+            'security': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': True,
+            },
+            'django': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
+            'django.request': {
+                'handlers': ['console'],
+                'level': 'ERROR',
+                'propagate': False,
+            },
+            'django.security': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': False,
+            },
         },
-        'console': {
-            'level': 'DEBUG',
-            'class': 'logging.StreamHandler',
-            'formatter': 'simple',
+        'root': {
+            'handlers': ['console'],
+            'level': 'WARNING',
         },
-    },
-    'loggers': {
-        'security': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': True,
-        },
-    },
-}
+    }
+    
+    # Add file logging only in development
+    if DEBUG:
+        logs_dir = os.path.join(BASE_DIR, 'logs')
+        try:
+            # Try to create logs directory
+            os.makedirs(logs_dir, exist_ok=True)
+            
+            # Add file handler if directory creation succeeds
+            config['handlers']['file'] = {
+                'level': 'INFO',
+                'class': 'logging.FileHandler',
+                'filename': os.path.join(logs_dir, 'security.log'),
+                'formatter': 'verbose',
+            }
+            
+            # Add file handler to security logger
+            config['loggers']['security']['handlers'] = ['file', 'console']
+            
+        except (OSError, PermissionError):
+            # If we can't create logs directory, stick with console only
+            pass
+    
+    return config
+
+# Apply logging configuration
+LOGGING = get_logging_config()
 
 
 # ===================================================================
