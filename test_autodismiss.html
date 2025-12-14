@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto-Dismiss Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 p-8">
+    <h1 class="text-2xl font-bold mb-8">Auto-Dismiss Message Test</h1>
+    
+    <button onclick="showTestMessage()" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 mb-4">
+        Show Test Message
+    </button>
+    
+    <!-- Test Messages (similar to Django messages) -->
+    <div class="fixed top-20 right-4 z-50 space-y-3">
+        <div class="bg-white rounded-lg shadow-2xl border-l-4 p-4 max-w-sm animate-pulse auto-dismiss-message border-green-500">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-500 text-2xl mr-3"></i>
+                    <p class="font-medium text-gray-800">Welcome back, Test User!</p>
+                </div>
+                <button onclick="this.closest('.auto-dismiss-message').remove()" class="text-gray-400 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Auto-dismiss messages after 5 seconds (same as base.html)
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, setting up auto-dismiss...');
+            const messages = document.querySelectorAll('.auto-dismiss-message');
+            console.log('Found messages:', messages.length);
+            
+            messages.forEach(function(message, index) {
+                console.log('Setting timeout for message', index);
+                setTimeout(function() {
+                    if (message.parentNode) {
+                        console.log('Auto-dismissing message', index);
+                        message.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                        message.style.opacity = '0';
+                        message.style.transform = 'translateX(100%)';
+                        setTimeout(function() {
+                            message.remove();
+                            console.log('Message', index, 'removed');
+                        }, 500);
+                    }
+                }, 5000);
+            });
+        });
+
+        function showTestMessage() {
+            const container = document.querySelector('.fixed.top-20');
+            const newMessage = document.createElement('div');
+            newMessage.className = 'bg-white rounded-lg shadow-2xl border-l-4 p-4 max-w-sm animate-pulse auto-dismiss-message border-blue-500';
+            newMessage.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-blue-500 text-2xl mr-3"></i>
+                        <p class="font-medium text-gray-800">Test message created at ${new Date().toLocaleTimeString()}</p>
+                    </div>
+                    <button onclick="this.closest('.auto-dismiss-message').remove()" class="text-gray-400 hover:text-gray-700">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(newMessage);
+            
+            // Set up auto-dismiss for the new message
+            setTimeout(function() {
+                if (newMessage.parentNode) {
+                    console.log('Auto-dismissing new test message');
+                    newMessage.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                    newMessage.style.opacity = '0';
+                    newMessage.style.transform = 'translateX(100%)';
+                    setTimeout(function() {
+                        newMessage.remove();
+                        console.log('New test message removed');
+                    }, 500);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

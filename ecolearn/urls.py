@@ -16,7 +16,14 @@ from accounts.views import (
     contact,
 )
 
+# Import health check views
+from .health import health_check, readiness_check
+
 urlpatterns = [
+    # Health checks for Render
+    path('health/', health_check, name='health_check'),
+    path('ready/', readiness_check, name='readiness_check'),
+    
     # Language switcher - MUST be before 'accounts/' to avoid conflicts
     path('set-language/<str:lang_code>/', set_language, name='set_language'),
 
@@ -41,9 +48,10 @@ urlpatterns = [
     
     # App URLs
     path('accounts/', include('accounts.urls', namespace='accounts')),
-    path('accounts/', include('allauth.urls')),  # Allauth URLs (Google OAuth)
+    path('accounts/', include('allauth.urls')),  # Allauth URLs (email/password only)
     path('elearning/', include('elearning.urls')),
     path('community/', include('community.urls')),
+    path('collaboration/', include('collaboration.urls')),  # Groups and collaboration
     path('reporting/', include('reporting.urls')),
     path('payments/', include('payments.urls')),
     path('admin-dashboard/', include('admin_dashboard.urls')),

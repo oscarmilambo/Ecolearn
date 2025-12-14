@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ group.name }} - EcoLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .group-header {
+        background: linear-gradient(135deg, #4CAF50, #2c5530);
+        color: white;
+        padding: 30px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+    }
+    
+    .group-title {
+        font-size: 2.2em;
+        margin-bottom: 10px;
+    }
+    
+    .group-meta {
+        display: flex;
+        gap: 20px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+    }
+    
+    .meta-item {
+        background: rgba(255,255,255,0.2);
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9em;
+    }
+    
+    .section-card {
+        background: white;
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 25px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .section-title {
+        font-size: 1.4em;
+        color: #2c5530;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #4CAF50;
+        padding-bottom: 8px;
+    }
+    
+    .event-item {
+        border-left: 4px solid #4CAF50;
+        padding: 15px;
+        margin-bottom: 15px;
+        background: #f9f9f9;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .event-title {
+        font-weight: bold;
+        color: #2c5530;
+        margin-bottom: 5px;
+    }
+    
+    .event-meta {
+        color: #666;
+        font-size: 0.9em;
+    }
+    
+    .chat-container {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        background: #f9f9f9;
+    }
+    
+    .chat-message {
+        margin-bottom: 15px;
+        padding: 10px;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .chat-sender {
+        font-weight: bold;
+        color: #2c5530;
+        margin-bottom: 5px;
+    }
+    
+    .chat-time {
+        font-size: 0.8em;
+        color: #888;
+        float: right;
+    }
+    
+    .chat-announcement {
+        border-left: 4px solid #FF9800;
+        background: #FFF3E0;
+    }
+    
+    .chat-form {
+        margin-top: 15px;
+    }
+    
+    .btn-primary {
+        background: #4CAF50;
+        border-color: #4CAF50;
+    }
+    
+    .btn-primary:hover {
+        background: #45a049;
+        border-color: #45a049;
+    }
+    
+    .btn-warning {
+        background: #FF9800;
+        border-color: #FF9800;
+    }
+    
+    .btn-danger {
+        background: #f44336;
+        border-color: #f44336;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="group-header">
+        <h1 class="group-title">{{ group.name }}</h1>
+        <p>{{ group.description }}</p>
+        <div class="group-meta">
+            <span class="meta-item">
+                <i class="fas fa-users"></i> {{ group.members.count }} members
+            </span>
+            <span class="meta-item">
+                <i class="fas fa-map-marker-alt"></i> {{ group.community }}, {{ group.district }}
+            </span>
+            <span class="meta-item">
+                <i class="fas fa-user-tie"></i> Coordinator: {{ group.coordinator.get_full_name|default:group.coordinator.username }}
+            </span>
+            <span class="meta-item">
+                <i class="fas fa-calendar"></i> Created: {{ group.created_at|date:"M d, Y" }}
+            </span>
+        </div>
+        
+        <div class="action-buttons">
+            {% if not is_member %}
+                <form method="post" action="{% url 'collaboration:join_group' group.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Join Group
+                    </button>
+                </form>
+            {% else %}
+                {% if membership.role == 'coordinator' %}
+                    <a href="{% url 'collaboration:edit_group' group.id %}" class="btn btn-secondary">
+                        <i class="fas fa-edit"></i> Edit Group
+                    </a>
+                    <a href="{% url 'collaboration:create_event' group.id %}" class="btn btn-warning">
+                        <i class="fas fa-calendar-plus"></i> Create Event
+                    </a>
+                    <a href="{% url 'collaboration:generate_impact_report' group.id %}" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> Generate Report
+                    </a>
+                {% else %}
+                    <form method="post" action="{% url 'collaboration:leave_group' group.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to leave this group?')">
+                            <i class="fas fa-user-minus"></i> Leave Group
+                        </button>
+                    </form>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Social Media Links -->
+    {% if group.social_media_links %}
+    <div class="section-card">
+        <h2 class="section-title">
+            <i class="fas fa-share-alt text-eco-green mr-2"></i>
+            Connect with Us on Social Media
+        </h2>
+        <div class="flex flex-wrap gap-3">
+            {% for link in group.social_media_links %}
+            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
+               class="inline-flex items-center px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+               style="background-color: {{ link.color }};">
+                <i class="{{ link.icon }} mr-2"></i>
+                {{ link.name }}
+            </a>
+            {% endfor %}
+        </div>
+        <p class="text-sm text-gray-600 mt-3">
+            <i class="fas fa-info-circle mr-1"></i>
+            Join our social media communities to stay updated on events, share experiences, and connect with fellow environmental champions!
+        </p>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Upcoming Events -->
+            <div class="section-card">
+                <h2 class="section-title">Upcoming Events</h2>
+                {% if upcoming_events %}
+                    {% for event in upcoming_events %}
+                    <div class="event-item">
+                        <div class="event-title">{{ event.title }}</div>
+                        <div class="event-meta">
+                            <i class="fas fa-calendar"></i> {{ event.scheduled_date|date:"M d, Y H:i" }} |
+                            <i class="fas fa-clock"></i> {{ event.duration_hours }} hours |
+                            <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+                        </div>
+                        <p>{{ event.description|truncatewords:15 }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No upcoming events scheduled.</p>
+                {% endif %}
+            </div>
+            
+            <!-- Recent Events -->
+            <div class="section-card">
+                <h2 class="section-title">Recent Events</h2>
+                {% if past_events %}
+                    {% for event in past_events %}
+                    <div class="event-item">
+                        <div class="event-title">{{ event.title }}</div>
+                        <div class="event-meta">
+                            <i class="fas fa-calendar"></i> {{ event.scheduled_date|date:"M d, Y" }} |
+                            <i class="fas fa-users"></i> {{ event.participants_count|default:0 }} participants |
+                            <i class="fas fa-trash"></i> {{ event.waste_collected|default:0 }} kg collected
+                        </div>
+                        <p>{{ event.description|truncatewords:15 }}</p>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted">No past events.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Group Chat -->
+            {% if is_member %}
+            <div class="section-card">
+                <h2 class="section-title">Group Chat</h2>
+                <div class="chat-container" id="chatContainer">
+                    {% for chat in recent_chats %}
+                    <div class="chat-message {% if chat.is_announcement %}chat-announcement{% endif %}">
+                        <div class="chat-sender">
+                            {{ chat.sender.get_full_name|default:chat.sender.username }}
+                            {% if chat.is_announcement %}
+                                <span class="badge badge-warning">Announcement</span>
+                            {% endif %}
+                            <span class="chat-time">{{ chat.created_at|date:"M d, H:i" }}</span>
+                        </div>
+                        <div>{{ chat.message }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <form class="chat-form" id="chatForm">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <textarea class="form-control" name="message" placeholder="Type your message..." rows="3" required></textarea>
+                    </div>
+                    {% if membership.role in 'coordinator,moderator' %}
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="is_announcement" id="isAnnouncement">
+                        <label class="form-check-label" for="isAnnouncement">
+                            Send as announcement
+                        </label>
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if is_member %}
+<script>
+document.getElementById('chatForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "collaboration:send_chat_message" group.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Add message to chat
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message';
+            messageDiv.innerHTML = `
+                <div class="chat-sender">
+                    ${data.sender}
+                    <span class="chat-time">${data.timestamp}</span>
+                </div>
+                <div>${data.message}</div>
+            `;
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Clear form
+            this.reset();
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+
+// Auto-refresh chat every 30 seconds
+setInterval(function() {
+    fetch('{% url "collaboration:get_chat_messages" group.id %}')
+    .then(response => response.json())
+    .then(data => {
+        if (data.messages) {
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '';
+            
+            data.messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message' + (msg.is_announcement ? ' chat-announcement' : '');
+                messageDiv.innerHTML = `
+                    <div class="chat-sender">
+                        ${msg.sender}
+                        ${msg.is_announcement ? '<span class="badge badge-warning">Announcement</span>' : ''}
+                        <span class="chat-time">${msg.timestamp}</span>
+                    </div>
+                    <div>${msg.message}</div>
+                `;
+                chatContainer.appendChild(messageDiv);
+            });
+            
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}, 30000);
+</script>
+{% endif %}
+{% endblock %}

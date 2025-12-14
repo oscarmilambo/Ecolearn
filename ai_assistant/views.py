@@ -4,13 +4,18 @@ from django.http import JsonResponse
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
-import google.generativeai as genai
 import json
 from .models import ChatSession, ChatMessage, AssistantFeedback
 
-
-# Configure Gemini AI
-genai.configure(api_key=settings.GEMINI_API_KEY)
+# Try to import and configure Gemini AI
+try:
+    import google.generativeai as genai
+    genai.configure(api_key=getattr(settings, 'GEMINI_API_KEY', ''))
+    GEMINI_AVAILABLE = True
+except (ImportError, Exception) as e:
+    print(f"Warning: Google Generative AI not available: {e}")
+    genai = None
+    GEMINI_AVAILABLE = False
 
 
 def get_system_context():
@@ -130,18 +135,22 @@ def send_message(request):
                     'parts': [msg.content]
                 })
         
-        # Initialize Gemini model
-        model = genai.GenerativeModel('gemini-pro')
-        
-        # Start chat with history
-        chat = model.start_chat(history=history[:-1])  # Exclude the current message
-        
-        # Add system context
-        full_prompt = f"{get_system_context()}\n\nUser Question: {message_content}"
-        
-        # Get AI response
-        response = chat.send_message(full_prompt)
-        ai_response = response.text
+        # Check if Gemini is available
+        if not GEMINI_AVAILABLE or not genai:
+            ai_response = "I apologize, but the AI assistant is currently unavailable. Please check that the Google Generative AI package is properly installed and configured."
+        else:
+            # Initialize Gemini model
+            model = genai.GenerativeModel('gemini-pro')
+            
+            # Start chat with history
+            chat = model.start_chat(history=history[:-1])  # Exclude the current message
+            
+            # Add system context
+            full_prompt = f"{get_system_context()}\n\nUser Question: {message_content}"
+            
+            # Get AI response
+            response = chat.send_message(full_prompt)
+            ai_response = response.text
         
         # Save AI response
         assistant_message = ChatMessage.objects.create(

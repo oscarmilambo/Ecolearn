@@ -67,6 +67,21 @@ urlpatterns = [
     path('priority-reports/', views.priority_reports, name='priority_reports'),
     path('escalate-report/<int:report_id>/', views.escalate_report, name='escalate_report'),
     
+    # Groups Management
+    path('groups/', views.groups_management, name='groups_management'),
+    path('groups/<int:group_id>/', views.group_detail_admin, name='group_detail_admin'),
+    path('groups/analytics/', views.groups_analytics, name='groups_analytics'),
+    path('export-groups/', views.export_groups_data, name='export_groups_data'),
+    
+    # Admin Groups Privileges
+    path('groups/create/', views.create_group_admin, name='create_group_admin'),
+    path('groups/<int:group_id>/edit/', views.edit_group_admin, name='edit_group_admin'),
+    path('groups/<int:group_id>/delete/', views.delete_group_admin, name='delete_group_admin'),
+    path('groups/<int:group_id>/toggle-status/', views.toggle_group_status_admin, name='toggle_group_status_admin'),
+    path('groups/<int:group_id>/members/', views.manage_group_members_admin, name='manage_group_members_admin'),
+    path('groups/bulk-actions/', views.bulk_group_actions_admin, name='bulk_group_actions_admin'),
+    path('groups/statistics/', views.group_statistics_admin, name='group_statistics_admin'),
+    
     # System Settings
     path('settings/', views.system_settings, name='settings'),
     

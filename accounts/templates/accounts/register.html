@@ -5,20 +5,6 @@
 
 {% block extra_css %}
 <style>
-    .password-match {
-        display: none;
-        font-size: 0.875rem;
-        margin-top: 0.5rem;
-    }
-    .password-match.show {
-        display: block;
-    }
-    .password-match.match {
-        color: #22c55e;
-    }
-    .password-match.no-match {
-        color: #ef4444;
-    }
     .spinner {
         border: 2px solid #f3f3f3;
         border-top: 2px solid #22c55e;
@@ -37,121 +23,110 @@
 {% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="text-center">
-            <i class="fas fa-leaf text-green-600 text-5xl mb-4"></i>
-            <h2 class="text-4xl font-extrabold text-gray-900">Join EcoLearn</h2>
-            <p class="mt-3 text-lg text-gray-600">
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 flex flex-col justify-center py-4 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-lg">
+        <div class="text-center mb-6">
+            <i class="fas fa-leaf text-green-600 text-4xl mb-3"></i>
+            <h2 class="text-3xl font-extrabold text-gray-900">Join EcoLearn</h2>
+            <p class="mt-2 text-base text-gray-600">
                 Start your environmental education journey today
             </p>
         </div>
     </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div class="bg-white py-10 px-6 shadow-2xl sm:rounded-2xl sm:px-12">
-            <form method="post" id="registrationForm" class="space-y-6">
+    <div class="sm:mx-auto sm:w-full sm:max-w-lg">
+        <div class="bg-white py-6 px-6 shadow-2xl sm:rounded-2xl sm:px-8">
+            <form method="post" id="registrationForm" class="space-y-3">
                 {% csrf_token %}
                 
-                <!-- Username Field -->
-                <div>
-                    <label for="{{ form.username.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Username *
-                    </label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <div class="mt-2 text-sm text-red-600">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
-                            {{ form.username.errors.0 }}
-                        </div>
-                    {% endif %}
-                    <p class="mt-1 text-xs text-gray-500">{{ form.username.help_text }}</p>
-                </div>
-
-                <!-- Email Field -->
-                <div>
-                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Email Address *
-                    </label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                        <div class="mt-2 text-sm text-red-600">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
-                            {{ form.email.errors.0 }}
-                        </div>
-                    {% endif %}
-                    <p class="mt-1 text-xs text-gray-500">We'll send you a verification email</p>
-                </div>
-
-                <!-- Password Field -->
-                <div>
-                    <label for="{{ form.password1.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Password *
-                    </label>
-                    <div class="relative">
-                        {{ form.password1 }}
-                        <button type="button" class="absolute inset-y-0 right-0 pr-4 flex items-center" onclick="togglePassword('{{ form.password1.id_for_label }}', this)">
-                            <i class="fas fa-eye text-gray-500 hover:text-gray-700"></i>
-                        </button>
-                    </div>
-                    {% if form.password1.errors %}
-                        <div class="mt-2 text-sm text-red-600">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
-                            {{ form.password1.errors.0 }}
-                        </div>
-                    {% endif %}
-                    <p class="mt-1 text-xs text-gray-500">
-                        <i class="fas fa-info-circle mr-1"></i>
-                        Must be at least 8 characters
-                    </p>
-                </div>
-
-                <!-- Confirm Password Field -->
-                <div>
-                    <label for="{{ form.password2.id_for_label }}" class="block text-sm font-semibold text-gray-700 mb-2">
-                        Confirm Password *
-                    </label>
-                    <div class="relative">
-                        {{ form.password2 }}
-                        <button type="button" class="absolute inset-y-0 right-0 pr-4 flex items-center" onclick="togglePassword('{{ form.password2.id_for_label }}', this)">
-                            <i class="fas fa-eye text-gray-500 hover:text-gray-700"></i>
-                        </button>
-                    </div>
-                    {% if form.password2.errors %}
-                        <div class="mt-2 text-sm text-red-600">
-                            <i class="fas fa-exclamation-circle mr-1"></i>
-                            {{ form.password2.errors.0 }}
-                        </div>
-                    {% endif %}
-                    <!-- Password Match Indicator -->
-                    <div id="passwordMatch" class="password-match">
-                        <i class="fas fa-check-circle mr-1"></i>
-                        <span id="matchText">Passwords match</span>
-                    </div>
-                </div>
-
-                <!-- Terms and Conditions Checkbox -->
-                <div class="flex items-start">
-                    <div class="flex items-center h-5">
-                        <input id="accept_terms" name="accept_terms" type="checkbox" required
-                               class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded cursor-pointer">
-                    </div>
-                    <div class="ml-3 text-sm">
-                        <label for="accept_terms" class="font-medium text-gray-700 cursor-pointer">
-                            I accept the <a href="{% url 'terms' %}" target="_blank" class="text-green-600 hover:text-green-700 underline">Terms of Service</a> and <a href="{% url 'privacy' %}" target="_blank" class="text-green-600 hover:text-green-700 underline">Privacy Policy</a> *
+                <!-- Name Fields - Side by Side -->
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            First Name
                         </label>
-                        {% if form.accept_terms.errors %}
-                            <div class="mt-1 text-sm text-red-600">
-                                {{ form.accept_terms.errors.0 }}
+                        {{ form.first_name }}
+                        {% if form.first_name.errors %}
+                            <div class="mt-1 text-xs text-red-600">
+                                {{ form.first_name.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Last Name
+                        </label>
+                        {{ form.last_name }}
+                        {% if form.last_name.errors %}
+                            <div class="mt-1 text-xs text-red-600">
+                                {{ form.last_name.errors.0 }}
                             </div>
                         {% endif %}
                     </div>
                 </div>
 
-                <!-- Submit Button -->
+                <!-- Email Field -->
                 <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <div class="mt-1 text-xs text-red-600">
+                            {{ form.email.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Gender Field -->
+                <div>
+                    <label for="{{ form.gender.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Gender
+                    </label>
+                    {{ form.gender }}
+                    {% if form.gender.errors %}
+                        <div class="mt-1 text-xs text-red-600">
+                            {{ form.gender.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Contact Method Field -->
+                <div>
+                    <label for="{{ form.contact_method.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Mobile number or email
+                    </label>
+                    {{ form.contact_method }}
+                    {% if form.contact_method.errors %}
+                        <div class="mt-1 text-xs text-red-600">
+                            {{ form.contact_method.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Password Field -->
+                <div>
+                    <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        Password
+                    </label>
+                    <div class="relative">
+                        {{ form.password }}
+                        <button type="button" class="absolute inset-y-0 right-0 pr-3 flex items-center" onclick="togglePassword('id_password', this)">
+                            <i class="fas fa-eye text-gray-400 hover:text-gray-600 text-sm"></i>
+                        </button>
+                    </div>
+                    {% if form.password.errors %}
+                        <div class="mt-1 text-xs text-red-600">
+                            {{ form.password.errors.0 }}
+                        </div>
+                    {% endif %}
+                    <p class="mt-1 text-xs text-gray-500">Must be at least 8 characters</p>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-1">
                     <button type="submit" id="submitBtn"
-                            class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-base font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                            class="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-md text-base font-semibold text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
                         <span id="btnText">Create Account</span>
                         <span id="btnSpinner" class="hidden">
                             <span class="spinner"></span>
@@ -159,53 +134,19 @@
                         </span>
                     </button>
                 </div>
+                
+                <!-- Terms Notice -->
+                <p class="text-xs text-center text-gray-500 mt-2">
+                    By creating an account, you agree to our 
+                    <a href="{% url 'terms' %}" target="_blank" class="text-green-600 hover:text-green-700 underline">Terms</a>, 
+                    <a href="{% url 'privacy' %}" target="_blank" class="text-green-600 hover:text-green-700 underline">Privacy Policy</a> 
+                    and Cookies Policy.
+                </p>
             </form>
 
-            <!-- Social Registration -->
-            {% load socialaccount %}
-            <div class="mt-8">
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-300"></div>
-                    </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="px-3 bg-white text-gray-600 font-medium">Or sign up with</span>
-                    </div>
-                </div>
 
-                <div class="mt-6">
-                    <a href="{% provider_login_url 'google' %}" 
-                       class="w-full flex justify-center items-center py-3 px-4 border-2 border-gray-300 rounded-lg shadow-sm text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
-                        <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                        </svg>
-                        Continue with Google
-                    </a>
-                </div>
-            </div>
 
-            <!-- Divider -->
-            <div class="mt-8">
-                <div class="relative">
-                    <div class="absolute inset-0 flex items-center">
-                        <div class="w-full border-t border-gray-300"></div>
-                    </div>
-                    <div class="relative flex justify-center text-sm">
-                        <span class="px-3 bg-white text-gray-600 font-medium">Already have an account?</span>
-                    </div>
-                </div>
 
-                <div class="mt-6">
-                    <a href="{% url 'accounts:login' %}" 
-                       class="w-full flex justify-center py-3 px-4 border-2 border-gray-300 rounded-lg shadow-sm text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all">
-                        <i class="fas fa-sign-in-alt mr-2 mt-1"></i>
-                        Sign In Instead
-                    </a>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -227,40 +168,24 @@ function togglePassword(fieldId, button) {
     }
 }
 
-// Password match indicator
-const password1 = document.getElementById('{{ form.password1.id_for_label }}');
-const password2 = document.getElementById('{{ form.password2.id_for_label }}');
-const matchIndicator = document.getElementById('passwordMatch');
-const matchText = document.getElementById('matchText');
+// Simple password validation
+const password = document.getElementById('id_password');
 
-function checkPasswordMatch() {
-    const pass1 = password1.value;
-    const pass2 = password2.value;
+function validatePassword() {
+    const passValue = password.value;
     
-    if (pass2.length === 0) {
-        matchIndicator.classList.remove('show');
-        return;
-    }
-    
-    matchIndicator.classList.add('show');
-    
-    if (pass1 === pass2 && pass2.length >= 8) {
-        matchIndicator.classList.remove('no-match');
-        matchIndicator.classList.add('match');
-        matchText.textContent = '✓ Passwords match';
-    } else if (pass1 === pass2) {
-        matchIndicator.classList.remove('no-match');
-        matchIndicator.classList.add('match');
-        matchText.textContent = '✓ Passwords match (but too short)';
+    if (passValue.length >= 8) {
+        password.classList.remove('border-red-300');
+        password.classList.add('border-green-300');
     } else {
-        matchIndicator.classList.remove('match');
-        matchIndicator.classList.add('no-match');
-        matchText.textContent = '✗ Passwords do not match';
+        password.classList.remove('border-green-300');
+        password.classList.add('border-red-300');
     }
 }
 
-password1.addEventListener('input', checkPasswordMatch);
-password2.addEventListener('input', checkPasswordMatch);
+if (password) {
+    password.addEventListener('input', validatePassword);
+}
 
 // Form submission with loading state
 const form = document.getElementById('registrationForm');

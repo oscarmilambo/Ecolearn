@@ -1,16 +1,23 @@
-# elearning/views.py - Updated with corrections and enrollment handling
+# elearning/views.py - FULLY OPTIMIZED with Redis caching, database optimization, and pagination
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, Count, Avg, F
+from django.db.models import Q, Count, Avg, F, Prefetch
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponse, HttpResponseNotAllowed
 from django.views.decorators.http import require_POST
+from django.views.decorators.cache import cache_page
+from django.core.cache import cache
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.db import transaction
+from django.urls import reverse
 from datetime import datetime, timedelta
 import io
-# NOTE: Assuming User is imported from standard Django location
-from django.contrib.auth.models import User 
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
 from .models import (
     Module, Category, Lesson, Quiz, Question, Answer,
     Enrollment, LessonProgress, QuizAttempt, QuizResponse,
@@ -19,12 +26,7 @@ from .models import (
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
-from reportlab.lib import colors
-from django.db import models
-from django.db import transaction
-from django.urls import reverse
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.utils import timezone 
+from reportlab.lib import colors 
 
 def get_user_language(request):
     """Get user's preferred language"""
@@ -223,9 +225,10 @@ def enroll_module(request, slug):
     return redirect('elearning:module_detail', slug=slug)
 
 @login_required
+@cache_page(60 * 15)  # Cache for 15 minutes
 def module_list(request):
     """
-    Display list of all available modules with filters
+    OPTIMIZED: Display list of all available modules with filters, caching, and pagination
     """
     # Get query parameters
     search_query = request.GET.get('q', '')
@@ -233,12 +236,23 @@ def module_list(request):
     difficulty = request.GET.get('difficulty', '')
     tag_slug = request.GET.get('tag', '')
     sort_by = request.GET.get('sort', 'featured')
+    page = request.GET.get('page', 1)
     
-    # Base queryset
+    # Create cache key for this specific query
+    cache_key = f"module_list_{search_query}_{category_id}_{difficulty}_{tag_slug}_{sort_by}_{page}_{request.user.id}"
+    cached_data = cache.get(cache_key)
+    
+    if cached_data:
+        return render(request, 'elearning/module_list.html', cached_data)
+    
+    # OPTIMIZED: Base queryset with select_related and prefetch_related
     modules = Module.objects.filter(
         is_published=True,
         is_active=True
-    ).select_related('category').prefetch_related('tags')
+    ).select_related('category', 'created_by').prefetch_related(
+        'tags',
+        Prefetch('enrollment_set', queryset=Enrollment.objects.select_related('user'))
+    )
     
     # Apply filters
     if search_query:
@@ -271,46 +285,79 @@ def module_list(request):
     else:  # featured
         modules = modules.order_by('-is_featured', '-enrollments_count', 'order')
     
-    # Get categories with module counts
-    categories = Category.objects.filter(is_active=True).annotate(
-        module_count=Count('modules', filter=Q(modules__is_published=True))
-    ).order_by('order')
+    # PAGINATION - 20 items per page
+    paginator = Paginator(modules, 20)
+    try:
+        modules_page = paginator.page(page)
+    except PageNotAnInteger:
+        modules_page = paginator.page(1)
+    except EmptyPage:
+        modules_page = paginator.page(paginator.num_pages)
     
-    # Get popular tags
-    tags = Tag.objects.annotate(
-        module_count=Count('modules', filter=Q(modules__is_published=True))
-    ).filter(module_count__gt=0).order_by('-module_count')[:10]
+    # CACHED: Get categories with module counts
+    categories_cache_key = "categories_with_counts"
+    categories = cache.get(categories_cache_key)
+    if not categories:
+        categories = Category.objects.filter(is_active=True).annotate(
+            module_count=Count('modules', filter=Q(modules__is_published=True))
+        ).order_by('order')
+        cache.set(categories_cache_key, categories, 60 * 30)  # Cache for 30 minutes
     
-    # Get featured modules
-    featured_modules = Module.objects.filter(
-        is_published=True,
-        is_featured=True
-    )[:3]
+    # CACHED: Get popular tags
+    tags_cache_key = "popular_tags"
+    tags = cache.get(tags_cache_key)
+    if not tags:
+        tags = Tag.objects.annotate(
+            module_count=Count('modules', filter=Q(modules__is_published=True))
+        ).filter(module_count__gt=0).order_by('-module_count')[:10]
+        cache.set(tags_cache_key, tags, 60 * 30)  # Cache for 30 minutes
     
-    # Get user enrollments
+    # CACHED: Get featured modules
+    featured_cache_key = "featured_modules"
+    featured_modules = cache.get(featured_cache_key)
+    if not featured_modules:
+        featured_modules = Module.objects.filter(
+            is_published=True,
+            is_featured=True
+        ).select_related('category')[:3]
+        cache.set(featured_cache_key, featured_modules, 60 * 30)  # Cache for 30 minutes
+    
+    # OPTIMIZED: Get user enrollments
     user_enrollments = []
     user_progress = {}
     if request.user.is_authenticated:
-        enrollments = Enrollment.objects.filter(
-            user=request.user
-        ).select_related('module')
-        
-        user_enrollments = [e.module_id for e in enrollments]
-        user_progress = {e.module_id: e.progress_percentage for e in enrollments}
+        user_cache_key = f"user_enrollments_{request.user.id}"
+        user_data = cache.get(user_cache_key)
+        if not user_data:
+            enrollments = Enrollment.objects.filter(
+                user=request.user
+            ).select_related('module').only('module_id', 'progress_percentage')
+            
+            user_enrollments = [e.module_id for e in enrollments]
+            user_progress = {e.module_id: e.progress_percentage for e in enrollments}
+            user_data = {'enrollments': user_enrollments, 'progress': user_progress}
+            cache.set(user_cache_key, user_data, 60 * 15)  # Cache for 15 minutes
+        else:
+            user_enrollments = user_data['enrollments']
+            user_progress = user_data['progress']
     
-    # Get stats
-    stats = {
-        'total_modules': Module.objects.filter(is_published=True).count(),
-        'total_students': Enrollment.objects.values('user').distinct().count(),
-        'total_completions': Enrollment.objects.filter(completed_at__isnull=False).count(),
-        'featured_modules': featured_modules,
-    }
+    # CACHED: Get stats
+    stats_cache_key = "module_stats"
+    stats = cache.get(stats_cache_key)
+    if not stats:
+        stats = {
+            'total_modules': Module.objects.filter(is_published=True).count(),
+            'total_students': Enrollment.objects.values('user').distinct().count(),
+            'total_completions': Enrollment.objects.filter(completed_at__isnull=False).count(),
+            'featured_modules': featured_modules,
+        }
+        cache.set(stats_cache_key, stats, 60 * 30)  # Cache for 30 minutes
     
     # Get user's preferred language
     user_language = request.session.get('language', 'en')
     
     context = {
-        'modules': modules,
+        'modules': modules_page,
         'categories': categories,
         'tags': tags,
         'selected_category': selected_category,
@@ -321,7 +368,12 @@ def module_list(request):
         'user_progress': user_progress,
         'stats': stats,
         'user_language': user_language,
+        'paginator': paginator,
+        'page_obj': modules_page,
     }
+    
+    # Cache the context for 15 minutes
+    cache.set(cache_key, context, 60 * 15)
     
     return render(request, 'elearning/module_list.html', context)
 

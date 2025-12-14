@@ -1,0 +1,263 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Impact Report - {{ report.group.name }} - EcoLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+        border: 1px solid #bbf7d0;
+        transition: all 0.3s ease;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -8px rgba(34, 197, 94, 0.3);
+    }
+    
+    .chart-container {
+        background: #fafafa;
+        border-radius: 8px;
+        padding: 1.5rem;
+    }
+    
+    @media print {
+        .no-print { display: none !important; }
+        .report-container { box-shadow: none; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Impact Report</h1>
+                    <p class="text-gray-600 mt-2">{{ report.group.name }} • {{ report.report_period_start|date:"M d, Y" }} - {{ report.report_period_end|date:"M d, Y" }}</p>
+                </div>
+                <div class="flex space-x-3 no-print">
+                    <button onclick="window.print()" class="bg-eco-green text-white px-4 py-2 rounded-lg hover:bg-eco-dark transition-colors flex items-center">
+                        <i class="fas fa-print mr-2"></i>Print Report
+                    </button>
+                    <a href="{% url 'collaboration:group_detail' report.group.id %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>Back to Group
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Container -->
+        <div class="report-container p-8">
+            
+            <!-- Group Info -->
+            <div class="mb-8 pb-6 border-b border-gray-200">
+                <div class="flex items-start space-x-6">
+                    {% if report.group.image %}
+                    <img src="{{ report.group.image.url }}" alt="{{ report.group.name }}" class="w-20 h-20 rounded-lg object-cover">
+                    {% else %}
+                    <div class="w-20 h-20 bg-eco-light rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-eco-green text-2xl"></i>
+                    </div>
+                    {% endif %}
+                    <div class="flex-1">
+                        <h2 class="text-2xl font-bold text-gray-900">{{ report.group.name }}</h2>
+                        <p class="text-gray-600 mt-1">{{ report.group.community }}, {{ report.group.district }}</p>
+                        <p class="text-sm text-gray-500 mt-2">{{ report.group.description|truncatewords:20 }}</p>
+                        <div class="flex items-center space-x-4 mt-3 text-sm text-gray-600">
+                            <span><i class="fas fa-user-friends mr-1"></i>{{ report.group.member_count }} members</span>
+                            <span><i class="fas fa-calendar mr-1"></i>Report Period: {{ report.report_period_start|date:"M d" }} - {{ report.report_period_end|date:"M d, Y" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                
+                <!-- Total Events -->
+                <div class="metric-card p-6 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Total Events</p>
+                            <p class="text-3xl font-bold text-eco-green">{{ report.total_events }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-eco-green bg-opacity-20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-calendar-check text-eco-green text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Cleanup events organized</p>
+                </div>
+
+                <!-- Total Participants -->
+                <div class="metric-card p-6 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Participants</p>
+                            <p class="text-3xl font-bold text-blue-600">{{ report.total_participants }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">People involved in activities</p>
+                </div>
+
+                <!-- Waste Collected -->
+                <div class="metric-card p-6 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Waste Collected</p>
+                            <p class="text-3xl font-bold text-orange-600">{{ report.waste_collected_kg|floatformat:1 }}</p>
+                            <p class="text-sm text-gray-500">kg</p>
+                        </div>
+                        <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-trash text-orange-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Total waste removed</p>
+                </div>
+
+                <!-- Community Reach -->
+                <div class="metric-card p-6 rounded-lg">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-sm font-medium text-gray-600">Community Reach</p>
+                            <p class="text-3xl font-bold text-purple-600">{{ report.community_reach|default:"N/A" }}</p>
+                        </div>
+                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bullhorn text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">People reached through campaigns</p>
+                </div>
+            </div>
+
+            <!-- Impact Summary -->
+            <div class="bg-gradient-to-r from-eco-light to-green-50 p-6 rounded-lg mb-8">
+                <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-chart-line text-eco-green mr-3"></i>
+                    Impact Summary
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Environmental Impact</h4>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-eco-green mr-2"></i>
+                                Removed {{ report.waste_collected_kg|floatformat:1 }}kg of waste from the environment
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-eco-green mr-2"></i>
+                                Organized {{ report.total_events }} cleanup event{{ report.total_events|pluralize }}
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-eco-green mr-2"></i>
+                                Cleaned {{ report.dumps_cleaned|default:0 }} illegal dump site{{ report.dumps_cleaned|default:0|pluralize }}
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-2">Community Engagement</h4>
+                        <ul class="space-y-2 text-sm text-gray-700">
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-eco-green mr-2"></i>
+                                Engaged {{ report.total_participants }} active participant{{ report.total_participants|pluralize }}
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-eco-green mr-2"></i>
+                                Submitted {{ report.reports_submitted|default:0 }} environmental report{{ report.reports_submitted|default:0|pluralize }}
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-check-circle text-eco-green mr-2"></i>
+                                Reached {{ report.community_reach|default:0 }} community member{{ report.community_reach|default:0|pluralize }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Indicators -->
+            {% if report.total_events > 0 %}
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white border border-gray-200 p-6 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-users-cog text-blue-500 mr-2"></i>
+                        Avg. Participation
+                    </h4>
+                    <p class="text-2xl font-bold text-blue-600">{{ report.total_participants|div:report.total_events|floatformat:1 }}</p>
+                    <p class="text-sm text-gray-500">participants per event</p>
+                </div>
+
+                <div class="bg-white border border-gray-200 p-6 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-weight-hanging text-orange-500 mr-2"></i>
+                        Avg. Waste/Event
+                    </h4>
+                    <p class="text-2xl font-bold text-orange-600">{{ report.waste_collected_kg|div:report.total_events|floatformat:1 }}</p>
+                    <p class="text-sm text-gray-500">kg per event</p>
+                </div>
+
+                <div class="bg-white border border-gray-200 p-6 rounded-lg">
+                    <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-calendar-alt text-green-500 mr-2"></i>
+                        Event Frequency
+                    </h4>
+                    <p class="text-2xl font-bold text-green-600">
+                        {% widthratio report.total_events 1 7 %}
+                    </p>
+                    <p class="text-sm text-gray-500">events per week (avg)</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Report Details -->
+            <div class="bg-gray-50 p-6 rounded-lg mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-gray-600 mr-2"></i>
+                    Report Details
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                        <p class="text-gray-600"><strong>Generated by:</strong> {{ report.generated_by.get_full_name|default:report.generated_by.username }}</p>
+                        <p class="text-gray-600"><strong>Generated on:</strong> {{ report.generated_at|date:"F d, Y \a\t g:i A" }}</p>
+                        <p class="text-gray-600"><strong>Report Period:</strong> {{ report.report_period_start|date:"F d, Y" }} - {{ report.report_period_end|date:"F d, Y" }}</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-600"><strong>Group Coordinator:</strong> {{ report.group.coordinator.get_full_name|default:report.group.coordinator.username }}</p>
+                        <p class="text-gray-600"><strong>Location:</strong> {{ report.group.community }}, {{ report.group.district }}</p>
+                        <p class="text-gray-600"><strong>Group Members:</strong> {{ report.group.member_count }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Call to Action -->
+            <div class="bg-eco-green text-white p-6 rounded-lg text-center">
+                <h3 class="text-xl font-bold mb-2">Keep Up the Great Work!</h3>
+                <p class="mb-4">Your group is making a real difference in {{ report.group.community }}. Continue organizing events and engaging your community for an even greater impact.</p>
+                <div class="flex justify-center space-x-4 no-print">
+                    <a href="{% url 'collaboration:create_event' report.group.id %}" class="bg-white text-eco-green px-6 py-2 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                        Plan Next Event
+                    </a>
+                    <a href="{% url 'collaboration:generate_report' report.group.id %}" class="bg-eco-dark text-white px-6 py-2 rounded-lg font-semibold hover:bg-green-800 transition-colors">
+                        Generate New Report
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %} 

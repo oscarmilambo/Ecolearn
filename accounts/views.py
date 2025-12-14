@@ -147,11 +147,37 @@ def register_view(request):
             request.session[attempts_key] = attempts + 1
             request.session[attempts_time_key] = current_time.isoformat()
             
-            # Create user but set as inactive until email verification
-            user = form.save(commit=False)
-            user.is_active = False  # User must verify email first
-            user.email = form.cleaned_data['email'].lower()
-            user.save()
+            # Create user manually since we're not using UserCreationForm
+            contact_method = form.cleaned_data['contact_method']
+            
+            # Generate username
+            if '@' in contact_method:
+                base_username = contact_method.split('@')[0]
+                email = contact_method.lower()
+                phone_number = None
+            else:
+                base_username = f"user_{contact_method[-4:]}"
+                email = None
+                phone_number = contact_method
+            
+            # Ensure unique username
+            counter = 1
+            username = base_username
+            while CustomUser.objects.filter(username=username).exists():
+                username = f"{base_username}{counter}"
+                counter += 1
+            
+            # Create user
+            user = CustomUser.objects.create_user(
+                username=username,
+                email=email,
+                password=form.cleaned_data['password'],
+                first_name=form.cleaned_data['first_name'],
+                last_name=form.cleaned_data['last_name'],
+                gender=form.cleaned_data['gender'],
+                phone_number=phone_number,
+                is_active=False  # User must verify email first
+            )
             
             # Create user profile
             UserProfile.objects.get_or_create(user=user)

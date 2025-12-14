@@ -22,6 +22,12 @@ urlpatterns = [
     path('stories/<int:story_id>/', views.story_detail, name='story_detail'),
     path('stories/<int:story_id>/like/', views.like_story, name='like_story'),
 
+    # ====================== CAMPAIGNS ======================
+    path('campaigns/', views.campaigns_list, name='campaigns_list'),
+    path('campaigns/<int:campaign_id>/', views.campaign_detail, name='campaign_detail'),
+    path('campaigns/<int:campaign_id>/join/', views.join_campaign, name='join_campaign'),
+    path('campaigns/calendar/', views.campaign_calendar, name='campaign_calendar'),
+
     # ====================== CHALLENGES ======================
     path('challenges/', views.challenges_list, name='challenges_list'),
     path('challenges/<int:challenge_id>/', views.challenge_detail, name='challenge_detail'),

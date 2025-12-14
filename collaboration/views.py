@@ -13,9 +13,7 @@ from .models import (
 @login_required
 def groups_list(request):
     """Display all cleanup groups"""
-    groups = CleanupGroup.objects.filter(is_active=True).annotate(
-        member_count=Count('members')
-    ).order_by('-created_at')
+    groups = CleanupGroup.objects.filter(is_active=True).order_by('-created_at')
     
     # Get user's groups
     user_groups = request.user.cleanup_groups.all()
@@ -72,12 +70,20 @@ def create_group(request):
         community = request.POST.get('community')
         district = request.POST.get('district')
         
+        # Social media fields (limited to 3 platforms)
+        facebook_url = request.POST.get('facebook_url', '')
+        whatsapp_url = request.POST.get('whatsapp_url', '')
+        twitter_url = request.POST.get('twitter_url', '')
+        
         group = CleanupGroup.objects.create(
             name=name,
             description=description,
             community=community,
             district=district,
-            coordinator=request.user
+            coordinator=request.user,
+            facebook_url=facebook_url,
+            whatsapp_url=whatsapp_url,
+            twitter_url=twitter_url
         )
         
         # Add creator as coordinator
@@ -310,3 +316,36 @@ def my_groups(request):
         'coordinated_groups': coordinated_groups,
     }
     return render(request, 'collaboration/my_groups.html', context)
+
+
+@login_required
+def edit_group(request, group_id):
+    """Edit group details including social media links"""
+    group = get_object_or_404(CleanupGroup, id=group_id, is_active=True)
+    
+    # Check if user is coordinator
+    if group.coordinator != request.user:
+        messages.error(request, 'Only coordinators can edit group details.')
+        return redirect('collaboration:group_detail', group_id=group.id)
+    
+    if request.method == 'POST':
+        # Update basic info
+        group.name = request.POST.get('name', group.name)
+        group.description = request.POST.get('description', group.description)
+        group.community = request.POST.get('community', group.community)
+        group.district = request.POST.get('district', group.district)
+        
+        # Update social media links (limited to 3 platforms)
+        group.facebook_url = request.POST.get('facebook_url', '')
+        group.whatsapp_url = request.POST.get('whatsapp_url', '')
+        group.twitter_url = request.POST.get('twitter_url', '')
+        
+        group.save()
+        
+        messages.success(request, 'Group details updated successfully!')
+        return redirect('collaboration:group_detail', group_id=group.id)
+    
+    context = {
+        'group': group,
+    }
+    return render(request, 'collaboration/edit_group.html', context)

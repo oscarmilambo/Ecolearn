@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 User = get_user_model()
 
@@ -38,10 +39,13 @@ class DumpingReport(models.Model):
     waste_type = models.CharField(max_length=200, blank=True)  # e.g., "plastic bottles, food waste"
     estimated_volume = models.CharField(max_length=100, blank=True)  # e.g., "1-2 cubic meters"
     
-    # Media files
-    photo1 = models.ImageField(upload_to='dumping_reports/')
-    photo2 = models.ImageField(upload_to='dumping_reports/', blank=True)
-    photo3 = models.ImageField(upload_to='dumping_reports/', blank=True)
+    # Media files with Cloudinary optimization
+    photo1 = CloudinaryField('image', 
+                             transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    photo2 = CloudinaryField('image', blank=True,
+                             transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    photo3 = CloudinaryField('image', blank=True,
+                             transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     
     # Status and tracking
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

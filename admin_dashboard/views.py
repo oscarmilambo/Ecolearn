@@ -9,6 +9,8 @@ from django.db.models.functions import TruncMonth
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
 from openpyxl import Workbook
 from twilio.rest import Client
 from django.conf import settings
@@ -2707,3 +2709,706 @@ EcoLearn Emergency System
     }
     
     return render(request, 'admin_dashboard/escalate_report.html', context)
+
+
+# ============================================================================
+# GROUPS MANAGEMENT SECTION
+# ============================================================================
+
+@staff_member_required
+def groups_management(request):
+    """Groups Management Dashboard"""
+    from collaboration.models import CleanupGroup, GroupMembership, GroupEvent, GroupImpactReport
+    from django.db.models import Q, Count, Sum, Avg
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Get filter parameters
+    status_filter = request.GET.get('status', '')
+    district_filter = request.GET.get('district', '')
+    search_query = request.GET.get('search', '')
+    
+    # Base queryset with annotations (using different names to avoid conflicts)
+    groups = CleanupGroup.objects.select_related('coordinator').annotate(
+        members_total=Count('members'),
+        events_total=Count('events'),
+        completed_events=Count('events', filter=Q(events__status='completed')),
+        total_waste_collected=Sum('events__waste_collected'),
+        total_participants=Sum('events__participants_count')
+    )
+    
+    # Apply filters
+    if status_filter == 'active':
+        groups = groups.filter(is_active=True)
+    elif status_filter == 'inactive':
+        groups = groups.filter(is_active=False)
+    if district_filter:
+        groups = groups.filter(district__icontains=district_filter)
+    if search_query:
+        groups = groups.filter(
+            Q(name__icontains=search_query) |
+            Q(community__icontains=search_query) |
+            Q(coordinator__username__icontains=search_query) |
+            Q(coordinator__first_name__icontains=search_query) |
+            Q(coordinator__last_name__icontains=search_query)
+        )
+    
+    groups = groups.order_by('-created_at')
+    
+    # Statistics
+    total_groups = CleanupGroup.objects.count()
+    active_groups = CleanupGroup.objects.filter(is_active=True).count()
+    inactive_groups = CleanupGroup.objects.filter(is_active=False).count()
+    
+    # Recent activity (last 30 days)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    new_groups_month = CleanupGroup.objects.filter(created_at__gte=thirty_days_ago).count()
+    recent_events = GroupEvent.objects.filter(created_at__gte=thirty_days_ago).count()
+    
+    # Top performing groups
+    top_groups = CleanupGroup.objects.annotate(
+        completed_events_count=Count('events', filter=Q(events__status='completed'))
+    ).order_by('-completed_events_count')[:5]
+    
+    # District breakdown
+    district_stats = CleanupGroup.objects.values('district').annotate(
+        count=Count('id'),
+        active_count=Count('id', filter=Q(is_active=True))
+    ).order_by('-count')[:10]
+    
+    # Social media adoption
+    groups_with_social = CleanupGroup.objects.filter(
+        Q(facebook_url__isnull=False, facebook_url__gt='') |
+        Q(whatsapp_url__isnull=False, whatsapp_url__gt='') |
+        Q(twitter_url__isnull=False, twitter_url__gt='')
+    ).count()
+    social_adoption_rate = round((groups_with_social / total_groups * 100), 1) if total_groups > 0 else 0
+    
+    # Total impact metrics
+    total_events = GroupEvent.objects.filter(status='completed').count()
+    total_waste_collected = GroupEvent.objects.filter(status='completed').aggregate(
+        total=Sum('waste_collected')
+    )['total'] or 0
+    total_participants = GroupEvent.objects.filter(status='completed').aggregate(
+        total=Sum('participants_count')
+    )['total'] or 0
+    
+    context = {
+        'groups': groups,
+        'total_groups': total_groups,
+        'active_groups': active_groups,
+        'inactive_groups': inactive_groups,
+        'new_groups_month': new_groups_month,
+        'recent_events': recent_events,
+        'top_groups': top_groups,
+        'district_stats': district_stats,
+        'groups_with_social': groups_with_social,
+        'social_adoption_rate': social_adoption_rate,
+        'total_events': total_events,
+        'total_waste_collected': total_waste_collected,
+        'total_participants': total_participants,
+        # Filter values
+        'status_filter': status_filter,
+        'district_filter': district_filter,
+        'search_query': search_query,
+    }
+    
+    return render(request, 'admin_dashboard/groups_management.html', context)
+
+
+@staff_member_required
+def group_detail_admin(request, group_id):
+    """Detailed admin view of a specific group"""
+    from collaboration.models import CleanupGroup, GroupMembership, GroupEvent, GroupImpactReport
+    from community.notifications import send_notification
+    
+    group = get_object_or_404(CleanupGroup, id=group_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'toggle_status':
+            group.is_active = not group.is_active
+            group.save()
+            
+            status = "activated" if group.is_active else "deactivated"
+            messages.success(request, f'Group {status} successfully!')
+            
+            # Notify coordinator
+            send_notification(
+                user=group.coordinator,
+                title=f'Group Status Update',
+                message=f'Your group "{group.name}" has been {status} by an administrator.',
+                notification_type='group_update'
+            )
+        
+        elif action == 'update_info':
+            group.name = request.POST.get('name', group.name)
+            group.description = request.POST.get('description', group.description)
+            group.community = request.POST.get('community', group.community)
+            group.district = request.POST.get('district', group.district)
+            group.save()
+            
+            messages.success(request, 'Group information updated successfully!')
+        
+        return redirect('admin_dashboard:group_detail_admin', group_id=group.id)
+    
+    # Get group statistics
+    members = GroupMembership.objects.filter(group=group, is_active=True).select_related('user')
+    events = GroupEvent.objects.filter(group=group).order_by('-scheduled_date')
+    reports = GroupImpactReport.objects.filter(group=group).order_by('-generated_at')
+    
+    # Calculate metrics
+    completed_events = events.filter(status='completed')
+    total_waste_collected = completed_events.aggregate(Sum('waste_collected'))['waste_collected__sum'] or 0
+    total_participants = completed_events.aggregate(Sum('participants_count'))['participants_count__sum'] or 0
+    
+    # Recent activity
+    recent_events = events[:5]
+    recent_members = members.order_by('-joined_at')[:5]
+    
+    context = {
+        'group': group,
+        'members': members,
+        'events': events,
+        'reports': reports,
+        'recent_events': recent_events,
+        'recent_members': recent_members,
+        'total_waste_collected': total_waste_collected,
+        'total_participants': total_participants,
+        'completed_events_count': completed_events.count(),
+    }
+    
+    return render(request, 'admin_dashboard/group_detail_admin.html', context)
+
+
+@staff_member_required
+def groups_analytics(request):
+    """Groups analytics and insights"""
+    from collaboration.models import CleanupGroup, GroupEvent, GroupMembership
+    from django.db.models import Count, Sum, Avg
+    from django.utils import timezone
+    from datetime import timedelta
+    
+    # Time-based analytics
+    six_months_ago = timezone.now() - timedelta(days=180)
+    
+    # Group growth over time
+    monthly_growth = []
+    for i in range(6):
+        month_start = timezone.now() - timedelta(days=30 * (i + 1))
+        month_end = timezone.now() - timedelta(days=30 * i)
+        count = CleanupGroup.objects.filter(
+            created_at__gte=month_start,
+            created_at__lt=month_end
+        ).count()
+        monthly_growth.append({
+            'month': month_start.strftime('%b %Y'),
+            'count': count
+        })
+    monthly_growth.reverse()
+    
+    # Impact metrics by district
+    district_impact = CleanupGroup.objects.values('district').annotate(
+        group_count=Count('id'),
+        total_events=Count('events'),
+        total_waste=Sum('events__waste_collected'),
+        total_participants=Sum('events__participants_count')
+    ).order_by('-total_waste')
+    
+    # Calculate average waste per group for each district
+    district_impact_list = []
+    for district in district_impact:
+        avg_waste_per_group = 0
+        if district['group_count'] > 0 and district['total_waste']:
+            avg_waste_per_group = district['total_waste'] / district['group_count']
+        
+        district_impact_list.append({
+            'district': district['district'],
+            'group_count': district['group_count'],
+            'total_events': district['total_events'] or 0,
+            'total_waste': district['total_waste'] or 0,
+            'total_participants': district['total_participants'] or 0,
+            'avg_waste_per_group': round(avg_waste_per_group, 1)
+        })
+    
+    # Social media adoption trends
+    social_stats = {
+        'facebook': CleanupGroup.objects.filter(facebook_url__isnull=False, facebook_url__gt='').count(),
+        'whatsapp': CleanupGroup.objects.filter(whatsapp_url__isnull=False, whatsapp_url__gt='').count(),
+        'twitter': CleanupGroup.objects.filter(twitter_url__isnull=False, twitter_url__gt='').count(),
+    }
+    
+    # Group size distribution
+    size_distribution = {
+        'small': CleanupGroup.objects.annotate(members_count=Count('members')).filter(members_count__lt=10).count(),
+        'medium': CleanupGroup.objects.annotate(members_count=Count('members')).filter(members_count__gte=10, members_count__lt=25).count(),
+        'large': CleanupGroup.objects.annotate(members_count=Count('members')).filter(members_count__gte=25).count(),
+    }
+    
+    # Most active coordinators
+    active_coordinators = CleanupGroup.objects.values(
+        'coordinator__username', 'coordinator__first_name', 'coordinator__last_name'
+    ).annotate(
+        groups_count=Count('id'),
+        total_events=Count('events'),
+        total_impact=Sum('events__waste_collected')
+    ).order_by('-total_impact')[:10]
+    
+    context = {
+        'monthly_growth': monthly_growth,
+        'district_impact': district_impact_list,
+        'social_stats': social_stats,
+        'size_distribution': size_distribution,
+        'active_coordinators': active_coordinators,
+    }
+    
+    return render(request, 'admin_dashboard/groups_analytics.html', context)
+
+
+@staff_member_required
+def export_groups_data(request):
+    """Export groups data to Excel"""
+    from collaboration.models import CleanupGroup
+    from django.http import HttpResponse
+    from openpyxl import Workbook
+    from django.utils import timezone
+    from django.db.models import Count, Sum
+    
+    # Create workbook
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Groups Data"
+    
+    # Headers
+    headers = [
+        'Group Name', 'Coordinator', 'Community', 'District', 'Members', 
+        'Events', 'Waste Collected (kg)', 'Status', 'Created Date',
+        'Facebook', 'WhatsApp', 'Twitter'
+    ]
+    ws.append(headers)
+    
+    # Data
+    groups = CleanupGroup.objects.select_related('coordinator').annotate(
+        members_count=Count('members'),
+        event_count=Count('events'),
+        waste_collected=Sum('events__waste_collected')
+    )
+    
+    for group in groups:
+        ws.append([
+            group.name,
+            group.coordinator.get_full_name() or group.coordinator.username,
+            group.community,
+            group.district,
+            group.members_count,
+            group.event_count,
+            float(group.waste_collected or 0),
+            'Active' if group.is_active else 'Inactive',
+            group.created_at.strftime('%Y-%m-%d'),
+            'Yes' if group.facebook_url else 'No',
+            'Yes' if group.whatsapp_url else 'No',
+            'Yes' if group.twitter_url else 'No',
+        ])
+    
+    # Response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename=groups_data_{timezone.now().strftime("%Y%m%d")}.xlsx'
+    
+    wb.save(response)
+    return response
+
+
+# ============================================================================
+# GROUPS MANAGEMENT SECTION
+# ======================================================================
+
+# ============================================================================
+# ADMIN GROUPS PRIVILEGES - CREATE, EDIT, DELETE, MANAGE
+# ============================================================================
+
+@staff_member_required
+def create_group_admin(request):
+    """Admin view to create new cleanup groups"""
+    from collaboration.models import CleanupGroup
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    
+    if request.method == 'POST':
+        try:
+            # Get form data
+            name = request.POST.get('name')
+            description = request.POST.get('description')
+            community = request.POST.get('community')
+            district = request.POST.get('district')
+            coordinator_id = request.POST.get('coordinator')
+            
+            # Social media links
+            facebook_url = request.POST.get('facebook_url', '')
+            whatsapp_url = request.POST.get('whatsapp_url', '')
+            twitter_url = request.POST.get('twitter_url', '')
+            
+            # Validation
+            if not all([name, description, community, district, coordinator_id]):
+                messages.error(request, 'All required fields must be filled.')
+                return redirect('admin_dashboard:create_group_admin')
+            
+            # Get coordinator
+            coordinator = get_object_or_404(User, id=coordinator_id)
+            
+            # Create group
+            group = CleanupGroup.objects.create(
+                name=name,
+                description=description,
+                community=community,
+                district=district,
+                coordinator=coordinator,
+                facebook_url=facebook_url,
+                whatsapp_url=whatsapp_url,
+                twitter_url=twitter_url,
+                is_active=True
+            )
+            
+            # Handle image upload
+            if 'image' in request.FILES:
+                group.image = request.FILES['image']
+                group.save()
+            
+            messages.success(request, f'Group "{name}" created successfully!')
+            return redirect('admin_dashboard:group_detail_admin', group_id=group.id)
+            
+        except Exception as e:
+            messages.error(request, f'Error creating group: {str(e)}')
+            return redirect('admin_dashboard:create_group_admin')
+    
+    # GET request - show form
+    users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+    
+    context = {
+        'users': users,
+        'page_title': 'Create New Group',
+    }
+    return render(request, 'admin_dashboard/create_group_admin.html', context)
+
+
+@staff_member_required
+def edit_group_admin(request, group_id):
+    """Admin view to edit cleanup groups"""
+    from collaboration.models import CleanupGroup
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    group = get_object_or_404(CleanupGroup, id=group_id)
+    
+    if request.method == 'POST':
+        try:
+            # Update group data
+            group.name = request.POST.get('name', group.name)
+            group.description = request.POST.get('description', group.description)
+            group.community = request.POST.get('community', group.community)
+            group.district = request.POST.get('district', group.district)
+            
+            # Update coordinator if provided
+            coordinator_id = request.POST.get('coordinator')
+            if coordinator_id:
+                coordinator = get_object_or_404(User, id=coordinator_id)
+                group.coordinator = coordinator
+            
+            # Update social media links
+            group.facebook_url = request.POST.get('facebook_url', '')
+            group.whatsapp_url = request.POST.get('whatsapp_url', '')
+            group.twitter_url = request.POST.get('twitter_url', '')
+            
+            # Handle image upload
+            if 'image' in request.FILES:
+                group.image = request.FILES['image']
+            
+            # Handle status change
+            if 'is_active' in request.POST:
+                group.is_active = request.POST.get('is_active') == 'on'
+            
+            group.save()
+            
+            messages.success(request, f'Group "{group.name}" updated successfully!')
+            return redirect('admin_dashboard:group_detail_admin', group_id=group.id)
+            
+        except Exception as e:
+            messages.error(request, f'Error updating group: {str(e)}')
+    
+    # GET request - show form
+    users = User.objects.filter(is_active=True).order_by('first_name', 'last_name', 'username')
+    
+    context = {
+        'group': group,
+        'users': users,
+        'page_title': f'Edit Group: {group.name}',
+    }
+    return render(request, 'admin_dashboard/edit_group_admin.html', context)
+
+
+@staff_member_required
+@require_POST
+def delete_group_admin(request, group_id):
+    """Admin view to delete cleanup groups"""
+    from collaboration.models import CleanupGroup
+    
+    group = get_object_or_404(CleanupGroup, id=group_id)
+    group_name = group.name
+    
+    try:
+        # Check if group has events or members
+        events_count = group.events.count()
+        members_count = group.members.count()
+        
+        if events_count > 0 or members_count > 0:
+            # Soft delete - deactivate instead of hard delete
+            group.is_active = False
+            group.save()
+            messages.warning(request, f'Group "{group_name}" has been deactivated instead of deleted due to existing events or members.')
+        else:
+            # Hard delete if no dependencies
+            group.delete()
+            messages.success(request, f'Group "{group_name}" deleted successfully!')
+        
+        return redirect('admin_dashboard:groups_management')
+        
+    except Exception as e:
+        messages.error(request, f'Error deleting group: {str(e)}')
+        return redirect('admin_dashboard:group_detail_admin', group_id=group_id)
+
+
+@staff_member_required
+@require_POST
+def toggle_group_status_admin(request, group_id):
+    """Admin view to activate/deactivate groups"""
+    from collaboration.models import CleanupGroup
+    
+    group = get_object_or_404(CleanupGroup, id=group_id)
+    
+    try:
+        group.is_active = not group.is_active
+        group.save()
+        
+        status = "activated" if group.is_active else "deactivated"
+        messages.success(request, f'Group "{group.name}" {status} successfully!')
+        
+        return JsonResponse({
+            'success': True,
+            'status': group.is_active,
+            'message': f'Group {status} successfully!'
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'Error updating group status: {str(e)}'
+        })
+
+
+@staff_member_required
+def manage_group_members_admin(request, group_id):
+    """Admin view to manage group members"""
+    from collaboration.models import CleanupGroup, GroupMembership
+    from django.contrib.auth import get_user_model
+    
+    User = get_user_model()
+    group = get_object_or_404(CleanupGroup, id=group_id)
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'add_member':
+            user_id = request.POST.get('user_id')
+            role = request.POST.get('role', 'member')
+            
+            try:
+                user = get_object_or_404(User, id=user_id)
+                membership, created = GroupMembership.objects.get_or_create(
+                    group=group,
+                    user=user,
+                    defaults={'role': role, 'is_active': True}
+                )
+                
+                if created:
+                    messages.success(request, f'{user.get_full_name() or user.username} added to group as {role}!')
+                else:
+                    messages.info(request, f'{user.get_full_name() or user.username} is already a member of this group.')
+                    
+            except Exception as e:
+                messages.error(request, f'Error adding member: {str(e)}')
+        
+        elif action == 'remove_member':
+            membership_id = request.POST.get('membership_id')
+            
+            try:
+                membership = get_object_or_404(GroupMembership, id=membership_id, group=group)
+                user_name = membership.user.get_full_name() or membership.user.username
+                membership.delete()
+                messages.success(request, f'{user_name} removed from group!')
+                
+            except Exception as e:
+                messages.error(request, f'Error removing member: {str(e)}')
+        
+        elif action == 'update_role':
+            membership_id = request.POST.get('membership_id')
+            new_role = request.POST.get('new_role')
+            
+            try:
+                membership = get_object_or_404(GroupMembership, id=membership_id, group=group)
+                membership.role = new_role
+                membership.save()
+                
+                user_name = membership.user.get_full_name() or membership.user.username
+                messages.success(request, f'{user_name} role updated to {new_role}!')
+                
+            except Exception as e:
+                messages.error(request, f'Error updating role: {str(e)}')
+        
+        return redirect('admin_dashboard:manage_group_members_admin', group_id=group_id)
+    
+    # GET request
+    members = GroupMembership.objects.filter(group=group, is_active=True).select_related('user')
+    available_users = User.objects.filter(is_active=True).exclude(
+        id__in=members.values_list('user_id', flat=True)
+    ).order_by('first_name', 'last_name', 'username')
+    
+    context = {
+        'group': group,
+        'members': members,
+        'available_users': available_users,
+        'role_choices': GroupMembership.ROLE_CHOICES,
+        'page_title': f'Manage Members: {group.name}',
+    }
+    return render(request, 'admin_dashboard/manage_group_members_admin.html', context)
+
+
+@staff_member_required
+def bulk_group_actions_admin(request):
+    """Admin view for bulk actions on groups"""
+    from collaboration.models import CleanupGroup
+    
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        group_ids = request.POST.getlist('group_ids')
+        
+        if not group_ids:
+            messages.error(request, 'No groups selected.')
+            return redirect('admin_dashboard:groups_management')
+        
+        groups = CleanupGroup.objects.filter(id__in=group_ids)
+        
+        try:
+            if action == 'activate':
+                groups.update(is_active=True)
+                messages.success(request, f'{groups.count()} groups activated successfully!')
+                
+            elif action == 'deactivate':
+                groups.update(is_active=False)
+                messages.success(request, f'{groups.count()} groups deactivated successfully!')
+                
+            elif action == 'delete':
+                # Check for dependencies before bulk delete
+                groups_with_deps = []
+                groups_to_delete = []
+                
+                for group in groups:
+                    if group.events.count() > 0 or group.members.count() > 0:
+                        groups_with_deps.append(group)
+                    else:
+                        groups_to_delete.append(group)
+                
+                # Delete groups without dependencies
+                if groups_to_delete:
+                    CleanupGroup.objects.filter(id__in=[g.id for g in groups_to_delete]).delete()
+                    messages.success(request, f'{len(groups_to_delete)} groups deleted successfully!')
+                
+                # Deactivate groups with dependencies
+                if groups_with_deps:
+                    CleanupGroup.objects.filter(id__in=[g.id for g in groups_with_deps]).update(is_active=False)
+                    messages.warning(request, f'{len(groups_with_deps)} groups deactivated instead of deleted due to existing events or members.')
+            
+        except Exception as e:
+            messages.error(request, f'Error performing bulk action: {str(e)}')
+    
+    return redirect('admin_dashboard:groups_management')
+
+
+@staff_member_required
+def group_statistics_admin(request):
+    """Admin view for detailed group statistics"""
+    from collaboration.models import CleanupGroup, GroupEvent, GroupMembership
+    from django.db.models import Avg, Count, Q
+    from django.db.models.functions import TruncMonth
+    
+    # Basic statistics
+    total_groups = CleanupGroup.objects.count()
+    active_groups = CleanupGroup.objects.filter(is_active=True).count()
+    inactive_groups = total_groups - active_groups
+    
+    # Growth statistics
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    ninety_days_ago = timezone.now() - timedelta(days=90)
+    
+    new_groups_30d = CleanupGroup.objects.filter(created_at__gte=thirty_days_ago).count()
+    new_groups_90d = CleanupGroup.objects.filter(created_at__gte=ninety_days_ago).count()
+    
+    # Performance statistics
+    avg_members_per_group = GroupMembership.objects.filter(is_active=True).values('group').annotate(
+        member_count=Count('user')
+    ).aggregate(avg_members=Avg('member_count'))['avg_members'] or 0
+    
+    avg_events_per_group = GroupEvent.objects.values('group').annotate(
+        event_count=Count('id')
+    ).aggregate(avg_events=Avg('event_count'))['avg_events'] or 0
+    
+    # District distribution
+    district_stats = CleanupGroup.objects.values('district').annotate(
+        total_count=Count('id'),
+        active_count=Count('id', filter=Q(is_active=True))
+    ).order_by('-total_count')
+    
+    # Monthly growth chart data
+    monthly_growth_data = CleanupGroup.objects.filter(
+        created_at__gte=timezone.now() - timedelta(days=365)
+    ).annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        count=Count('id')
+    ).order_by('month')
+    
+    # Format monthly growth data for template
+    monthly_growth = []
+    for item in monthly_growth_data:
+        monthly_growth.append({
+            'month': item['month'].strftime('%b %Y') if item['month'] else '',
+            'count': item['count']
+        })
+    
+    # Social media adoption
+    groups_with_social = CleanupGroup.objects.filter(
+        Q(facebook_url__isnull=False, facebook_url__gt='') |
+        Q(whatsapp_url__isnull=False, whatsapp_url__gt='') |
+        Q(twitter_url__isnull=False, twitter_url__gt='')
+    ).count()
+    
+    social_adoption_rate = (groups_with_social / total_groups * 100) if total_groups > 0 else 0
+    
+    context = {
+        'total_groups': total_groups,
+        'active_groups': active_groups,
+        'inactive_groups': inactive_groups,
+        'new_groups_30d': new_groups_30d,
+        'new_groups_90d': new_groups_90d,
+        'avg_members_per_group': round(avg_members_per_group, 1),
+        'avg_events_per_group': round(avg_events_per_group, 1),
+        'district_stats': district_stats,
+        'monthly_growth': monthly_growth,
+        'groups_with_social': groups_with_social,
+        'social_adoption_rate': round(social_adoption_rate, 1),
+        'page_title': 'Group Statistics',
+    }
+    
+    return render(request, 'admin_dashboard/group_statistics_admin.html', context)

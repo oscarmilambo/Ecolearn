@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from cloudinary.models import CloudinaryField
 
 User = get_user_model()
 
@@ -12,7 +13,14 @@ class CleanupGroup(models.Model):
     district = models.CharField(max_length=100)
     coordinator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coordinated_groups')
     members = models.ManyToManyField(User, through='GroupMembership', related_name='cleanup_groups')
-    image = models.ImageField(upload_to='groups/', blank=True)
+    image = CloudinaryField('image', blank=True,
+                           transformation={'width': 400, 'height': 300, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    
+    # Social Media Links (Limited to 3 platforms)
+    facebook_url = models.URLField(blank=True, help_text="Facebook page or group URL")
+    whatsapp_url = models.URLField(blank=True, help_text="WhatsApp group invite link")
+    twitter_url = models.URLField(blank=True, help_text="Twitter/X profile URL")
+    
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -34,6 +42,28 @@ class CleanupGroup(models.Model):
             'reports': sum(m.user.report_set.count() for m in self.membership.all()),
             'tons_collected': sum(e.waste_collected for e in self.events.all() if e.waste_collected),
         }
+    
+    @property
+    def social_media_links(self):
+        """Get available social media links with icons (Facebook, WhatsApp, X only)"""
+        links = []
+        social_platforms = [
+            ('facebook_url', 'fab fa-facebook-f', 'Facebook', '#1877f2'),
+            ('whatsapp_url', 'fab fa-whatsapp', 'WhatsApp', '#25d366'),
+            ('twitter_url', 'fab fa-x-twitter', 'X (Twitter)', '#000000'),
+        ]
+        
+        for field_name, icon, name, color in social_platforms:
+            url = getattr(self, field_name)
+            if url:
+                links.append({
+                    'url': url,
+                    'icon': icon,
+                    'name': name,
+                    'color': color
+                })
+        
+        return links
 
 
 class GroupMembership(models.Model):
@@ -76,7 +106,8 @@ class GroupEvent(models.Model):
     status = models.CharField(max_length=20, choices=EVENT_STATUS, default='planned')
     waste_collected = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="In kilograms")
     participants_count = models.IntegerField(default=0)
-    image = models.ImageField(upload_to='group_events/', blank=True)
+    image = CloudinaryField('image', blank=True,
+                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -91,7 +122,8 @@ class GroupChat(models.Model):
     group = models.ForeignKey(CleanupGroup, on_delete=models.CASCADE, related_name='chats')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
-    image = models.ImageField(upload_to='chat_images/', blank=True)
+    image = CloudinaryField('image', blank=True,
+                           transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     is_announcement = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -137,7 +169,8 @@ class Badge(models.Model):
     description = models.TextField()
     category = models.CharField(max_length=20, choices=BADGE_CATEGORIES)
     icon = models.CharField(max_length=50, default='🏆')
-    image = models.ImageField(upload_to='badges/', blank=True)
+    image = CloudinaryField('image', blank=True,
+                           transformation={'width': 100, 'height': 100, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     points_required = models.IntegerField(default=0)
     criteria = models.TextField(help_text="Criteria to earn this badge")
     is_active = models.BooleanField(default=True)

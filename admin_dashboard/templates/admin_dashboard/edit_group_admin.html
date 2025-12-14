@@ -1,0 +1,260 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Edit Group: {{ group.name }}{% endblock %}
+{% block page_title %}Edit Group: {{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    
+    <!-- Back Button -->
+    <div class="flex items-center justify-between">
+        <a href="{% url 'admin_dashboard:group_detail_admin' group.id %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-zm-green transition">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Group Details
+        </a>
+        
+        <!-- Quick Actions -->
+        <div class="flex space-x-3">
+            <form method="POST" action="{% url 'admin_dashboard:toggle_group_status_admin' group.id %}" class="inline">
+                {% csrf_token %}
+                <button type="submit" class="px-4 py-2 {% if group.is_active %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white rounded-lg transition">
+                    <i class="fas {% if group.is_active %}fa-pause{% else %}fa-play{% endif %} mr-2"></i>
+                    {% if group.is_active %}Deactivate{% else %}Activate{% endif %}
+                </button>
+            </form>
+            
+            <a href="{% url 'admin_dashboard:manage_group_members_admin' group.id %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-users mr-2"></i>Manage Members
+            </a>
+        </div>
+    </div>
+
+    <!-- Edit Group Form -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Edit Group Information</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Update group details and settings</p>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+            {% csrf_token %}
+            
+            <!-- Status Toggle -->
+            <div class="bg-gray-50 dark:bg-zinc-700 rounded-lg p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white">Group Status</h4>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Control whether this group is active or inactive</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="is_active" class="sr-only peer" {% if group.is_active %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+                    </label>
+                </div>
+            </div>
+            
+            <!-- Basic Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Group Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="name" name="name" value="{{ group.name }}" required
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                </div>
+                
+                <div>
+                    <label for="coordinator" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Coordinator <span class="text-red-500">*</span>
+                    </label>
+                    <select id="coordinator" name="coordinator" required
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                        {% for user in users %}
+                        <option value="{{ user.id }}" {% if user.id == group.coordinator.id %}selected{% endif %}>
+                            {{ user.get_full_name|default:user.username }} ({{ user.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Location Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="community" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Community <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="community" name="community" value="{{ group.community }}" required
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                </div>
+                
+                <div>
+                    <label for="district" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        District <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="district" name="district" value="{{ group.district }}" required
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                <textarea id="description" name="description" rows="4" required
+                          class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">{{ group.description }}</textarea>
+            </div>
+            
+            <!-- Current Image Display -->
+            {% if group.image %}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Image</label>
+                <div class="flex items-center space-x-4">
+                    <img src="{{ group.image.url }}" alt="{{ group.name }}" class="w-20 h-20 object-cover rounded-lg">
+                    <div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Current group image</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-500">Upload a new image to replace this one</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Group Image Upload -->
+            <div>
+                <label for="image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {% if group.image %}Update Group Image{% else %}Group Image{% endif %}
+                </label>
+                <input type="file" id="image" name="image" accept="image/*"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    {% if group.image %}Upload a new image to replace the current one{% else %}Upload a group logo or representative image{% endif %}
+                </p>
+            </div>
+            
+            <!-- Social Media Links -->
+            <div class="border-t border-gray-200 dark:border-zinc-700 pt-6">
+                <h4 class="text-md font-medium text-gray-900 dark:text-white mb-4">Social Media Links</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="facebook_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fab fa-facebook-f text-blue-600 mr-2"></i>Facebook URL
+                        </label>
+                        <input type="url" id="facebook_url" name="facebook_url" value="{{ group.facebook_url }}"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                               placeholder="https://facebook.com/your-group">
+                    </div>
+                    
+                    <div>
+                        <label for="whatsapp_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fab fa-whatsapp text-green-600 mr-2"></i>WhatsApp URL
+                        </label>
+                        <input type="url" id="whatsapp_url" name="whatsapp_url" value="{{ group.whatsapp_url }}"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                               placeholder="https://chat.whatsapp.com/invite-link">
+                    </div>
+                    
+                    <div>
+                        <label for="twitter_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fab fa-x-twitter text-gray-900 dark:text-white mr-2"></i>X (Twitter) URL
+                        </label>
+                        <input type="url" id="twitter_url" name="twitter_url" value="{{ group.twitter_url }}"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                               placeholder="https://x.com/your-group">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-zinc-700">
+                <button type="button" onclick="confirmDelete()" 
+                        class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                    <i class="fas fa-trash mr-2"></i>Delete Group
+                </button>
+                
+                <div class="flex space-x-4">
+                    <a href="{% url 'admin_dashboard:group_detail_admin' group.id %}" 
+                       class="px-6 py-2 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-zm-green text-white rounded-lg hover:bg-green-600 transition">
+                        <i class="fas fa-save mr-2"></i>Save Changes
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md mx-4">
+        <div class="text-center">
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Group</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+                Are you sure you want to delete "{{ group.name }}"? This action cannot be undone.
+                {% if group.events.count > 0 or group.members.count > 0 %}
+                <br><br><strong>Note:</strong> This group has events or members, so it will be deactivated instead of deleted.
+                {% endif %}
+            </p>
+            <div class="flex space-x-4">
+                <button onclick="closeDeleteModal()" 
+                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                    Cancel
+                </button>
+                <form method="POST" action="{% url 'admin_dashboard:delete_group_admin' group.id %}" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete() {
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.getElementById('deleteModal').classList.add('flex');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('flex');
+}
+
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    
+    form.addEventListener('submit', function(e) {
+        const requiredFields = ['name', 'coordinator', 'community', 'district', 'description'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (!field.value.trim()) {
+                field.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

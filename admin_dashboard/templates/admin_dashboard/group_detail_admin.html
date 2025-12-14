@@ -1,0 +1,310 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ group.name }} - Group Details{% endblock %}
+{% block page_title %}{{ group.name }}{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    
+    <!-- Back Button -->
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'admin_dashboard:groups_management' %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Groups
+        </a>
+        <div class="flex items-center space-x-2">
+            {% if group.is_active %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                Active
+            </span>
+            {% else %}
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                Inactive
+            </span>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Group Overview -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+        <div class="flex items-start justify-between">
+            <div class="flex items-start space-x-6">
+                <div class="w-20 h-20 bg-zm-green rounded-xl flex items-center justify-center text-white font-bold text-2xl">
+                    {{ group.name|first|upper }}
+                </div>
+                <div>
+                    <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ group.name }}</h2>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">{{ group.community }}, {{ group.district }}</p>
+                    <p class="text-gray-500 dark:text-gray-500 mt-2">{{ group.description }}</p>
+                    <div class="flex items-center space-x-4 mt-4 text-sm text-gray-600 dark:text-gray-400">
+                        <span><i class="fas fa-calendar mr-1"></i>Created {{ group.created_at|date:"M d, Y" }}</span>
+                        <span><i class="fas fa-user-tie mr-1"></i>{{ group.coordinator.get_full_name|default:group.coordinator.username }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'collaboration:group_detail' group.id %}" target="_blank" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-external-link-alt mr-2"></i>View Public
+                </a>
+                <button onclick="toggleEditMode()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    <i class="fas fa-edit mr-2"></i>Edit Info
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Members</p>
+                    <p class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ members.count }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Events</p>
+                    <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ events.count }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">{{ completed_events_count }} completed</div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Waste Collected</p>
+                    <p class="text-3xl font-bold text-orange-600 dark:text-orange-400">{{ total_waste_collected|floatformat:1 }}</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-trash text-orange-600 dark:text-orange-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">kg total</div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Participants</p>
+                    <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">{{ total_participants }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-check text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-2 text-sm text-gray-600 dark:text-gray-400">in events</div>
+        </div>
+    </div>
+
+    <!-- Social Media Links -->
+    {% if group.social_media_links %}
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Social Media Presence</h3>
+        <div class="flex flex-wrap gap-3">
+            {% for link in group.social_media_links %}
+            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
+               class="inline-flex items-center px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:scale-105"
+               style="background-color: {{ link.color }};">
+                <i class="{{ link.icon }} mr-2"></i>
+                {{ link.name }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Admin Actions -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Admin Actions</h3>
+        <div class="flex flex-wrap gap-3">
+            <form method="POST" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="toggle_status">
+                <button type="submit" class="px-4 py-2 {% if group.is_active %}bg-red-600 hover:bg-red-700{% else %}bg-green-600 hover:bg-green-700{% endif %} text-white rounded-lg transition">
+                    <i class="fas {% if group.is_active %}fa-pause{% else %}fa-play{% endif %} mr-2"></i>
+                    {% if group.is_active %}Deactivate Group{% else %}Activate Group{% endif %}
+                </button>
+            </form>
+            
+            <button onclick="showContactCoordinator()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-envelope mr-2"></i>Contact Coordinator
+            </button>
+        </div>
+    </div>
+
+    <!-- Edit Form (Hidden by default) -->
+    <div id="editForm" class="hidden bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Edit Group Information</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="update_info">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Group Name</label>
+                    <input type="text" name="name" value="{{ group.name }}" class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Community</label>
+                    <input type="text" name="community" value="{{ group.community }}" class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">District</label>
+                    <input type="text" name="district" value="{{ group.district }}" class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                </div>
+            </div>
+            <div class="mt-6">
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Description</label>
+                <textarea name="description" rows="4" class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">{{ group.description }}</textarea>
+            </div>
+            <div class="mt-6 flex space-x-3">
+                <button type="submit" class="px-6 py-2 bg-zm-green text-white rounded-lg hover:bg-green-600 transition">
+                    <i class="fas fa-save mr-2"></i>Save Changes
+                </button>
+                <button type="button" onclick="toggleEditMode()" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tabs -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 overflow-hidden">
+        <div class="border-b border-gray-200 dark:border-zinc-700">
+            <nav class="flex space-x-8 px-6" aria-label="Tabs">
+                <button onclick="showTab('members')" class="tab-button py-4 px-1 border-b-2 border-zm-green text-zm-green font-medium text-sm">
+                    Members ({{ members.count }})
+                </button>
+                <button onclick="showTab('events')" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                    Events ({{ events.count }})
+                </button>
+                <button onclick="showTab('reports')" class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm">
+                    Reports ({{ reports.count }})
+                </button>
+            </nav>
+        </div>
+
+        <!-- Members Tab -->
+        <div id="members-tab" class="tab-content p-6">
+            <div class="space-y-4">
+                {% for member in members %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-zm-green rounded-full flex items-center justify-center text-white font-bold">
+                            {{ member.user.username|first|upper }}
+                        </div>
+                        <div>
+                            <div class="font-medium text-gray-900 dark:text-white">{{ member.user.get_full_name|default:member.user.username }}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ member.user.email }} • {{ member.get_role_display }}</div>
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        Joined {{ member.joined_at|date:"M d, Y" }}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-users text-4xl mb-4"></i>
+                    <p>No members found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Events Tab -->
+        <div id="events-tab" class="tab-content p-6 hidden">
+            <div class="space-y-4">
+                {% for event in recent_events %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                    <div>
+                        <div class="font-medium text-gray-900 dark:text-white">{{ event.title }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ event.location }} • {{ event.scheduled_date|date:"M d, Y H:i" }}</div>
+                        {% if event.waste_collected %}
+                        <div class="text-sm text-orange-600 dark:text-orange-400">{{ event.waste_collected }}kg collected</div>
+                        {% endif %}
+                    </div>
+                    <div class="text-right">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium 
+                            {% if event.status == 'completed' %}bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200
+                            {% elif event.status == 'ongoing' %}bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                            {% elif event.status == 'planned' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200
+                            {% else %}bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200{% endif %}">
+                            {{ event.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-calendar-alt text-4xl mb-4"></i>
+                    <p>No events found</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Reports Tab -->
+        <div id="reports-tab" class="tab-content p-6 hidden">
+            <div class="space-y-4">
+                {% for report in reports %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                    <div>
+                        <div class="font-medium text-gray-900 dark:text-white">{{ report.report_period_start|date:"M Y" }} - {{ report.report_period_end|date:"M Y" }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ report.total_events }} events • {{ report.waste_collected_kg }}kg collected</div>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        {{ report.generated_at|date:"M d, Y" }}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <i class="fas fa-chart-bar text-4xl mb-4"></i>
+                    <p>No reports generated yet</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+function toggleEditMode() {
+    const editForm = document.getElementById('editForm');
+    editForm.classList.toggle('hidden');
+}
+
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.add('hidden');
+    });
+    
+    // Remove active class from all tab buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('border-zm-green', 'text-zm-green');
+        button.classList.add('border-transparent', 'text-gray-500');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName + '-tab').classList.remove('hidden');
+    
+    // Add active class to selected tab button
+    event.target.classList.remove('border-transparent', 'text-gray-500');
+    event.target.classList.add('border-zm-green', 'text-zm-green');
+}
+
+function showContactCoordinator() {
+    alert('Contact coordinator: {{ group.coordinator.email }}');
+}
+</script>
+{% endblock %}

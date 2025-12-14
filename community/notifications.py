@@ -31,8 +31,41 @@ class NotificationService:
             self.twilio_client = None
             logger.warning("Twilio credentials not configured")
     
-    # SMS REMOVED - Using WebSockets as primary notification method
-    # WhatsApp kept for important alerts only
+    def send_sms(self, to_number, message):
+        """
+        Send SMS message via Twilio
+        
+        Args:
+            to_number: Phone number with country code
+            message: Message text
+        
+        Returns:
+            dict: {'success': bool, 'message_sid': str, 'error': str}
+        """
+        if not self.twilio_client:
+            return {'success': False, 'error': 'SMS not configured'}
+        
+        try:
+            # Format phone number
+            if not to_number.startswith('+'):
+                to_number = f'+260{to_number}'
+            
+            message_obj = self.twilio_client.messages.create(
+                body=message,
+                from_=self.twilio_phone,
+                to=to_number
+            )
+            
+            logger.info(f"SMS sent to {to_number}: {message_obj.sid}")
+            return {
+                'success': True,
+                'message_sid': message_obj.sid,
+                'status': message_obj.status
+            }
+        
+        except Exception as e:
+            logger.error(f"SMS send failed to {to_number}: {str(e)}")
+            return {'success': False, 'error': str(e)}
     
     def send_whatsapp(self, to_number, message, media_url=None):
         """

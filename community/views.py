@@ -7,7 +7,8 @@ from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from .models import (
     ForumCategory, ForumTopic, ForumReply, CommunityEvent, 
-    EventParticipant, SuccessStory, SocialMediaShare, Notification
+    EventParticipant, SuccessStory, SocialMediaShare, Notification,
+    CommunityCampaign, CampaignParticipant
 )
 from .forms import TopicForm, ReplyForm, EventForm, SuccessStoryForm
 import requests
@@ -459,6 +460,179 @@ def send_whatsapp_alert(user, alert):
     except Exception as e:
         print(f"WhatsApp Error: {e}")
         return False
+
+
+# ===================================================================
+# COMMUNITY CAMPAIGNS (FR08 & FR09)
+# ===================================================================
+
+@login_required
+def campaigns_list(request):
+    """Display active and upcoming community campaigns (FR08)"""
+    from .models import CommunityCampaign, CampaignParticipant
+    
+    # Get active and published campaigns
+    upcoming_campaigns = CommunityCampaign.objects.filter(
+        is_active=True,
+        is_published=True,
+        start_date__gte=timezone.now()
+    ).order_by('start_date')
+    
+    ongoing_campaigns = CommunityCampaign.objects.filter(
+        is_active=True,
+        is_published=True,
+        start_date__lte=timezone.now(),
+        end_date__gte=timezone.now()
+    ).order_by('start_date')
+    
+    past_campaigns = CommunityCampaign.objects.filter(
+        is_active=True,
+        is_published=True,
+        end_date__lt=timezone.now()
+    ).order_by('-start_date')[:5]
+    
+    # Get user's participation status
+    user_campaigns = CampaignParticipant.objects.filter(
+        user=request.user
+    ).values_list('campaign_id', flat=True)
+    
+    context = {
+        'upcoming_campaigns': upcoming_campaigns,
+        'ongoing_campaigns': ongoing_campaigns,
+        'past_campaigns': past_campaigns,
+        'user_campaigns': list(user_campaigns),
+    }
+    return render(request, 'community/campaigns_list.html', context)
+
+
+@login_required
+def campaign_detail(request, campaign_id):
+    """View campaign details and participant list (FR08)"""
+    from .models import CommunityCampaign, CampaignParticipant
+    
+    campaign = get_object_or_404(CommunityCampaign, id=campaign_id, is_active=True, is_published=True)
+    
+    # Check if user is registered
+    user_participation = CampaignParticipant.objects.filter(
+        campaign=campaign,
+        user=request.user
+    ).first()
+    
+    # Get recent participants (for display)
+    recent_participants = CampaignParticipant.objects.filter(
+        campaign=campaign
+    ).select_related('user').order_by('-registered_at')[:10]
+    
+    # Get next occurrence if recurring
+    next_campaign = None
+    if campaign.recurrence != 'one_time' and campaign.next_occurrence:
+        next_campaign = CommunityCampaign.objects.filter(
+            title=campaign.title,
+            start_date__gt=campaign.end_date,
+            is_active=True,
+            is_published=True
+        ).first()
+    
+    context = {
+        'campaign': campaign,
+        'user_participation': user_participation,
+        'recent_participants': recent_participants,
+        'next_campaign': next_campaign,
+    }
+    return render(request, 'community/campaign_detail.html', context)
+
+
+@login_required
+def join_campaign(request, campaign_id):
+    """Join a community campaign with one click (FR08)"""
+    from .models import CommunityCampaign, CampaignParticipant
+    
+    if request.method == 'POST':
+        campaign = get_object_or_404(CommunityCampaign, id=campaign_id, is_active=True, is_published=True)
+        
+        # Check if can register
+        if not campaign.can_register:
+            if campaign.is_full:
+                messages.error(request, 'This campaign is full.')
+            elif campaign.registration_deadline and timezone.now() > campaign.registration_deadline:
+                messages.error(request, 'Registration deadline has passed.')
+            elif campaign.is_past:
+                messages.error(request, 'This campaign has already ended.')
+            else:
+                messages.error(request, 'Registration is not available for this campaign.')
+            return redirect('community:campaign_detail', campaign_id=campaign.id)
+        
+        # Get interest level from form
+        interest_level = request.POST.get('interest_level', 'join')
+        
+        participant, created = CampaignParticipant.objects.get_or_create(
+            campaign=campaign,
+            user=request.user,
+            defaults={'interest_level': interest_level}
+        )
+        
+        if created:
+            # Update participant count
+            campaign.participant_count += 1
+            campaign.save(update_fields=['participant_count'])
+            
+            # Success message based on interest level
+            if interest_level == 'join':
+                messages.success(request, f'🎉 You have joined {campaign.title}!')
+            elif interest_level == 'interested':
+                messages.success(request, f'✅ You have registered interest in {campaign.title}!')
+            else:
+                messages.success(request, f'👍 You have marked {campaign.title} as "maybe"!')
+            
+            # Send confirmation (FR09)
+            participant.send_confirmation()
+            
+        else:
+            # Update existing participation
+            if participant.interest_level != interest_level:
+                participant.interest_level = interest_level
+                participant.save(update_fields=['interest_level'])
+                messages.info(request, f'Updated your participation status for {campaign.title}.')
+            else:
+                messages.info(request, 'You are already registered for this campaign.')
+        
+        return redirect('community:campaign_detail', campaign_id=campaign.id)
+    
+    return redirect('community:campaigns_list')
+
+
+@login_required
+def campaign_calendar(request):
+    """Display campaign calendar (FR09)"""
+    from .models import CommunityCampaign
+    import json
+    
+    # Get all active campaigns for calendar
+    campaigns = CommunityCampaign.objects.filter(
+        is_active=True,
+        is_published=True
+    ).order_by('start_date')
+    
+    # Format for calendar
+    calendar_events = []
+    for campaign in campaigns:
+        calendar_events.append({
+            'id': campaign.id,
+            'title': campaign.title,
+            'start': campaign.start_date.isoformat(),
+            'end': campaign.end_date.isoformat(),
+            'url': campaign.get_absolute_url(),
+            'description': campaign.description[:100] + '...' if len(campaign.description) > 100 else campaign.description,
+            'location': campaign.location,
+            'type': campaign.campaign_type,
+            'participants': campaign.participant_count,
+        })
+    
+    context = {
+        'campaigns': campaigns,
+        'calendar_events': json.dumps(calendar_events),
+    }
+    return render(request, 'community/campaign_calendar.html', context)
 
 
 # ===================================================================

@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Event - {{ group.name }} - EcoLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+    .create-event-container {
+        max-width: 700px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 8px;
+        padding: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .page-title {
+        text-align: center;
+        color: #2c5530;
+        margin-bottom: 10px;
+        font-size: 2em;
+    }
+    
+    .group-name {
+        text-align: center;
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 1.1em;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-label {
+        font-weight: bold;
+        color: #2c5530;
+        margin-bottom: 8px;
+        display: block;
+    }
+    
+    .form-control {
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        padding: 12px;
+        font-size: 1em;
+        transition: border-color 0.2s;
+    }
+    
+    .form-control:focus {
+        border-color: #4CAF50;
+        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
+    }
+    
+    .btn-create {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 6px;
+        font-size: 1.1em;
+        font-weight: bold;
+        width: 100%;
+        transition: background 0.2s;
+    }
+    
+    .btn-create:hover {
+        background: #45a049;
+    }
+    
+    .btn-cancel {
+        background: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        text-decoration: none;
+        display: inline-block;
+        margin-top: 15px;
+        transition: background 0.2s;
+    }
+    
+    .btn-cancel:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .help-text {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 5px;
+    }
+    
+    .form-icon {
+        color: #4CAF50;
+        margin-right: 8px;
+    }
+    
+    .row {
+        margin-left: -10px;
+        margin-right: -10px;
+    }
+    
+    .col-md-6 {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="create-event-container">
+        <h1 class="page-title">
+            <i class="fas fa-calendar-plus form-icon"></i>
+            Create New Event
+        </h1>
+        <div class="group-name">for {{ group.name }}</div>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="title" class="form-label">
+                    <i class="fas fa-tag form-icon"></i>
+                    Event Title
+                </label>
+                <input type="text" class="form-control" id="title" name="title" required 
+                       placeholder="Enter a descriptive title for your event">
+                <div class="help-text">Choose a clear, engaging title that describes the event</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="description" class="form-label">
+                    <i class="fas fa-align-left form-icon"></i>
+                    Description
+                </label>
+                <textarea class="form-control" id="description" name="description" rows="4" required
+                          placeholder="Describe the event details, what to bring, meeting points, etc."></textarea>
+                <div class="help-text">Provide comprehensive details about the event, including what participants should bring</div>
+            </div>
+            
+            <div class="form-group">
+                <label for="location" class="form-label">
+                    <i class="fas fa-map-marker-alt form-icon"></i>
+                    Location
+                </label>
+                <input type="text" class="form-control" id="location" name="location" required
+                       placeholder="Enter the exact meeting location">
+                <div class="help-text">Provide a specific address or landmark for easy navigation</div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="scheduled_date" class="form-label">
+                            <i class="fas fa-calendar form-icon"></i>
+                            Date & Time
+                        </label>
+                        <input type="datetime-local" class="form-control" id="scheduled_date" name="scheduled_date" required>
+                        <div class="help-text">Select the date and start time for the event</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="duration_hours" class="form-label">
+                            <i class="fas fa-clock form-icon"></i>
+                            Duration (Hours)
+                        </label>
+                        <select class="form-control" id="duration_hours" name="duration_hours">
+                            <option value="1">1 hour</option>
+                            <option value="2" selected>2 hours</option>
+                            <option value="3">3 hours</option>
+                            <option value="4">4 hours</option>
+                            <option value="6">6 hours</option>
+                            <option value="8">8 hours (Full day)</option>
+                        </select>
+                        <div class="help-text">Estimated duration of the cleanup event</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-create">
+                <i class="fas fa-plus"></i>
+                Create Event
+            </button>
+            
+            <div class="text-center">
+                <a href="{% url 'collaboration:group_detail' group.id %}" class="btn-cancel">
+                    <i class="fas fa-arrow-left"></i>
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Set minimum date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const dateInput = document.getElementById('scheduled_date');
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    dateInput.min = now.toISOString().slice(0, 16);
+});
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const location = document.getElementById('location').value.trim();
+    const scheduledDate = document.getElementById('scheduled_date').value;
+    
+    if (!title || !description || !location || !scheduledDate) {
+        e.preventDefault();
+        alert('Please fill in all required fields.');
+        return false;
+    }
+    
+    if (title.length < 5) {
+        e.preventDefault();
+        alert('Event title must be at least 5 characters long.');
+        return false;
+    }
+    
+    if (description.length < 20) {
+        e.preventDefault();
+        alert('Please provide a more detailed description (at least 20 characters).');
+        return false;
+    }
+    
+    // Check if date is in the future
+    const selectedDate = new Date(scheduledDate);
+    const now = new Date();
+    
+    if (selectedDate <= now) {
+        e.preventDefault();
+        alert('Please select a future date and time for the event.');
+        return false;
+    }
+});
+</script>
+{% endblock %}

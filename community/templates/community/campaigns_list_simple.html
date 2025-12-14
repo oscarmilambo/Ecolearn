@@ -1,0 +1,41 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Test Campaigns{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Test Campaigns Page</h1>
+    
+    <p>Upcoming: {{ upcoming_campaigns|length }}</p>
+    <p>Ongoing: {{ ongoing_campaigns|length }}</p>
+    <p>Past: {{ past_campaigns|length }}</p>
+    
+    {% if upcoming_campaigns %}
+        <h2>Upcoming Campaigns</h2>
+        {% for campaign in upcoming_campaigns %}
+            <div>{{ campaign.title }} - {{ campaign.location }}</div>
+        {% endfor %}
+    {% else %}
+        <p>No upcoming campaigns</p>
+    {% endif %}
+    
+    {% if ongoing_campaigns %}
+        <h2>Ongoing Campaigns</h2>
+        {% for campaign in ongoing_campaigns %}
+            <div>{{ campaign.title }} - {{ campaign.location }}</div>
+        {% endfor %}
+    {% else %}
+        <p>No ongoing campaigns</p>
+    {% endif %}
+    
+    {% if past_campaigns %}
+        <h2>Past Campaigns</h2>
+        {% for campaign in past_campaigns %}
+            <div>{{ campaign.title }} - {{ campaign.location }}</div>
+        {% endfor %}
+    {% else %}
+        <p>No past campaigns</p>
+    {% endif %}
+</div>
+{% endblock %}

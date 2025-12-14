@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from django.db.models import Sum
+from cloudinary.models import CloudinaryField
 
 User = get_user_model()
 
@@ -187,7 +188,8 @@ class Reward(models.Model):
     description = models.TextField()
     reward_type = models.CharField(max_length=20, choices=REWARD_TYPES)
     points_cost = models.IntegerField()
-    image = models.ImageField(upload_to='rewards/', blank=True)
+    image = CloudinaryField('image', blank=True,
+                           transformation={'width': 400, 'height': 300, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     stock_quantity = models.IntegerField(default=0)
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

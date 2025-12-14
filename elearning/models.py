@@ -1,35 +1,42 @@
-# elearning/models.py
+# elearning/models.py - Optimized for performance with Cloudinary and caching
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.db.models import F
 from django.utils.text import slugify
+from django.core.cache import cache
+from cloudinary.models import CloudinaryField
 
 User = get_user_model()
 
 
 class Category(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, db_index=True)
     name_bem = models.CharField(max_length=100, blank=True, null=True)
     name_ny = models.CharField(max_length=100, blank=True, null=True)
     description = models.TextField(blank=True)
     description_bem = models.TextField(blank=True, null=True)
     description_ny = models.TextField(blank=True, null=True)
-    icon = models.ImageField(upload_to='category_icons/', blank=True, null=True)
+    icon = CloudinaryField('image', blank=True, null=True, 
+                          transformation={'width': 100, 'height': 100, 'crop': 'fill', 'format': 'webp'})
     icon_class = models.CharField(
         max_length=50, 
         default='fas fa-leaf',
         help_text='FontAwesome icon class (e.g., fas fa-recycle, fas fa-trash)'
     )
-    created_at = models.DateTimeField(auto_now_add=True)
-    slug = models.SlugField(max_length=100, unique=True, null=True, blank=True)
-    order = models.IntegerField(default=0)
-    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    slug = models.SlugField(max_length=100, unique=True, null=True, blank=True, db_index=True)
+    order = models.IntegerField(default=0, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     color = models.CharField(max_length=7, default='#000000')
 
     class Meta:
         verbose_name_plural = "Categories"
         ordering = ['order']
+        indexes = [
+            models.Index(fields=['is_active', 'order']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return self.get_translated_name()
@@ -53,10 +60,15 @@ class Category(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=100, db_index=True)
     name_bem = models.CharField(max_length=100, blank=True, null=True)
     name_ny = models.CharField(max_length=100, blank=True, null=True)
-    slug = models.SlugField(max_length=100, unique=True, null=True, blank=True)
+    slug = models.SlugField(max_length=100, unique=True, null=True, blank=True, db_index=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['name']),
+        ]
 
     def __str__(self):
         return self.get_translated_name()
@@ -92,39 +104,49 @@ class Module(models.Model):
         ('advanced', 'Advanced'),
     ]
 
-    title = models.CharField(max_length=200)
+    title = models.CharField(max_length=200, db_index=True)
     title_bem = models.CharField(max_length=200, blank=True, null=True)
     title_ny = models.CharField(max_length=200, blank=True, null=True)
     description = models.TextField(blank=True)
     description_bem = models.TextField(blank=True, null=True)
     description_ny = models.TextField(blank=True, null=True)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='modules')
-    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='modules', db_index=True)
+    difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, db_index=True)
     duration_minutes = models.IntegerField(default=0)
     points_reward = models.IntegerField(default=10)
-    thumbnail = models.ImageField(upload_to='module_thumbnails/', blank=True, null=True)
-    is_active = models.BooleanField(default=True)
-    order = models.IntegerField(default=0)
+    thumbnail = CloudinaryField('image', blank=True, null=True,
+                               transformation={'width': 400, 'height': 300, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    is_active = models.BooleanField(default=True, db_index=True)
+    order = models.IntegerField(default=0, db_index=True)
     hierarchy_stage = models.CharField(max_length=20, choices=HIERARCHY_CHOICES, blank=True)
     waste_stream = models.CharField(max_length=20, choices=WASTE_STREAM_CHOICES, blank=True)
     external_tour_url = models.URLField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    slug = models.SlugField(max_length=200, unique=True, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    slug = models.SlugField(max_length=200, unique=True, null=True, blank=True, db_index=True)
     tags = models.ManyToManyField(Tag, blank=True, related_name='modules')
     prerequisites = models.ManyToManyField('self', symmetrical=False, blank=True)
-    is_premium = models.BooleanField(default=False)
-    is_featured = models.BooleanField(default=False)
-    is_published = models.BooleanField(default=True)
-    views_count = models.IntegerField(default=0)
-    enrollments_count = models.IntegerField(default=0)
+    is_premium = models.BooleanField(default=False, db_index=True)
+    is_featured = models.BooleanField(default=False, db_index=True)
+    is_published = models.BooleanField(default=True, db_index=True)
+    views_count = models.IntegerField(default=0, db_index=True)
+    enrollments_count = models.IntegerField(default=0, db_index=True)
     completions_count = models.IntegerField(default=0)
-    average_rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0)
+    average_rating = models.DecimalField(max_digits=3, decimal_places=1, default=0.0, db_index=True)
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='created_modules')
     updated_at = models.DateTimeField(auto_now=True)
     video_url = models.URLField(blank=True)
 
     class Meta:
         ordering = ['order', 'created_at']
+        indexes = [
+            models.Index(fields=['is_published', 'is_active']),
+            models.Index(fields=['category', 'is_published']),
+            models.Index(fields=['difficulty', 'is_published']),
+            models.Index(fields=['is_featured', 'enrollments_count']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['title']),
+            models.Index(fields=['average_rating', 'enrollments_count']),
+        ]
 
     def __str__(self):
         return self.get_translated_title()
@@ -160,41 +182,53 @@ class Lesson(models.Model):
         ("sorting", "Sorting Game"),
     ]
 
-    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='lessons')
-    title = models.CharField(max_length=200)
+    module = models.ForeignKey(Module, on_delete=models.CASCADE, related_name='lessons', db_index=True)
+    title = models.CharField(max_length=200, db_index=True)
     title_bem = models.CharField(max_length=200, blank=True, null=True)
     title_ny = models.CharField(max_length=200, blank=True, null=True)
-    slug = models.SlugField(max_length=200, null=True, blank=True)
-    content_type = models.CharField(max_length=10, choices=CONTENT_TYPES)
+    slug = models.SlugField(max_length=200, null=True, blank=True, db_index=True)
+    content_type = models.CharField(max_length=10, choices=CONTENT_TYPES, db_index=True)
     content = models.TextField(blank=True)
     content_bem = models.TextField(blank=True, null=True)
     content_ny = models.TextField(blank=True, null=True)
 
-    # Media Files - English (default)
-    video_file = models.FileField(upload_to='lesson_videos/en/', blank=True, null=True)
-    audio_file = models.FileField(upload_to='lesson_audio/en/', blank=True, null=True)
+    # Media Files with Cloudinary - English (default)
+    video_file = CloudinaryField('video', blank=True, null=True, resource_type='video',
+                                transformation={'quality': 'auto', 'format': 'mp4'})
+    audio_file = CloudinaryField('audio', blank=True, null=True, resource_type='video',
+                                transformation={'quality': 'auto', 'format': 'mp3'})
 
-    # Media Files - Bemba
-    video_file_bem = models.FileField(upload_to='lesson_videos/bem/', blank=True, null=True)
-    audio_file_bem = models.FileField(upload_to='lesson_audio/bem/', blank=True, null=True)
+    # Media Files with Cloudinary - Bemba
+    video_file_bem = CloudinaryField('video', blank=True, null=True, resource_type='video',
+                                    transformation={'quality': 'auto', 'format': 'mp4'})
+    audio_file_bem = CloudinaryField('audio', blank=True, null=True, resource_type='video',
+                                    transformation={'quality': 'auto', 'format': 'mp3'})
 
-    # Media Files - Nyanja
-    video_file_ny = models.FileField(upload_to='lesson_videos/ny/', blank=True, null=True)
-    audio_file_ny = models.FileField(upload_to='lesson_audio/ny/', blank=True, null=True)
+    # Media Files with Cloudinary - Nyanja
+    video_file_ny = CloudinaryField('video', blank=True, null=True, resource_type='video',
+                                   transformation={'quality': 'auto', 'format': 'mp4'})
+    audio_file_ny = CloudinaryField('audio', blank=True, null=True, resource_type='video',
+                                   transformation={'quality': 'auto', 'format': 'mp3'})
 
     external_tour_url = models.URLField(blank=True)
     interactive_type = models.CharField(max_length=20, choices=INTERACTIVE_TYPES, default="none")
     interactive_payload = models.JSONField(null=True, blank=True, help_text="JSON config for interactive content")
     duration_minutes = models.IntegerField(default=0)
-    order = models.IntegerField(default=0)
-    is_required = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    is_preview = models.BooleanField(default=False)
-    is_published = models.BooleanField(default=False)
+    order = models.IntegerField(default=0, db_index=True)
+    is_required = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_preview = models.BooleanField(default=False, db_index=True)
+    is_published = models.BooleanField(default=False, db_index=True)
 
     class Meta:
         ordering = ['order', 'created_at']
         unique_together = ['module', 'slug']
+        indexes = [
+            models.Index(fields=['module', 'order']),
+            models.Index(fields=['module', 'is_published']),
+            models.Index(fields=['is_preview', 'is_published']),
+            models.Index(fields=['created_at']),
+        ]
 
     def __str__(self):
         return f"{self.module} - {self.get_translated_title()}"

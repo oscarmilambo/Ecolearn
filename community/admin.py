@@ -10,6 +10,7 @@ from .models import (
     CommunityEvent, EventParticipant,
     SuccessStory, SocialMediaShare,
     Notification, HealthAlert,
+    CommunityCampaign, CampaignParticipant,
     CommunityChallenge, ChallengeParticipant, ChallengeProof
 )
 
@@ -35,6 +36,13 @@ class HealthAlertResource(resources.ModelResource):
     class Meta:
         model = HealthAlert
         fields = ('id', 'alert_type', 'severity', 'title', 'location', 'is_active', 'created_at')
+        export_order = fields
+
+
+class CommunityCampaignResource(resources.ModelResource):
+    class Meta:
+        model = CommunityCampaign
+        fields = ('id', 'title', 'campaign_type', 'location', 'start_date', 'end_date', 'recurrence', 'participant_count', 'is_active', 'is_published')
         export_order = fields
 
 
@@ -165,6 +173,140 @@ class HealthAlertAdmin(ImportExportModelAdmin):
         return format_html('<span style="color:white; background:{}; padding:2px 8px; border-radius:4px;">{}</span>',
                            color, obj.get_severity_display().upper())
     severity_display.short_description = "Severity"
+
+
+@admin.register(CommunityCampaign)
+class CommunityCampaignAdmin(ImportExportModelAdmin):
+    resource_class = CommunityCampaignResource
+    list_display = ('title', 'campaign_type', 'location', 'start_date', 'recurrence_display', 'participant_count', 'status_display', 'is_published')
+    list_filter = ('campaign_type', 'recurrence', 'is_active', 'is_published', 'start_date')
+    search_fields = ('title', 'location', 'organizer__username')
+    readonly_fields = ('participant_count', 'created_at', 'updated_at', 'next_occurrence')
+    ordering = ('-start_date',)
+    
+    fieldsets = (
+        ('Campaign Details', {
+            'fields': ('title', 'title_bem', 'title_ny', 'description', 'description_bem', 'description_ny', 'campaign_type')
+        }),
+        ('Schedule & Location', {
+            'fields': ('start_date', 'end_date', 'location', 'latitude', 'longitude')
+        }),
+        ('Recurrence Settings', {
+            'fields': ('recurrence', 'next_occurrence'),
+            'description': 'For recurring campaigns, the system will automatically create new instances.'
+        }),
+        ('Registration', {
+            'fields': ('max_participants', 'registration_deadline')
+        }),
+        ('Organizer Details', {
+            'fields': ('organizer', 'contact_phone', 'contact_email')
+        }),
+        ('Media & Status', {
+            'fields': ('image', 'is_active', 'is_published')
+        }),
+        ('Statistics', {
+            'fields': ('participant_count', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    actions = ['publish_campaigns', 'unpublish_campaigns', 'create_recurring_campaigns']
+    
+    def recurrence_display(self, obj):
+        if obj.recurrence == 'one_time':
+            return '🔄 One-time'
+        else:
+            return f'🔄 {obj.get_recurrence_display()}'
+    recurrence_display.short_description = 'Recurrence'
+    
+    def status_display(self, obj):
+        now = timezone.now()
+        if obj.is_past:
+            return format_html('<span style="color:gray;">📅 Past</span>')
+        elif obj.is_ongoing:
+            return format_html('<span style="color:green;">🟢 Ongoing</span>')
+        elif obj.is_upcoming:
+            return format_html('<span style="color:blue;">🔵 Upcoming</span>')
+        else:
+            return format_html('<span style="color:orange;">⏳ Scheduled</span>')
+    status_display.short_description = 'Status'
+    
+    def publish_campaigns(self, request, queryset):
+        count = queryset.update(is_published=True)
+        self.message_user(request, f"✅ {count} campaign(s) published and visible to users!")
+    publish_campaigns.short_description = "✅ Publish selected campaigns"
+    
+    def unpublish_campaigns(self, request, queryset):
+        count = queryset.update(is_published=False)
+        self.message_user(request, f"❌ {count} campaign(s) unpublished.")
+    unpublish_campaigns.short_description = "❌ Unpublish selected campaigns"
+    
+    def create_recurring_campaigns(self, request, queryset):
+        count = 0
+        for campaign in queryset.filter(recurrence__in=['monthly', 'quarterly', 'yearly']):
+            if campaign.create_next_occurrence():
+                count += 1
+        self.message_user(request, f"🔄 {count} recurring campaign(s) created!")
+    create_recurring_campaigns.short_description = "🔄 Create next occurrence for recurring campaigns"
+
+
+@admin.register(CampaignParticipant)
+class CampaignParticipantAdmin(admin.ModelAdmin):
+    list_display = ('user', 'campaign', 'interest_level_display', 'registered_at', 'attended', 'reminder_status')
+    list_filter = ('interest_level', 'attended', 'registered_at', 'campaign__campaign_type')
+    search_fields = ('user__username', 'campaign__title')
+    readonly_fields = ('registered_at', 'reminder_3days_sent', 'reminder_1day_sent', 'confirmation_sent')
+    ordering = ('-registered_at',)
+    
+    actions = ['send_reminders', 'mark_attended']
+    
+    def interest_level_display(self, obj):
+        colors = {
+            'join': 'green',
+            'interested': 'blue',
+            'maybe': 'orange'
+        }
+        color = colors.get(obj.interest_level, 'gray')
+        icons = {
+            'join': '✅',
+            'interested': '👍',
+            'maybe': '🤔'
+        }
+        icon = icons.get(obj.interest_level, '❓')
+        return format_html(
+            '<span style="color:{};">{} {}</span>',
+            color, icon, obj.get_interest_level_display()
+        )
+    interest_level_display.short_description = 'Interest Level'
+    
+    def reminder_status(self, obj):
+        status = []
+        if obj.confirmation_sent:
+            status.append('✅ Confirmed')
+        if obj.reminder_3days_sent:
+            status.append('📅 3-day')
+        if obj.reminder_1day_sent:
+            status.append('⏰ 1-day')
+        return ' | '.join(status) if status else '❌ No reminders'
+    reminder_status.short_description = 'Reminders Sent'
+    
+    def send_reminders(self, request, queryset):
+        count = 0
+        for participant in queryset:
+            days_until = (participant.campaign.start_date - timezone.now()).days
+            if days_until == 3 and not participant.reminder_3days_sent:
+                participant.send_reminder(3)
+                count += 1
+            elif days_until == 1 and not participant.reminder_1day_sent:
+                participant.send_reminder(1)
+                count += 1
+        self.message_user(request, f"📱 {count} reminder(s) sent!")
+    send_reminders.short_description = "📱 Send campaign reminders"
+    
+    def mark_attended(self, request, queryset):
+        count = queryset.update(attended=True, attendance_confirmed_at=timezone.now())
+        self.message_user(request, f"✅ {count} participant(s) marked as attended!")
+    mark_attended.short_description = "✅ Mark as attended"
 
 
 @admin.register(CommunityChallenge)

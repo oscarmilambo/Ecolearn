@@ -11,10 +11,17 @@ class CustomUserAdmin(UserAdmin):
     search_fields = ('username', 'email', 'phone_number', 'first_name', 'last_name')
     ordering = ('-date_joined',)
     
-    fieldsets = UserAdmin.fieldsets + (
+    # Override fieldsets to exclude non-editable fields
+    fieldsets = (
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
         ('Additional Info', {
             'fields': ('phone_number', 'preferred_language', 'profile_picture', 'date_of_birth', 'location', 'is_verified')
         }),
+        ('Permissions', {
+            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
+        }),
+        ('Important dates', {'fields': ('last_login',)}),
     )
     
     add_fieldsets = UserAdmin.add_fieldsets + (
@@ -22,6 +29,9 @@ class CustomUserAdmin(UserAdmin):
             'fields': ('email', 'phone_number', 'preferred_language')
         }),
     )
+    
+    # Explicitly exclude non-editable fields
+    readonly_fields = ('date_joined', 'last_login')
 
 
 @admin.register(UserProfile)

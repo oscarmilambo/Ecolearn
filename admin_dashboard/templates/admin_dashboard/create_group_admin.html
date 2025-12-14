@@ -1,0 +1,183 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Create New Group{% endblock %}
+{% block page_title %}Create New Cleanup Group{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    
+    <!-- Back Button -->
+    <div class="flex items-center space-x-4">
+        <a href="{% url 'admin_dashboard:groups_management' %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-zm-green transition">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Back to Groups Management
+        </a>
+    </div>
+
+    <!-- Create Group Form -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Group Information</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Create a new cleanup group with all necessary details</p>
+        </div>
+        
+        <form method="POST" enctype="multipart/form-data" class="p-6 space-y-6">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Group Name <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="name" name="name" required
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                           placeholder="Enter group name">
+                </div>
+                
+                <div>
+                    <label for="coordinator" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Coordinator <span class="text-red-500">*</span>
+                    </label>
+                    <select id="coordinator" name="coordinator" required
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                        <option value="">Select coordinator</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">
+                            {{ user.get_full_name|default:user.username }} ({{ user.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Location Information -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="community" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Community <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="community" name="community" required
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                           placeholder="Enter community name">
+                </div>
+                
+                <div>
+                    <label for="district" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        District <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" id="district" name="district" required
+                           class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                           placeholder="Enter district name">
+                </div>
+            </div>
+            
+            <!-- Description -->
+            <div>
+                <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Description <span class="text-red-500">*</span>
+                </label>
+                <textarea id="description" name="description" rows="4" required
+                          class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                          placeholder="Describe the group's mission and activities"></textarea>
+            </div>
+            
+            <!-- Group Image -->
+            <div>
+                <label for="image" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Group Image
+                </label>
+                <input type="file" id="image" name="image" accept="image/*"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Upload a group logo or representative image (optional)</p>
+            </div>
+            
+            <!-- Social Media Links -->
+            <div class="border-t border-gray-200 dark:border-zinc-700 pt-6">
+                <h4 class="text-md font-medium text-gray-900 dark:text-white mb-4">Social Media Links (Optional)</h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label for="facebook_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fab fa-facebook-f text-blue-600 mr-2"></i>Facebook URL
+                        </label>
+                        <input type="url" id="facebook_url" name="facebook_url"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                               placeholder="https://facebook.com/your-group">
+                    </div>
+                    
+                    <div>
+                        <label for="whatsapp_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fab fa-whatsapp text-green-600 mr-2"></i>WhatsApp URL
+                        </label>
+                        <input type="url" id="whatsapp_url" name="whatsapp_url"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                               placeholder="https://chat.whatsapp.com/invite-link">
+                    </div>
+                    
+                    <div>
+                        <label for="twitter_url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <i class="fab fa-x-twitter text-gray-900 dark:text-white mr-2"></i>X (Twitter) URL
+                        </label>
+                        <input type="url" id="twitter_url" name="twitter_url"
+                               class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white"
+                               placeholder="https://x.com/your-group">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200 dark:border-zinc-700">
+                <a href="{% url 'admin_dashboard:groups_management' %}" 
+                   class="px-6 py-2 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="px-6 py-2 bg-zm-green text-white rounded-lg hover:bg-green-600 transition">
+                    <i class="fas fa-plus mr-2"></i>Create Group
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+
+<script>
+// Form validation and enhancements
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const coordinatorSelect = document.getElementById('coordinator');
+    
+    // Add search functionality to coordinator select
+    coordinatorSelect.addEventListener('focus', function() {
+        this.size = Math.min(this.options.length, 8);
+    });
+    
+    coordinatorSelect.addEventListener('blur', function() {
+        this.size = 1;
+    });
+    
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+        const requiredFields = ['name', 'coordinator', 'community', 'district', 'description'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (!field.value.trim()) {
+                field.classList.add('border-red-500');
+                isValid = false;
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

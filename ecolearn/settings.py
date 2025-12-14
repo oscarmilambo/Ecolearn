@@ -1,18 +1,19 @@
 """
-Django settings for ecolearn project.
+Django settings for ecolearn project - Optimized for Render deployment
 """
 
 import os
 from pathlib import Path
-from decouple import config  # pip install python-decouple
+from decouple import config
+import dj_database_url
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY
 SECRET_KEY = config('SECRET_KEY')
-DEBUG = config('DEBUG', cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver').split(',')
+DEBUG = config('DEBUG', default=False, cast=bool)
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver,*.onrender.com').split(',')
 
 # Application definition
 INSTALLED_APPS = [
@@ -26,11 +27,14 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'django.contrib.sites',  # Required for allauth
     
-    # Django Allauth
+    # Third-party apps
+    'cloudinary_storage',  # Must be before django.contrib.staticfiles
+    'cloudinary',
+    'whitenoise.runserver_nostatic',  # WhiteNoise for static files
+    
+    # Django Allauth (email/password only)
     'allauth',
     'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
     
     'channels',  # Django Channels for WebSockets
     'import_export',  # Django Import-Export
@@ -48,6 +52,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',  # WhiteNoise for static files
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',  # Language switching
     'security.middleware.SecurityMiddleware',
@@ -55,6 +60,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'allauth.account.middleware.AccountMiddleware',  # Required for allauth
     'accounts.middleware.UserLanguageMiddleware',  # User's preferred language
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -85,41 +91,60 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ecolearn.wsgi.application'
 ASGI_APPLICATION = 'ecolearn.asgi.application'
 
-# Django Channels Configuration
-# Using in-memory channel layer for development (switch to Redis for production)
+# REDIS CONFIGURATION FOR CACHING AND CHANNELS
+REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/0')
+
+# Django Channels Configuration with Redis
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [REDIS_URL],
+        },
+    },
+}
+
+# CACHING CONFIGURATION
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URL,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'KEY_PREFIX': 'ecolearn',
+        'TIMEOUT': 1800,  # 30 minutes default
     }
 }
 
-# For production with Redis, use this configuration:
-# CHANNEL_LAYERS = {
-#     'default': {
-#         'BACKEND': 'channels_redis.core.RedisChannelLayer',
-#         'CONFIG': {
-#             "hosts": [config('REDIS_URL', default='redis://127.0.0.1:6379/0')],
-#         },
-#     },
-# }
+# Cache time settings
+CACHE_TTL = {
+    'views': 900,  # 15 minutes for views
+    'queries': 1800,  # 30 minutes for queries
+    'static': 86400,  # 24 hours for static content
+}
 
-# DATABASE — Use SQLite for development, MySQL for production
-# To use MySQL, set USE_MYSQL=True in .env and start MySQL server
-USE_MYSQL = config('USE_MYSQL', default=False, cast=bool)
+# SESSION CONFIGURATION
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
 
-if USE_MYSQL:
+# DATABASE CONFIGURATION
+# Use MySQL for production, SQLite for development
+DATABASE_URL = config('DATABASE_URL', default=None)
+
+if DATABASE_URL:
+    # Production: Use MySQL via DATABASE_URL
     DATABASES = {
-        'default': {
-            'ENGINE': config('DB_ENGINE'), 
-            'NAME': config('DB_NAME'),     
-            'USER': config('DB_USER'),     
-            'PASSWORD': config('DB_PASSWORD'), 
-            'HOST': config('DB_HOST'),     
-            'PORT': config('DB_PORT', cast=int), 
-        }
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    }
+    # Ensure MySQL client is used
+    DATABASES['default']['ENGINE'] = 'django.db.backends.mysql'
+    DATABASES['default']['OPTIONS'] = {
+        'charset': 'utf8mb4',
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
     }
 else:
-    # SQLite - Simple, no server required
+    # Development: Use SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -160,17 +185,53 @@ LANGUAGES = [
 LANGUAGE_COOKIE_NAME = 'django_language'
 LANGUAGE_COOKIE_AGE = 31536000  # 1 year
 
-# Static files
+# CLOUDINARY CONFIGURATION - GLOBAL FOR ALL APPS
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': config('CLOUDINARY_API_KEY'),
+    'API_SECRET': config('CLOUDINARY_API_SECRET'),
+    'SECURE': True,
+}
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name=config('CLOUDINARY_CLOUD_NAME'),
+    api_key=config('CLOUDINARY_API_KEY'),
+    api_secret=config('CLOUDINARY_API_SECRET'),
+    secure=True
+)
+
+# STATIC FILES CONFIGURATION WITH WHITENOISE
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
-    #BASE_DIR / 'admin_dashboard/static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files
+# WhiteNoise configuration for static files compression
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = True
+WHITENOISE_MAX_AGE = 31536000  # 1 year cache for static files
+
+# MEDIA FILES WITH CLOUDINARY - ALL USER UPLOADS
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+# CLOUDINARY TRANSFORMATIONS - GLOBAL PRESETS
+CLOUDINARY_TRANSFORMATIONS = {
+    'profile_picture': {'width': 200, 'height': 200, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'},
+    'thumbnail': {'width': 400, 'height': 300, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'},
+    'banner': {'width': 1200, 'height': 400, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'},
+    'gallery': {'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'},
+    'icon': {'width': 100, 'height': 100, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'},
+    'report_photo': {'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'},
+}
 
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -250,8 +311,8 @@ LOGGING = {
     },
 }
 
-# ====
-===============================================================
+
+# ===================================================================
 # DJANGO ALLAUTH CONFIGURATION
 # ===================================================================
 
@@ -265,45 +326,24 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Allauth settings
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+# Allauth settings - Updated to new format (no more deprecation warnings)
+ACCOUNT_LOGIN_METHODS = {'email'}  # Replaces ACCOUNT_AUTHENTICATION_METHOD
+ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Replaces multiple deprecated settings
+ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Changed from mandatory to optional for social accounts
 ACCOUNT_UNIQUE_EMAIL = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
-ACCOUNT_SIGNUP_EMAIL_ENTER_TWICE = False
 ACCOUNT_SESSION_REMEMBER = True
+ACCOUNT_RATE_LIMITS = {
+    'login_failed': '5/5m',  # Replaces ACCOUNT_LOGIN_ATTEMPTS_LIMIT/TIMEOUT
+}
 
-# Social account settings
-SOCIALACCOUNT_AUTO_SIGNUP = True
-SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # Google already verifies email
-SOCIALACCOUNT_QUERY_EMAIL = True
-SOCIALACCOUNT_STORE_TOKENS = True
+
 
 # Redirect URLs
 LOGIN_REDIRECT_URL = '/dashboard/'
 ACCOUNT_LOGOUT_REDIRECT_URL = '/'
-SOCIALACCOUNT_LOGIN_ON_GET = True
 
-# Google OAuth settings (add to .env file)
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        },
-        'APP': {
-            'client_id': config('GOOGLE_CLIENT_ID', default=''),
-            'secret': config('GOOGLE_CLIENT_SECRET', default=''),
-            'key': ''
-        }
-    }
-}
+
 
 # Custom adapter to handle user creation
 ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
-SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'

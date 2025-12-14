@@ -6,7 +6,7 @@
 <title>EcoLearn | Learn. Engage. Grow.</title>
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+
 {% load static %}
 <style>
 /* Custom Eco Theme */
@@ -165,21 +165,15 @@ nav.scrolled {
     50% { transform: scale(1.1); }
 }
 
-/* Text gradient animation */
+/* Static text gradient - no animation */
 .gradient-text {
-    background: linear-gradient(90deg, #166534, #22c55e, #10b981, #22c55e, #166534);
-    background-size: 200% auto;
+    background: linear-gradient(90deg, #166534, #22c55e, #10b981);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    animation: gradientText 4s linear infinite;
 }
 
-@keyframes gradientText {
-    to { background-position: 200% center; }
-}
-
-/* Stats counter animation */
+/* Static stats styling */
 .stat-number {
     font-variant-numeric: tabular-nums;
 }
@@ -220,25 +214,15 @@ nav.scrolled {
     height: 300px;
 }
 
-/* Loading animation for hero content */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(40px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
+/* Static content - no fade animations */
 .fade-in-up {
-    animation: fadeInUp 1s ease-out forwards;
+    opacity: 1;
+    transform: translateY(0);
 }
 
-.delay-1 { animation-delay: 0.2s; opacity: 0; }
-.delay-2 { animation-delay: 0.4s; opacity: 0; }
-.delay-3 { animation-delay: 0.6s; opacity: 0; }
+.delay-1, .delay-2, .delay-3 { 
+    opacity: 1; 
+}
 
 /* Icon bounce on hover */
 .icon-bounce:hover {
@@ -321,7 +305,7 @@ nav.scrolled {
         {% for message in messages %}
             <div class="message-container bg-white border-l-4 
                 {% if message.tags == 'success' %}border-green-500{% elif message.tags == 'error' %}border-red-500{% elif message.tags == 'warning' %}border-yellow-500{% else %}border-blue-500{% endif %} 
-                p-4 rounded-lg shadow-lg max-w-sm animate-slide-in" role="alert">
+                p-4 rounded-lg shadow-lg max-w-sm animate-slide-in auto-dismiss-message" role="alert">
                 <div class="flex items-start">
                     <div class="flex-shrink-0">
                         {% if message.tags == 'success' %}
@@ -364,13 +348,13 @@ nav.scrolled {
     <div class="max-w-7xl mx-auto px-4 pt-28 pb-20 relative z-10">
         <div class="grid md:grid-cols-2 items-center gap-10">
             <div class="text-center md:text-left">
-                <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight drop-shadow-lg fade-in-up">
+                <h1 class="text-5xl md:text-6xl font-extrabold mb-6 leading-tight drop-shadow-lg">
                     Building a <span class="gradient-text">Greener Future</span> for Zambia 🇿🇲
                 </h1>
-                <p class="text-lg md:text-xl mb-10 text-black/90 fade-in-up delay-1">
+                <p class="text-lg md:text-xl mb-10 text-black/90">
                     EcoLearn empowers learners, communities, and innovators to embrace sustainability through <strong>education, action, and collaboration</strong> focused on Zambian realities.
                 </p>
-                <div class="flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4 fade-in-up delay-2">
+                <div class="flex flex-col sm:flex-row justify-center md:justify-start space-y-4 sm:space-y-0 sm:space-x-4">
                     <a href="{% url 'accounts:register' %}" class="cta-glow bg-white text-green-700 hover:bg-green-100 px-8 py-4 rounded-full text-lg font-semibold shadow-xl transition transform hover:scale-105">
                         <i class="fas fa-rocket mr-2" aria-hidden="true"></i>Get Started Free
                     </a>
@@ -379,24 +363,24 @@ nav.scrolled {
                     </a>
                 </div>
                 
-                <!-- Stats Counter -->
-                <div class="grid grid-cols-3 gap-6 mt-12 fade-in-up delay-3">
+                <!-- Static Stats -->
+                <div class="grid grid-cols-3 gap-6 mt-12">
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-green-800 stat-number" data-target="1000">0</div>
+                        <div class="text-3xl font-bold text-green-800">1000+</div>
                         <div class="text-sm text-black/80">Active Learners</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-green-800 stat-number" data-target="50">0</div>
+                        <div class="text-3xl font-bold text-green-800">50+</div>
                         <div class="text-sm text-black/80">Courses</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-3xl font-bold text-green-800 stat-number" data-target="95">0</div>
+                        <div class="text-3xl font-bold text-green-800">95%</div>
                         <div class="text-sm text-black/80">Success Rate</div>
                     </div>
                 </div>
             </div>
             
-            <div class="hidden md:block fade-in-up delay-2">
+            <div class="hidden md:block">
                 <div class="bg-white/50 p-8 rounded-3xl shadow-2xl backdrop-blur-sm transform hover:scale-105 transition duration-500">
                     <!-- ADD YOUR HERO IMAGE HERE -->
                     <!-- Example: <img src="{% static 'images/hero-image.jpg' %}" alt="EcoLearn Platform" class="rounded-2xl mb-4"> -->
@@ -413,22 +397,22 @@ nav.scrolled {
 
 <section id="about" class="py-20 bg-white text-center">
 <div class="max-w-5xl mx-auto px-4">
-    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6 reveal" data-aos="fade-up">Why EcoLearn? 🌱</h2>
-    <p class="text-gray-600 max-w-3xl mx-auto mb-12 reveal" data-aos="fade-up" data-aos-delay="100">
+    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-6 reveal">Why EcoLearn? 🌱</h2>
+    <p class="text-gray-600 max-w-3xl mx-auto mb-12 reveal">
     EcoLearn is Zambia's premier e-learning platform dedicated to environmental education — connecting knowledge, culture, and community for a sustainable tomorrow.
     </p>
     <div class="grid md:grid-cols-3 gap-8">
-    <div class="p-8 bg-green-50 rounded-xl shadow feature-card" data-aos="flip-left" data-aos-delay="100">
+    <div class="p-8 bg-green-50 rounded-xl shadow feature-card">
         <i class="fas fa-seedling text-5xl text-green-600 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="text-xl font-semibold mb-2">Sustainability Skills</h3>
         <p class="text-gray-600">Master eco-friendly practices in waste management, recycling, and renewable energy.</p>
     </div>
-    <div class="p-8 bg-blue-50 rounded-xl shadow feature-card" data-aos="flip-left" data-aos-delay="200">
+    <div class="p-8 bg-blue-50 rounded-xl shadow feature-card">
         <i class="fas fa-users text-5xl text-blue-600 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="text-xl font-semibold mb-2">Community Connection</h3>
         <p class="text-gray-600">Collaborate with local learners and make a difference in your neighborhood.</p>
     </div>
-    <div class="p-8 bg-yellow-50 rounded-xl shadow feature-card" data-aos="flip-left" data-aos-delay="300">
+    <div class="p-8 bg-yellow-50 rounded-xl shadow feature-card">
         <i class="fas fa-award text-5xl text-yellow-500 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="text-xl font-semibold mb-2">Recognized Certification</h3>
         <p class="text-gray-600">Earn EcoLearn certificates that prove your sustainability expertise.</p>
@@ -439,31 +423,31 @@ nav.scrolled {
 
 <section id="features" class="py-24 bg-green-50">
 <div class="max-w-7xl mx-auto px-6 text-center">
-    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8" data-aos="zoom-in">Explore Our Platform 📘</h2>
-    <p class="text-gray-600 max-w-2xl mx-auto mb-12" data-aos="zoom-in" data-aos-delay="100">Everything you need to learn, engage, and create positive change for the planet.</p>
+    <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8">Explore Our Platform 📘</h2>
+    <p class="text-gray-600 max-w-2xl mx-auto mb-12">Everything you need to learn, engage, and create positive change for the planet.</p>
     <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-    <div class="bg-white p-8 rounded-xl shadow feature-card" data-aos="fade-up" data-aos-delay="100">
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
         <i class="fas fa-book-open text-5xl text-green-600 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="font-semibold text-xl mb-2">Interactive Lessons</h3>
         <p class="text-gray-600">Engage in gamified learning with quizzes, videos, and progress tracking.</p>
     </div>
-    <div class="bg-white p-8 rounded-xl shadow feature-card" data-aos="fade-up" data-aos-delay="200">
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
         <i class="fas fa-language text-5xl text-green-500 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="font-semibold text-xl mb-2">Multilingual Support</h3>
         <p class="text-gray-600">Learn in English, Bemba, or Nyanja — for an inclusive Zambian experience.</p>
     </div>
-    <div class="bg-white p-8 rounded-xl shadow feature-card" data-aos="fade-up" data-aos-delay="300">
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
         <i class="fas fa-mobile-alt text-5xl text-yellow-500 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="font-semibold text-xl mb-2">Mobile Friendly</h3>
         <p class="text-gray-600">Access EcoLearn anytime, anywhere — perfectly optimized for all devices.</p>
     </div>
-    <div class="bg-white p-8 rounded-xl shadow feature-card" data-aos="fade-up" data-aos-delay="400">
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
         <i class="fas fa-comments text-5xl text-blue-600 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="font-semibold text-xl mb-2">Community Forums</h3>
         <p class="text-gray-600">Share ideas, discuss sustainability, and inspire local change.</p>
     </div>
 
-    <div class="bg-white p-8 rounded-xl shadow feature-card" data-aos="fade-up" data-aos-delay="600">
+    <div class="bg-white p-8 rounded-xl shadow feature-card">
         <i class="fas fa-bell text-5xl text-indigo-600 mb-4 icon-bounce" aria-hidden="true"></i>
         <h3 class="font-semibold text-xl mb-2">Smart Notifications</h3>
         <p class="text-gray-600">Receive updates on new courses, events, and community challenges.</p>
@@ -475,7 +459,7 @@ nav.scrolled {
 <!-- What is EcoLearn Section - FIXED IMAGES -->
 <section class="py-20 bg-gradient-to-br from-gray-50 to-green-50">
     <div class="max-w-7xl mx-auto px-6">
-        <div class="text-center mb-16" data-aos="fade-up">
+        <div class="text-center mb-16">
             <h2 class="text-4xl font-bold text-gray-900 mb-4">What is EcoLearn?</h2>
             <p class="text-xl text-gray-600 max-w-3xl mx-auto">
                 A comprehensive environmental education platform designed specifically for Zambia's unique challenges and opportunities
@@ -484,12 +468,12 @@ nav.scrolled {
 
         <!-- LEFT: Image + RIGHT: Text -->
         <div class="grid md:grid-cols-2 gap-12 items-center mb-16">
-            <div data-aos="fade-right">
+            <div>
                 <img src="{% static 'images/zambia_c.jpg' %}" 
                      alt="Children learning about waste segregation in Lusaka, Zambia" 
                      class="rounded-2xl shadow-2xl w-full h-64 md:h-80 object-cover">
             </div>
-            <div data-aos="fade-left">
+            <div>
                 <h3 class="text-3xl font-bold text-gray-900 mb-4">Learn About Zambia's Environment</h3>
                 <p class="text-gray-600 mb-6 leading-relaxed">
                     From the Victoria Falls to the Zambezi River, Zambia's natural beauty is unmatched. EcoLearn helps you understand and protect our precious ecosystems through interactive courses on:
@@ -517,7 +501,7 @@ nav.scrolled {
 
         <!-- LEFT: Text + RIGHT: Image -->
         <div class="grid md:grid-cols-2 gap-12 items-center">
-            <div class="order-2 md:order-1" data-aos="fade-right">
+            <div class="order-2 md:order-1">
                 <h3 class="text-3xl font-bold text-gray-900 mb-4">Take Action in Your Community</h3>
                 <p class="text-gray-600 mb-6 leading-relaxed">
                     Learning is just the beginning. EcoLearn connects you with local initiatives and empowers you to make real change:
@@ -541,7 +525,7 @@ nav.scrolled {
                     </li>
                 </ul>
             </div>
-            <div class="order-1 md:order-2" data-aos="fade-left">
+            <div class="order-1 md:order-2">
                 <img src="{% static 'images/ghetto.jpg' %}?v=2" 
                      alt="Zambian youth doing a community clean-up" 
                      class="rounded-2xl shadow-2xl w-full h-64 md:h-80 object-cover">
@@ -559,15 +543,14 @@ nav.scrolled {
     </div>
 
     <div class="relative z-10 max-w-4xl mx-auto px-6">
-        <h2 class="text-3xl md:text-5xl font-bold mb-6" data-aos="fade-down">
+        <h2 class="text-3xl md:text-5xl font-bold mb-6">
             Join the Green Revolution Today!
         </h2>
-        <p class="text-xl text-white/90 mb-10" data-aos="fade-up" data-aos-delay="100">
+        <p class="text-xl text-white/90 mb-10">
             Take your first step toward sustainability education and community action in Zambia.
         </p>
         <a href="{% url 'accounts:register' %}" 
-           class="cta-glow bg-white text-green-700 hover:bg-green-50 px-12 py-5 rounded-full text-xl font-bold inline-block transition shadow-2xl transform hover:scale-105" 
-           data-aos="zoom-in" data-aos-delay="200">
+           class="cta-glow bg-white text-green-700 hover:bg-green-50 px-12 py-5 rounded-full text-xl font-bold inline-block transition shadow-2xl transform hover:scale-105">
             <i class="fas fa-rocket mr-3"></i>Start Learning Now – It's Free!
         </a>
     </div>
@@ -611,14 +594,7 @@ nav.scrolled {
     <i class="fas fa-arrow-up"></i>
 </button>
 
-<script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 <script>
-    // Initialize AOS (Animate On Scroll)
-    AOS.init({
-        duration: 1000,
-        once: true,
-        offset: 100
-    });
 
     // Mobile menu toggle
     document.getElementById('mobile-menu-btn')?.addEventListener('click', function() {
@@ -662,47 +638,7 @@ nav.scrolled {
         }
     });
     
-    // Stats Counter Animation
-    function animateCounter(element) {
-        const target = parseInt(element.getAttribute('data-target'));
-        const duration = 2000;
-        const increment = target / (duration / 16);
-        let current = 0;
-        
-        const timer = setInterval(() => {
-            current += increment;
-            if (current >= target) {
-                element.textContent = target + (element.parentElement.textContent.includes('Rate') ? '%' : '+');
-                clearInterval(timer);
-            } else {
-                element.textContent = Math.floor(current) + (element.parentElement.textContent.includes('Rate') ? '%' : '+');
-            }
-        }, 16);
-    }
-    
-    // Trigger counter animation when in view
-    const observerOptions = {
-        threshold: 0.5,
-        rootMargin: '0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const counters = entry.target.querySelectorAll('.stat-number');
-                counters.forEach(counter => {
-                    if (counter.textContent === '0') {
-                        animateCounter(counter);
-                    }
-                });
-            }
-        });
-    }, observerOptions);
-    
-    const heroSection = document.querySelector('.hero-section');
-    if (heroSection) {
-        observer.observe(heroSection);
-    }
+    // Stats are now static - no animation needed
     
     // Reveal animation on scroll
     const revealElements = document.querySelectorAll('.reveal');
@@ -734,6 +670,23 @@ nav.scrolled {
         window.scrollTo({
             top: 0,
             behavior: 'smooth'
+        });
+    });
+    
+    // Auto-dismiss messages after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const messages = document.querySelectorAll('.auto-dismiss-message');
+        messages.forEach(function(message) {
+            setTimeout(function() {
+                if (message.parentNode) {
+                    message.style.transition = 'opacity 0.5s ease-out, transform 0.5s ease-out';
+                    message.style.opacity = '0';
+                    message.style.transform = 'translateX(100%)';
+                    setTimeout(function() {
+                        message.remove();
+                    }, 500);
+                }
+            }, 5000);
         });
     });
     

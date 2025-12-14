@@ -1,0 +1,155 @@
+{% comment %}
+CLOUDINARY TEMPLATE TAGS - GLOBAL OPTIMIZATION
+Use these tags across ALL templates for optimized image delivery with lazy loading
+{% endcomment %}
+
+{% load cloudinary %}
+
+{% comment %}
+LAZY LOADING IMAGE MACRO
+Usage: {% include 'cloudinary_tags.html' with image=module.thumbnail alt="Module thumbnail" width=400 height=300 %}
+{% endcomment %}
+
+{% if image %}
+<img 
+    src="{% cloudinary_url image width=50 height=50 crop='fill' format='webp' quality='auto' %}"
+    data-src="{% cloudinary_url image width=width|default:400 height=height|default:300 crop='fill' format='webp' quality='auto' %}"
+    alt="{{ alt|default:'Image' }}"
+    class="lazy-load {{ css_class|default:'' }}"
+    loading="lazy"
+    style="transition: opacity 0.3s ease-in-out; {{ style|default:'' }}"
+    {% if width %}width="{{ width }}"{% endif %}
+    {% if height %}height="{{ height }}"{% endif %}
+/>
+{% else %}
+<div class="placeholder-image {{ css_class|default:'' }}" 
+     style="width: {{ width|default:400 }}px; height: {{ height|default:300 }}px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); display: flex; align-items: center; justify-content: center; color: #666; {{ style|default:'' }}">
+    <i class="fas fa-image fa-2x"></i>
+</div>
+{% endif %}
+
+{% comment %}
+RESPONSIVE IMAGE MACRO
+Usage: {% include 'cloudinary_tags.html' with image=lesson.thumbnail responsive=True alt="Lesson image" %}
+{% endcomment %}
+
+{% if responsive and image %}
+<picture>
+    <source media="(max-width: 768px)" 
+            srcset="{% cloudinary_url image width=300 height=200 crop='fill' format='webp' quality='auto' %}">
+    <source media="(max-width: 1024px)" 
+            srcset="{% cloudinary_url image width=500 height=300 crop='fill' format='webp' quality='auto' %}">
+    <img src="{% cloudinary_url image width=800 height=500 crop='fill' format='webp' quality='auto' %}"
+         alt="{{ alt|default:'Image' }}"
+         class="responsive-image lazy-load {{ css_class|default:'' }}"
+         loading="lazy"
+         style="{{ style|default:'' }}">
+</picture>
+{% endif %}
+
+{% comment %}
+AVATAR IMAGE MACRO
+Usage: {% include 'cloudinary_tags.html' with avatar=True image=user.profile.avatar alt="User avatar" size=50 %}
+{% endcomment %}
+
+{% if avatar and image %}
+<img src="{% cloudinary_url image width=size|default:50 height=size|default:50 crop='fill' format='webp' quality='auto' gravity='face' radius='max' %}"
+     alt="{{ alt|default:'Avatar' }}"
+     class="avatar lazy-load {{ css_class|default:'' }}"
+     loading="lazy"
+     style="border-radius: 50%; {{ style|default:'' }}"
+     width="{{ size|default:50 }}"
+     height="{{ size|default:50 }}">
+{% elif avatar %}
+<div class="avatar-placeholder {{ css_class|default:'' }}"
+     style="width: {{ size|default:50 }}px; height: {{ size|default:50 }}px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; {{ style|default:'' }}">
+    {{ alt|default:'User'|first|upper }}
+</div>
+{% endif %}
+
+{% comment %}
+THUMBNAIL GRID MACRO
+Usage: {% include 'cloudinary_tags.html' with thumbnail=True image=module.thumbnail alt="Module" title=module.title %}
+{% endcomment %}
+
+{% if thumbnail %}
+<div class="thumbnail-card {{ css_class|default:'' }}" style="{{ style|default:'' }}">
+    {% if image %}
+    <img src="{% cloudinary_url image width=300 height=200 crop='fill' format='webp' quality='auto' %}"
+         alt="{{ alt|default:'Thumbnail' }}"
+         class="thumbnail-image lazy-load"
+         loading="lazy"
+         style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px;">
+    {% else %}
+    <div class="thumbnail-placeholder" 
+         style="width: 100%; height: 200px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+        <i class="fas fa-image fa-3x"></i>
+    </div>
+    {% endif %}
+    {% if title %}
+    <h3 class="thumbnail-title" style="margin-top: 10px; font-size: 1.1rem; font-weight: 600;">{{ title }}</h3>
+    {% endif %}
+</div>
+{% endif %}
+
+<script>
+// Lazy Loading Implementation
+document.addEventListener('DOMContentLoaded', function() {
+    const lazyImages = document.querySelectorAll('.lazy-load');
+    
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.style.opacity = '1';
+                    img.classList.remove('lazy-load');
+                    observer.unobserve(img);
+                }
+            }
+        });
+    }, {
+        rootMargin: '50px 0px',
+        threshold: 0.01
+    });
+    
+    lazyImages.forEach(img => {
+        img.style.opacity = '0.5';
+        imageObserver.observe(img);
+    });
+});
+</script>
+
+<style>
+.lazy-load {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.placeholder-image, .avatar-placeholder, .thumbnail-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: #666;
+}
+
+.thumbnail-card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.thumbnail-card:hover {
+    transform: translateY(-5px);
+}
+
+.responsive-image {
+    width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .thumbnail-image {
+        height: 150px !important;
+    }
+}
+</style>

@@ -111,6 +111,10 @@
                     <span class="ml-auto bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">{{ pending_proofs_count }}</span>
                     {% endif %}
                 </a>
+                <a href="{% url 'admin_dashboard:groups_management' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition">
+                    <i class="fas fa-user-friends"></i>
+                    <span>Cleanup Groups</span>
+                </a>
                 <a href="{% url 'admin_dashboard:notification_management' %}" class="flex items-center space-x-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-zinc-700 transition">
                     <i class="fas fa-bell"></i>
                     <span>Notifications</span>

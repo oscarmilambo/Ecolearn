@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.core.validators import MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
+from cloudinary.models import CloudinaryField
 
 User = get_user_model()
 
@@ -111,7 +112,8 @@ class CommunityEvent(models.Model):
     registration_deadline = models.DateTimeField(null=True, blank=True)
     
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
-    image = models.ImageField(upload_to='events/', blank=True, null=True)
+    image = CloudinaryField('image', blank=True, null=True,
+                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -177,7 +179,8 @@ class SuccessStory(models.Model):
     story_type = models.CharField(max_length=20, choices=STORY_TYPES)
     content = models.TextField()
     location = models.CharField(max_length=255, blank=True)
-    image = models.ImageField(upload_to='stories/', blank=True, null=True)
+    image = CloudinaryField('image', blank=True, null=True,
+                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     video_url = models.URLField(blank=True, null=True)
     is_featured = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=False, help_text="Requires admin approval")
@@ -295,6 +298,296 @@ class HealthAlert(models.Model):
         return f"[{self.get_severity_display()}] {self.title}"
 
 
+# ====================== COMMUNITY CAMPAIGNS ======================
+class CommunityCampaign(models.Model):
+    """
+    Periodic waste management campaigns (FR08)
+    """
+    RECURRENCE_CHOICES = [
+        ('one_time', 'One-time Event'),
+        ('monthly', 'Monthly'),
+        ('quarterly', 'Quarterly'),
+        ('yearly', 'Yearly'),
+    ]
+    
+    CAMPAIGN_TYPES = [
+        ('cleanup', 'Community Cleanup'),
+        ('workshop', 'Segregation Workshop'),
+        ('challenge', 'Zero-Plastic Challenge'),
+        ('education', 'Waste Management Education'),
+        ('recycling', 'Recycling Drive'),
+        ('composting', 'Composting Workshop'),
+    ]
+    
+    title = models.CharField(max_length=200, verbose_name="Campaign Title")
+    title_bem = models.CharField(max_length=200, blank=True, verbose_name="Title (Bemba)")
+    title_ny = models.CharField(max_length=200, blank=True, verbose_name="Title (Nyanja)")
+    
+    description = models.TextField(verbose_name="Campaign Description")
+    description_bem = models.TextField(blank=True, verbose_name="Description (Bemba)")
+    description_ny = models.TextField(blank=True, verbose_name="Description (Nyanja)")
+    
+    campaign_type = models.CharField(max_length=20, choices=CAMPAIGN_TYPES, default='cleanup')
+    location = models.CharField(max_length=255, verbose_name="Campaign Location")
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True)
+    
+    start_date = models.DateTimeField(verbose_name="Start Date & Time")
+    end_date = models.DateTimeField(verbose_name="End Date & Time")
+    
+    # Recurrence settings
+    recurrence = models.CharField(max_length=20, choices=RECURRENCE_CHOICES, default='one_time')
+    next_occurrence = models.DateTimeField(null=True, blank=True, help_text="Auto-calculated next occurrence")
+    
+    # Registration settings
+    max_participants = models.PositiveIntegerField(null=True, blank=True, verbose_name="Maximum Participants")
+    registration_deadline = models.DateTimeField(null=True, blank=True)
+    
+    # Campaign details
+    organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_campaigns')
+    contact_phone = models.CharField(max_length=20, blank=True, verbose_name="Contact Phone")
+    contact_email = models.EmailField(blank=True, verbose_name="Contact Email")
+    
+    # Media
+    image = CloudinaryField('image', blank=True, null=True,
+                           transformation={'width': 1200, 'height': 400, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    
+    # Status
+    is_active = models.BooleanField(default=True, verbose_name="Active Campaign")
+    is_published = models.BooleanField(default=False, verbose_name="Published (visible to users)")
+    
+    # Tracking
+    participant_count = models.PositiveIntegerField(default=0, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-start_date']
+        verbose_name = "Community Campaign"
+        verbose_name_plural = "Community Campaigns"
+        indexes = [
+            models.Index(fields=['start_date']),
+            models.Index(fields=['is_active', 'is_published']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.start_date.strftime('%B %d, %Y')}"
+
+    def get_absolute_url(self):
+        return reverse('community:campaign_detail', args=[self.id])
+
+    @property
+    def is_upcoming(self):
+        return self.start_date > timezone.now()
+
+    @property
+    def is_ongoing(self):
+        return self.start_date <= timezone.now() <= self.end_date
+
+    @property
+    def is_past(self):
+        return self.end_date < timezone.now()
+
+    @property
+    def is_full(self):
+        return self.max_participants and self.participant_count >= self.max_participants
+
+    @property
+    def can_register(self):
+        """Check if users can still register"""
+        if not self.is_active or not self.is_published:
+            return False
+        if self.is_full:
+            return False
+        if self.registration_deadline and timezone.now() > self.registration_deadline:
+            return False
+        if self.is_past:
+            return False
+        return True
+
+    def create_next_occurrence(self):
+        """Create next occurrence for recurring campaigns"""
+        if self.recurrence == 'one_time':
+            return None
+        
+        from dateutil.relativedelta import relativedelta
+        
+        if self.recurrence == 'monthly':
+            next_start = self.start_date + relativedelta(months=1)
+            next_end = self.end_date + relativedelta(months=1)
+        elif self.recurrence == 'quarterly':
+            next_start = self.start_date + relativedelta(months=3)
+            next_end = self.end_date + relativedelta(months=3)
+        elif self.recurrence == 'yearly':
+            next_start = self.start_date + relativedelta(years=1)
+            next_end = self.end_date + relativedelta(years=1)
+        else:
+            return None
+        
+        # Create new campaign instance
+        new_campaign = CommunityCampaign.objects.create(
+            title=self.title,
+            title_bem=self.title_bem,
+            title_ny=self.title_ny,
+            description=self.description,
+            description_bem=self.description_bem,
+            description_ny=self.description_ny,
+            campaign_type=self.campaign_type,
+            location=self.location,
+            latitude=self.latitude,
+            longitude=self.longitude,
+            start_date=next_start,
+            end_date=next_end,
+            recurrence=self.recurrence,
+            max_participants=self.max_participants,
+            registration_deadline=next_start - timezone.timedelta(days=1) if self.registration_deadline else None,
+            organizer=self.organizer,
+            contact_phone=self.contact_phone,
+            contact_email=self.contact_email,
+            image=self.image,
+            is_active=True,
+            is_published=True,
+        )
+        
+        # Update next occurrence
+        self.next_occurrence = next_start
+        self.save(update_fields=['next_occurrence'])
+        
+        return new_campaign
+
+
+class CampaignParticipant(models.Model):
+    """
+    Track campaign participants and send reminders (FR09)
+    """
+    campaign = models.ForeignKey(CommunityCampaign, on_delete=models.CASCADE, related_name='participants')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='campaign_participations')
+    
+    # Registration details
+    registered_at = models.DateTimeField(auto_now_add=True)
+    interest_level = models.CharField(
+        max_length=20,
+        choices=[
+            ('join', 'Will Join'),
+            ('interested', 'Interested'),
+            ('maybe', 'Maybe'),
+        ],
+        default='join'
+    )
+    
+    # Attendance tracking
+    attended = models.BooleanField(default=False, help_text="Did the user attend?")
+    attendance_confirmed_at = models.DateTimeField(null=True, blank=True)
+    
+    # Reminder tracking (FR09)
+    reminder_3days_sent = models.BooleanField(default=False)
+    reminder_1day_sent = models.BooleanField(default=False)
+    confirmation_sent = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ['campaign', 'user']
+        verbose_name = "Campaign Participant"
+        verbose_name_plural = "Campaign Participants"
+        indexes = [
+            models.Index(fields=['campaign', 'user']),
+            models.Index(fields=['registered_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.get_full_name() or self.user.username} → {self.campaign.title}"
+
+    def send_confirmation(self):
+        """Send registration confirmation"""
+        if self.confirmation_sent:
+            return
+        
+        try:
+            from .notifications import notification_service
+            
+            user_name = self.user.get_full_name() or self.user.username
+            prefs = getattr(self.user, 'notification_preferences', None)
+            
+            # SMS confirmation
+            if prefs and prefs.sms_enabled and prefs.event_reminders and self.user.phone_number:
+                sms_message = f"✅ {user_name}, you're registered for {self.campaign.title} on {self.campaign.start_date.strftime('%B %d, %Y at %I:%M %p')}. Location: {self.campaign.location}"
+                result = notification_service.send_sms(str(self.user.phone_number), sms_message)
+                if result.get('success'):
+                    print(f"✅ Campaign confirmation SMS sent to {self.user.username}")
+            
+            # WhatsApp confirmation
+            if prefs and prefs.whatsapp_enabled and prefs.event_reminders and self.user.phone_number:
+                whatsapp_message = f"✅ *Campaign Registration Confirmed*\n\n*Campaign:* {self.campaign.title}\n*Date:* {self.campaign.start_date.strftime('%B %d, %Y at %I:%M %p')}\n*Location:* {self.campaign.location}\n\nThank you for joining our waste management initiative!"
+                result = notification_service.send_whatsapp(str(self.user.phone_number), whatsapp_message)
+                if result.get('success'):
+                    print(f"✅ Campaign confirmation WhatsApp sent to {self.user.username}")
+            
+            # In-app notification
+            Notification.objects.create(
+                user=self.user,
+                notification_type='event_reminder',
+                title=f'Registered for {self.campaign.title}',
+                message=f'You have successfully registered for {self.campaign.title} on {self.campaign.start_date.strftime("%B %d, %Y")}.',
+                url=self.campaign.get_absolute_url()
+            )
+            
+            self.confirmation_sent = True
+            self.save(update_fields=['confirmation_sent'])
+            
+        except Exception as e:
+            print(f"Campaign confirmation error: {e}")
+
+    def send_reminder(self, days_before):
+        """Send campaign reminder (3 days or 1 day before)"""
+        try:
+            from .notifications import notification_service
+            
+            user_name = self.user.get_full_name() or self.user.username
+            prefs = getattr(self.user, 'notification_preferences', None)
+            
+            if days_before == 3:
+                if self.reminder_3days_sent:
+                    return
+                reminder_text = "in 3 days"
+                field_to_update = 'reminder_3days_sent'
+            elif days_before == 1:
+                if self.reminder_1day_sent:
+                    return
+                reminder_text = "tomorrow"
+                field_to_update = 'reminder_1day_sent'
+            else:
+                return
+            
+            # SMS reminder
+            if prefs and prefs.sms_enabled and prefs.event_reminders and self.user.phone_number:
+                sms_message = f"⏰ Reminder: {self.campaign.title} is {reminder_text} at {self.campaign.start_date.strftime('%I:%M %p')}. Location: {self.campaign.location}. See you there!"
+                result = notification_service.send_sms(str(self.user.phone_number), sms_message)
+                if result.get('success'):
+                    print(f"✅ Campaign {days_before}-day reminder SMS sent to {self.user.username}")
+            
+            # WhatsApp reminder
+            if prefs and prefs.whatsapp_enabled and prefs.event_reminders and self.user.phone_number:
+                whatsapp_message = f"⏰ *Campaign Reminder*\n\n*{self.campaign.title}* is {reminder_text}!\n\n*Time:* {self.campaign.start_date.strftime('%I:%M %p')}\n*Location:* {self.campaign.location}\n\nDon't forget to bring gloves and water. See you there! 🌍"
+                result = notification_service.send_whatsapp(str(self.user.phone_number), whatsapp_message)
+                if result.get('success'):
+                    print(f"✅ Campaign {days_before}-day reminder WhatsApp sent to {self.user.username}")
+            
+            # In-app notification
+            Notification.objects.create(
+                user=self.user,
+                notification_type='event_reminder',
+                title=f'Reminder: {self.campaign.title}',
+                message=f'Your registered campaign {self.campaign.title} is {reminder_text}!',
+                url=self.campaign.get_absolute_url()
+            )
+            
+            # Update reminder status
+            setattr(self, field_to_update, True)
+            self.save(update_fields=[field_to_update])
+            
+        except Exception as e:
+            print(f"Campaign reminder error: {e}")
+
+
 # ====================== COMMUNITY CHALLENGES ======================
 class CommunityChallenge(models.Model):
     CHALLENGE_TYPES = [
@@ -312,7 +605,8 @@ class CommunityChallenge(models.Model):
     target_goal = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     current_progress = models.PositiveIntegerField(default=0)
     reward_points = models.PositiveIntegerField(default=100)
-    image = models.ImageField(upload_to='challenges/', blank=True, null=True)
+    image = CloudinaryField('image', blank=True, null=True,
+                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -366,8 +660,10 @@ class ChallengeProof(models.Model):
     ]
     
     participant = models.ForeignKey(ChallengeParticipant, on_delete=models.CASCADE, related_name='proofs')
-    before_photo = models.ImageField(upload_to='challenge_proofs/before/', help_text='Required: Before photo')
-    after_photo = models.ImageField(upload_to='challenge_proofs/after/', blank=True, null=True, help_text='Optional: After photo')
+    before_photo = CloudinaryField('image', help_text='Required: Before photo',
+                                  transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    after_photo = CloudinaryField('image', blank=True, null=True, help_text='Optional: After photo',
+                                 transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
     bags_collected = models.PositiveIntegerField(default=0, help_text='Number of bags collected')
     description = models.TextField(blank=True, help_text='Optional description')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

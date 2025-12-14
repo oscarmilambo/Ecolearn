@@ -1,0 +1,273 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Manage Members: {{ group.name }}{% endblock %}
+{% block page_title %}Manage Group Members{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-8">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <a href="{% url 'admin_dashboard:group_detail_admin' group.id %}" class="flex items-center text-gray-600 dark:text-gray-400 hover:text-zm-green transition mb-2">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Back to Group Details
+            </a>
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-white">{{ group.name }}</h2>
+            <p class="text-gray-600 dark:text-gray-400">{{ group.community }}, {{ group.district }}</p>
+        </div>
+        
+        <div class="text-right">
+            <div class="text-3xl font-bold text-zm-green">{{ members.count }}</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400">Total Members</div>
+        </div>
+    </div>
+
+    <!-- Add New Member -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Add New Member</h3>
+        </div>
+        
+        <form method="POST" class="p-6">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="add_member">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="md:col-span-2">
+                    <label for="user_id" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Select User
+                    </label>
+                    <select id="user_id" name="user_id" required
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                        <option value="">Choose a user to add...</option>
+                        {% for user in available_users %}
+                        <option value="{{ user.id }}">
+                            {{ user.get_full_name|default:user.username }} ({{ user.email }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="role" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Role
+                    </label>
+                    <select id="role" name="role" required
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                        {% for value, label in role_choices %}
+                        <option value="{{ value }}" {% if value == 'member' %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="px-6 py-2 bg-zm-green text-white rounded-lg hover:bg-green-600 transition">
+                    <i class="fas fa-user-plus mr-2"></i>Add Member
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Current Members -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Current Members ({{ members.count }})</h3>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Member</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Joined</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-zinc-800 divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for membership in members %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-zm-green rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                    {{ membership.user.first_name|first|default:membership.user.username|first|upper }}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                        {{ membership.user.get_full_name|default:membership.user.username }}
+                                        {% if membership.user == group.coordinator %}
+                                        <span class="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                            Coordinator
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ membership.user.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <form method="POST" class="inline-block">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="update_role">
+                                <input type="hidden" name="membership_id" value="{{ membership.id }}">
+                                <select name="new_role" onchange="this.form.submit()"
+                                        class="text-sm border border-gray-300 dark:border-zinc-600 rounded px-2 py-1 dark:bg-zinc-700 dark:text-white"
+                                        {% if membership.user == group.coordinator %}disabled{% endif %}>
+                                    {% for value, label in role_choices %}
+                                    <option value="{{ value }}" {% if value == membership.role %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                            {{ membership.joined_at|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if membership.is_active %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                Active
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                Inactive
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {% if membership.user != group.coordinator %}
+                            <button onclick="confirmRemoveMember('{{ membership.id }}', '{{ membership.user.get_full_name|default:membership.user.username }}')"
+                                    class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300">
+                                <i class="fas fa-user-minus"></i>
+                            </button>
+                            {% else %}
+                            <span class="text-gray-400" title="Cannot remove coordinator">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-12 text-center">
+                            <div class="text-gray-500 dark:text-gray-400">
+                                <i class="fas fa-users text-4xl mb-4"></i>
+                                <p class="text-lg font-medium">No members yet</p>
+                                <p class="text-sm">Add the first member to get started</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Member Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Coordinators</p>
+                    <p class="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                        {{ members|length|add:"-1"|add:"1" }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-crown text-blue-600 dark:text-blue-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Moderators</p>
+                    <p class="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                        {% for membership in members %}{% if membership.role == 'moderator' %}{{ forloop.counter0|add:"1" }}{% endif %}{% empty %}0{% endfor %}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-shield-alt text-purple-600 dark:text-purple-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Members</p>
+                    <p class="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {% for membership in members %}{% if membership.role == 'member' %}{{ forloop.counter0|add:"1" }}{% endif %}{% empty %}0{% endfor %}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-green-600 dark:text-green-400"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Remove Member Confirmation Modal -->
+<div id="removeMemberModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md mx-4">
+        <div class="text-center">
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-user-minus text-red-600 dark:text-red-400 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Remove Member</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+                Are you sure you want to remove <strong id="memberName"></strong> from this group?
+            </p>
+            <div class="flex space-x-4">
+                <button onclick="closeRemoveMemberModal()" 
+                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                    Cancel
+                </button>
+                <form id="removeMemberForm" method="POST" class="flex-1">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove_member">
+                    <input type="hidden" name="membership_id" id="membershipId">
+                    <button type="submit" 
+                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        Remove
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmRemoveMember(membershipId, memberName) {
+    document.getElementById('membershipId').value = membershipId;
+    document.getElementById('memberName').textContent = memberName;
+    document.getElementById('removeMemberModal').classList.remove('hidden');
+    document.getElementById('removeMemberModal').classList.add('flex');
+}
+
+function closeRemoveMemberModal() {
+    document.getElementById('removeMemberModal').classList.add('hidden');
+    document.getElementById('removeMemberModal').classList.remove('flex');
+}
+
+// Enhanced user search
+document.addEventListener('DOMContentLoaded', function() {
+    const userSelect = document.getElementById('user_id');
+    
+    // Add search functionality
+    userSelect.addEventListener('focus', function() {
+        this.size = Math.min(this.options.length, 8);
+    });
+    
+    userSelect.addEventListener('blur', function() {
+        this.size = 1;
+    });
+});
+</script>
+{% endblock %}

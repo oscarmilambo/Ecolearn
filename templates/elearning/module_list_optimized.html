@@ -1,0 +1,432 @@
+{% extends 'base.html' %}
+{% load cloudinary %}
+{% load humanize %}
+
+{% block title %}Learning Modules - EcoLearn{% endblock %}
+
+{% block extra_css %}
+<style>
+.module-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+}
+
+.module-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.module-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.module-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.module-content {
+    padding: 1.5rem;
+}
+
+.module-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #1f2937;
+}
+
+.module-description {
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.module-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.difficulty-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.difficulty-beginner { background: #dcfce7; color: #166534; }
+.difficulty-intermediate { background: #fef3c7; color: #92400e; }
+.difficulty-advanced { background: #fee2e2; color: #991b1b; }
+
+.module-stats {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+}
+
+.module-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: #3b82f6;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+    text-decoration: none;
+    color: white;
+}
+
+.btn-enrolled {
+    background: #10b981;
+    color: white;
+}
+
+.filters-section {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.filter-row {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 500;
+    color: #374151;
+    font-size: 0.9rem;
+}
+
+.filter-group select,
+.filter-group input {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    margin-top: 3rem;
+}
+
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.pagination a,
+.pagination span {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #374151;
+    transition: all 0.2s;
+}
+
+.pagination a:hover {
+    background: #f3f4f6;
+    text-decoration: none;
+}
+
+.pagination .current {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #3b82f6;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.9rem;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .module-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Page Header -->
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-gray-900 mb-4">Learning Modules</h1>
+        <p class="text-xl text-gray-600">Discover waste management courses tailored for you</p>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_modules|intcomma }}</div>
+            <div class="stat-label">Total Modules</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_students|intcomma }}</div>
+            <div class="stat-label">Active Students</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ stats.total_completions|intcomma }}</div>
+            <div class="stat-label">Completions</div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filters-section">
+        <form method="get" class="filter-row">
+            <div class="filter-group">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="q" value="{{ search_query }}" 
+                       placeholder="Search modules..." style="min-width: 250px;">
+            </div>
+            
+            <div class="filter-group">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                    <option value="{{ category.id }}" {% if category.id|stringformat:"s" == request.GET.category %}selected{% endif %}>
+                        {{ category.get_translated_name }} ({{ category.module_count }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="difficulty">Difficulty</label>
+                <select id="difficulty" name="difficulty">
+                    <option value="">All Levels</option>
+                    <option value="beginner" {% if current_difficulty == 'beginner' %}selected{% endif %}>Beginner</option>
+                    <option value="intermediate" {% if current_difficulty == 'intermediate' %}selected{% endif %}>Intermediate</option>
+                    <option value="advanced" {% if current_difficulty == 'advanced' %}selected{% endif %}>Advanced</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="sort">Sort By</label>
+                <select id="sort" name="sort">
+                    <option value="featured" {% if sort_by == 'featured' %}selected{% endif %}>Featured</option>
+                    <option value="popular" {% if sort_by == 'popular' %}selected{% endif %}>Most Popular</option>
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest</option>
+                    <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>Highest Rated</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn-primary">Filter</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Results Info -->
+    <div class="flex justify-between items-center mb-4">
+        <p class="text-gray-600">
+            Showing {{ modules.start_index }}-{{ modules.end_index }} of {{ paginator.count }} modules
+        </p>
+        {% if search_query %}
+        <p class="text-sm text-gray-500">
+            Search results for "{{ search_query }}"
+            <a href="{% url 'elearning:module_list' %}" class="text-blue-600 hover:underline ml-2">Clear</a>
+        </p>
+        {% endif %}
+    </div>
+
+    <!-- Modules Grid -->
+    <div class="module-grid">
+        {% for module in modules %}
+        <div class="module-card">
+            <!-- Module Image with Lazy Loading -->
+            {% if module.thumbnail %}
+                <img src="{% cloudinary_url module.thumbnail width=50 height=50 crop='fill' format='webp' quality='auto' %}"
+                     data-src="{% cloudinary_url module.thumbnail width=400 height=200 crop='fill' format='webp' quality='auto' %}"
+                     alt="{{ module.get_translated_title }}"
+                     class="module-image lazy-load"
+                     loading="lazy">
+            {% else %}
+                <div class="module-image" style="display: flex; align-items: center; justify-content: center; color: white;">
+                    <i class="fas fa-leaf fa-3x"></i>
+                </div>
+            {% endif %}
+
+            <div class="module-content">
+                <h3 class="module-title">{{ module.get_translated_title }}</h3>
+                
+                <p class="module-description">
+                    {{ module.get_translated_description|truncatewords:20 }}
+                </p>
+
+                <div class="module-meta">
+                    <span class="difficulty-badge difficulty-{{ module.difficulty }}">
+                        {{ module.get_difficulty_display }}
+                    </span>
+                    <span>{{ module.duration_minutes }} min</span>
+                </div>
+
+                <div class="module-stats">
+                    <span><i class="fas fa-users"></i> {{ module.enrollments_count|intcomma }}</span>
+                    <span><i class="fas fa-eye"></i> {{ module.views_count|intcomma }}</span>
+                    {% if module.average_rating > 0 %}
+                    <span><i class="fas fa-star"></i> {{ module.average_rating|floatformat:1 }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="module-actions">
+                    {% if module.id in user_enrollments %}
+                        <a href="{% url 'elearning:module_detail' module.slug %}" class="btn-primary btn-enrolled">
+                            Continue Learning ({{ user_progress.module.id|default:0 }}%)
+                        </a>
+                    {% else %}
+                        <a href="{% url 'elearning:module_detail' module.slug %}" class="btn-primary">
+                            View Module
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <i class="fas fa-search fa-3x text-gray-400 mb-4"></i>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No modules found</h3>
+            <p class="text-gray-500">Try adjusting your search criteria</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if paginator.num_pages > 1 %}
+    <div class="pagination-wrapper">
+        <div class="pagination">
+            {% if modules.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">First</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ modules.previous_page_number }}">Previous</a>
+            {% endif %}
+
+            {% for num in modules.paginator.page_range %}
+                {% if num == modules.number %}
+                    <span class="current">{{ num }}</span>
+                {% elif num > modules.number|add:'-3' and num < modules.number|add:'3' %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if modules.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ modules.next_page_number }}">Next</a>
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ paginator.num_pages }}">Last</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Lazy Loading Implementation
+document.addEventListener('DOMContentLoaded', function() {
+    const lazyImages = document.querySelectorAll('.lazy-load');
+    
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                if (img.dataset.src) {
+                    img.src = img.dataset.src;
+                    img.style.opacity = '1';
+                    img.classList.remove('lazy-load');
+                    observer.unobserve(img);
+                }
+            }
+        });
+    }, {
+        rootMargin: '50px 0px',
+        threshold: 0.01
+    });
+    
+    lazyImages.forEach(img => {
+        img.style.opacity = '0.5';
+        imageObserver.observe(img);
+    });
+});
+
+// Auto-submit form on filter change
+document.querySelectorAll('#category, #difficulty, #sort').forEach(select => {
+    select.addEventListener('change', function() {
+        this.form.submit();
+    });
+});
+</script>
+{% endblock %}

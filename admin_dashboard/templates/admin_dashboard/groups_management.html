@@ -1,0 +1,483 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Groups Management{% endblock %}
+{% block page_title %}Cleanup Groups Management{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Groups</p>
+                    <p class="text-3xl font-bold text-gray-900 dark:text-white">{{ total_groups }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-user-friends text-blue-600 dark:text-blue-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="text-green-600 dark:text-green-400 font-medium">+{{ new_groups_month }}</span>
+                <span class="text-gray-600 dark:text-gray-400 ml-2">this month</span>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Active Groups</p>
+                    <p class="text-3xl font-bold text-green-600 dark:text-green-400">{{ active_groups }}</p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-green-600 dark:text-green-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="text-gray-600 dark:text-gray-400">{{ inactive_groups }} inactive</span>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Impact</p>
+                    <p class="text-3xl font-bold text-orange-600 dark:text-orange-400">{{ total_waste_collected|floatformat:1 }}kg</p>
+                </div>
+                <div class="w-12 h-12 bg-orange-100 dark:bg-orange-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-trash text-orange-600 dark:text-orange-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="text-gray-600 dark:text-gray-400">{{ total_events }} events completed</span>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600 dark:text-gray-400">Social Media</p>
+                    <p class="text-3xl font-bold text-purple-600 dark:text-purple-400">{{ social_adoption_rate }}%</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-share-alt text-purple-600 dark:text-purple-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4 flex items-center text-sm">
+                <span class="text-gray-600 dark:text-gray-400">{{ groups_with_social }} groups connected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Actions -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+            <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                <form method="GET" class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
+                    <div class="relative">
+                        <input type="text" name="search" value="{{ search_query }}" 
+                               placeholder="Search groups, coordinators..." 
+                               class="pl-10 pr-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    
+                    <select name="status" class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                        <option value="">All Status</option>
+                        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                    </select>
+                    
+                    <input type="text" name="district" value="{{ district_filter }}" 
+                           placeholder="District" 
+                           class="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg focus:ring-2 focus:ring-zm-green focus:border-transparent dark:bg-zinc-700 dark:text-white">
+                    
+                    <button type="submit" class="px-6 py-2 bg-zm-green text-white rounded-lg hover:bg-green-600 transition">
+                        <i class="fas fa-filter mr-2"></i>Filter
+                    </button>
+                </form>
+            </div>
+            
+            <div class="flex space-x-3">
+                <a href="{% url 'admin_dashboard:create_group_admin' %}" class="px-4 py-2 bg-zm-green text-white rounded-lg hover:bg-green-600 transition">
+                    <i class="fas fa-plus mr-2"></i>Create Group
+                </a>
+                <a href="{% url 'admin_dashboard:groups_analytics' %}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-chart-bar mr-2"></i>Analytics
+                </a>
+                <a href="{% url 'admin_dashboard:group_statistics_admin' %}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                    <i class="fas fa-chart-pie mr-2"></i>Statistics
+                </a>
+                <a href="{% url 'admin_dashboard:export_groups_data' %}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                    <i class="fas fa-download mr-2"></i>Export
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Groups Table -->
+    <div class="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-200 dark:border-zinc-700 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">All Groups ({{ groups.count }})</h3>
+        </div>
+        
+        <!-- Bulk Actions -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-zinc-700">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-zm-green focus:ring-zm-green">
+                        <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">Select All</span>
+                    </label>
+                    <div id="bulkActions" class="hidden flex items-center space-x-2">
+                        <span class="text-sm text-gray-600 dark:text-gray-400">With selected:</span>
+                        <button onclick="bulkAction('activate')" class="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition">
+                            <i class="fas fa-play mr-1"></i>Activate
+                        </button>
+                        <button onclick="bulkAction('deactivate')" class="px-3 py-1 bg-yellow-600 text-white text-sm rounded hover:bg-yellow-700 transition">
+                            <i class="fas fa-pause mr-1"></i>Deactivate
+                        </button>
+                        <button onclick="bulkAction('delete')" class="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition">
+                            <i class="fas fa-trash mr-1"></i>Delete
+                        </button>
+                    </div>
+                </div>
+                <div id="selectedCount" class="hidden text-sm text-gray-600 dark:text-gray-400">
+                    <span id="selectedNumber">0</span> selected
+                </div>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 dark:bg-zinc-700">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                            <input type="checkbox" class="rounded border-gray-300 text-zm-green focus:ring-zm-green" disabled>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Group</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Coordinator</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Location</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Members</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Events</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Impact</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Social</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white dark:bg-zinc-800 divide-y divide-gray-200 dark:divide-zinc-700">
+                    {% for group in groups %}
+                    <tr class="hover:bg-gray-50 dark:hover:bg-zinc-700">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" name="group_ids" value="{{ group.id }}" class="group-checkbox rounded border-gray-300 text-zm-green focus:ring-zm-green">
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-zm-green rounded-lg flex items-center justify-center text-white font-bold text-sm">
+                                    {{ group.name|first|upper }}
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900 dark:text-white">{{ group.name }}</div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Created {{ group.created_at|date:"M d, Y" }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900 dark:text-white">{{ group.coordinator.get_full_name|default:group.coordinator.username }}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ group.coordinator.email }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900 dark:text-white">{{ group.community }}</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ group.district }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ group.member_count }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900 dark:text-white">{{ group.event_count }} total</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ group.completed_events }} completed</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-orange-600 dark:text-orange-400">{{ group.total_waste_collected|default:0|floatformat:1 }}kg</div>
+                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ group.total_participants|default:0 }} participants</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex space-x-1">
+                                {% if group.facebook_url %}
+                                <i class="fab fa-facebook-f text-blue-600" title="Facebook"></i>
+                                {% endif %}
+                                {% if group.whatsapp_url %}
+                                <i class="fab fa-whatsapp text-green-600" title="WhatsApp"></i>
+                                {% endif %}
+                                {% if group.twitter_url %}
+                                <i class="fab fa-x-twitter text-gray-900 dark:text-white" title="X (Twitter)"></i>
+                                {% endif %}
+                                {% if not group.facebook_url and not group.whatsapp_url and not group.twitter_url %}
+                                <span class="text-gray-400 text-xs">None</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if group.is_active %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                Active
+                            </span>
+                            {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                                Inactive
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'admin_dashboard:group_detail_admin' group.id %}" class="text-zm-green hover:text-green-600" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'admin_dashboard:edit_group_admin' group.id %}" class="text-blue-600 hover:text-blue-800" title="Edit Group">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'admin_dashboard:manage_group_members_admin' group.id %}" class="text-purple-600 hover:text-purple-800" title="Manage Members">
+                                    <i class="fas fa-users"></i>
+                                </a>
+                                <button onclick="toggleGroupStatus({{ group.id }}, {{ group.is_active|yesno:'false,true' }})" 
+                                        class="{% if group.is_active %}text-red-600 hover:text-red-800{% else %}text-green-600 hover:text-green-800{% endif %}" 
+                                        title="{% if group.is_active %}Deactivate{% else %}Activate{% endif %}">
+                                    <i class="fas {% if group.is_active %}fa-pause{% else %}fa-play{% endif %}"></i>
+                                </button>
+                                <button onclick="confirmDeleteGroup({{ group.id }}, '{{ group.name|escapejs }}')" 
+                                        class="text-red-600 hover:text-red-800" 
+                                        title="Delete Group">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <a href="{% url 'collaboration:group_detail' group.id %}" target="_blank" class="text-gray-600 hover:text-gray-800" title="View Public Page">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="px-6 py-12 text-center">
+                            <div class="text-gray-500 dark:text-gray-400">
+                                <i class="fas fa-user-friends text-4xl mb-4"></i>
+                                <p class="text-lg font-medium">No groups found</p>
+                                <p class="text-sm">Try adjusting your search filters</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- District Statistics -->
+    {% if district_stats %}
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Groups by District</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for district in district_stats %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                <div>
+                    <div class="font-medium text-gray-900 dark:text-white">{{ district.district }}</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ district.active_count }} active</div>
+                </div>
+                <div class="text-2xl font-bold text-zm-green">{{ district.count }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Top Performing Groups -->
+    {% if top_groups %}
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 shadow-sm border border-gray-200 dark:border-zinc-700">
+        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Top Performing Groups</h3>
+        <div class="space-y-4">
+            {% for group in top_groups %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 dark:bg-zinc-700 rounded-lg">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-zm-green rounded-lg flex items-center justify-center text-white font-bold">
+                        {{ forloop.counter }}
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-900 dark:text-white">{{ group.name }}</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ group.community }}, {{ group.district }}</div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-lg font-bold text-zm-green">{{ group.completed_events_count }} events</div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">completed</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<!-- Bulk Action Form -->
+<form id="bulkActionForm" method="POST" action="{% url 'admin_dashboard:bulk_group_actions_admin' %}" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" name="action" id="bulkActionType">
+    <div id="bulkGroupIds"></div>
+</form>
+
+<!-- Delete Group Confirmation Modal -->
+<div id="deleteGroupModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white dark:bg-zinc-800 rounded-xl p-6 max-w-md mx-4">
+        <div class="text-center">
+            <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-xl"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Delete Group</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6">
+                Are you sure you want to delete "<strong id="deleteGroupName"></strong>"? 
+                <br><br>
+                <span class="text-sm text-red-600 dark:text-red-400">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Groups with events or members will be deactivated instead of permanently deleted.
+                </span>
+            </p>
+            <div class="flex space-x-4">
+                <button onclick="closeDeleteGroupModal()" 
+                        class="flex-1 px-4 py-2 border border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-700 transition">
+                    Cancel
+                </button>
+                <form id="deleteGroupForm" method="POST" class="flex-1">
+                    {% csrf_token %}
+                    <button type="submit" 
+                            class="w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-trash mr-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Bulk actions functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+    const selectedNumber = document.getElementById('selectedNumber');
+    
+    // Select all functionality
+    selectAllCheckbox.addEventListener('change', function() {
+        groupCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkActions();
+    });
+    
+    // Individual checkbox functionality
+    groupCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+    
+    function updateBulkActions() {
+        const checkedBoxes = document.querySelectorAll('.group-checkbox:checked');
+        const count = checkedBoxes.length;
+        
+        if (count > 0) {
+            bulkActions.classList.remove('hidden');
+            selectedCount.classList.remove('hidden');
+            selectedNumber.textContent = count;
+        } else {
+            bulkActions.classList.add('hidden');
+            selectedCount.classList.add('hidden');
+        }
+        
+        // Update select all checkbox state
+        selectAllCheckbox.checked = count === groupCheckboxes.length;
+        selectAllCheckbox.indeterminate = count > 0 && count < groupCheckboxes.length;
+    }
+});
+
+function bulkAction(action) {
+    const checkedBoxes = document.querySelectorAll('.group-checkbox:checked');
+    
+    if (checkedBoxes.length === 0) {
+        alert('Please select at least one group.');
+        return;
+    }
+    
+    let confirmMessage = '';
+    switch(action) {
+        case 'activate':
+            confirmMessage = `Are you sure you want to activate ${checkedBoxes.length} group(s)?`;
+            break;
+        case 'deactivate':
+            confirmMessage = `Are you sure you want to deactivate ${checkedBoxes.length} group(s)?`;
+            break;
+        case 'delete':
+            confirmMessage = `Are you sure you want to delete ${checkedBoxes.length} group(s)? Groups with events or members will be deactivated instead.`;
+            break;
+    }
+    
+    if (confirm(confirmMessage)) {
+        const form = document.getElementById('bulkActionForm');
+        const actionInput = document.getElementById('bulkActionType');
+        const groupIdsContainer = document.getElementById('bulkGroupIds');
+        
+        actionInput.value = action;
+        groupIdsContainer.innerHTML = '';
+        
+        checkedBoxes.forEach(checkbox => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'group_ids';
+            input.value = checkbox.value;
+            groupIdsContainer.appendChild(input);
+        });
+        
+        form.submit();
+    }
+}
+
+function toggleGroupStatus(groupId, activate) {
+    const action = activate ? 'activate' : 'deactivate';
+    const confirmMessage = `Are you sure you want to ${action} this group?`;
+    
+    if (confirm(confirmMessage)) {
+        fetch(`/admin-dashboard/groups/${groupId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the group status.');
+        });
+    }
+}
+
+function confirmDeleteGroup(groupId, groupName) {
+    document.getElementById('deleteGroupName').textContent = groupName;
+    document.getElementById('deleteGroupForm').action = `/admin-dashboard/groups/${groupId}/delete/`;
+    document.getElementById('deleteGroupModal').classList.remove('hidden');
+    document.getElementById('deleteGroupModal').classList.add('flex');
+}
+
+function closeDeleteGroupModal() {
+    document.getElementById('deleteGroupModal').classList.add('hidden');
+    document.getElementById('deleteGroupModal').classList.remove('flex');
+}
+</script>
+{% endblock %}

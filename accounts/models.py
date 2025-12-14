@@ -3,6 +3,7 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
+from cloudinary.models import CloudinaryField
 
 
 class CustomUser(AbstractUser):
@@ -44,6 +45,18 @@ class CustomUser(AbstractUser):
     )
 
     # === PROFILE FIELDS (Optional but recommended) ===
+    GENDER_CHOICES = [
+        ('female', 'Female'),
+        ('male', 'Male'),
+        ('custom', 'Custom'),
+    ]
+    gender = models.CharField(
+        max_length=10,
+        choices=GENDER_CHOICES,
+        blank=True, null=True,
+        verbose_name=_('Gender')
+    )
+    
     phone_number = models.CharField(
         max_length=15,
         blank=True, null=True,
@@ -54,10 +67,11 @@ class CustomUser(AbstractUser):
         blank=True,
         verbose_name=_('Bio')
     )
-    profile_picture = models.ImageField(
-        upload_to='profile_pics/',
+    profile_picture = CloudinaryField(
+        'image', 
         blank=True, null=True,
-        verbose_name=_('Profile Picture')
+        verbose_name=_('Profile Picture'),
+        transformation={'width': 200, 'height': 200, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'}
     )
 
     # === TIMESTAMPS ===
@@ -101,7 +115,11 @@ class CustomUser(AbstractUser):
         choices=LANGUAGE_CHOICES, 
         default='en'
     )
-    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    profile_picture = CloudinaryField(
+        'image', 
+        blank=True, null=True,
+        transformation={'width': 200, 'height': 200, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'}
+    )
     date_of_birth = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=255, blank=True)
     
