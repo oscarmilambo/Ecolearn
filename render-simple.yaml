@@ -1,5 +1,5 @@
 services:
-  # Web Service - Django Application
+  # Web Service - Django Application (Simplified without Redis)
   - type: web
     name: ecolearn-web
     env: python
@@ -22,11 +22,6 @@ services:
         fromDatabase:
           name: ecolearn-mysql
           property: connectionString
-      - key: REDIS_URL
-        fromService:
-          type: redis
-          name: ecolearn-redis
-          property: connectionString
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -48,13 +43,6 @@ services:
     healthCheckPath: /health/
     autoDeploy: true
 
-  # Redis Service for Caching and Channels
-  - type: redis
-    name: ecolearn-redis
-    plan: starter
-    maxmemoryPolicy: allkeys-lru
-    ipAllowList: []  # Empty array allows access from all Render services
-
 databases:
   # MySQL Database
   - name: ecolearn-mysql
@@ -62,14 +50,5 @@ databases:
     user: ecolearn_user
     plan: starter
 
-# Environment Variables Documentation
-# Add these to your Render dashboard:
-# 
-# CLOUDINARY_CLOUD_NAME: Your Cloudinary cloud name
-# CLOUDINARY_API_KEY: Your Cloudinary API key  
-# CLOUDINARY_API_SECRET: Your Cloudinary API secret
-# TWILIO_ACCOUNT_SID: Your Twilio Account SID
-# TWILIO_AUTH_TOKEN: Your Twilio Auth Token
-# TWILIO_PHONE_NUMBER: Your Twilio phone number
-# TWILIO_WHATSAPP_NUMBER: Your Twilio WhatsApp number
-# GEMINI_API_KEY: Your Google Gemini API key
+# Note: This version uses local memory cache instead of Redis
+# Redis can be added later if needed for better performance

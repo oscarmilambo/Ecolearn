@@ -53,7 +53,7 @@ services:
     name: ecolearn-redis
     plan: starter
     maxmemoryPolicy: allkeys-lru
-    ipAllowList: []  # Empty array allows access from all Render services
+    ipAllowList: []  # Allow access from all Render services in this account
 
 databases:
   # MySQL Database
@@ -63,7 +63,7 @@ databases:
     plan: starter
 
 # Environment Variables Documentation
-# Add these to your Render dashboard:
+# Add these to your Render dashboard after deployment:
 # 
 # CLOUDINARY_CLOUD_NAME: Your Cloudinary cloud name
 # CLOUDINARY_API_KEY: Your Cloudinary API key  
