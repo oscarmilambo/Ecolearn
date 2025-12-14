@@ -4,7 +4,7 @@ from django.utils import timezone
 from django.urls import reverse
 from django.core.validators import MinValueValidator
 from django.contrib.contenttypes.fields import GenericRelation
-from cloudinary.models import CloudinaryField
+# from cloudinary.models import CloudinaryField  # Temporarily disabled
 
 User = get_user_model()
 
@@ -112,8 +112,7 @@ class CommunityEvent(models.Model):
     registration_deadline = models.DateTimeField(null=True, blank=True)
     
     organizer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='organized_events')
-    image = CloudinaryField('image', blank=True, null=True,
-                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -179,8 +178,7 @@ class SuccessStory(models.Model):
     story_type = models.CharField(max_length=20, choices=STORY_TYPES)
     content = models.TextField()
     location = models.CharField(max_length=255, blank=True)
-    image = CloudinaryField('image', blank=True, null=True,
-                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     video_url = models.URLField(blank=True, null=True)
     is_featured = models.BooleanField(default=False)
     is_approved = models.BooleanField(default=False, help_text="Requires admin approval")
@@ -349,8 +347,7 @@ class CommunityCampaign(models.Model):
     contact_email = models.EmailField(blank=True, verbose_name="Contact Email")
     
     # Media
-    image = CloudinaryField('image', blank=True, null=True,
-                           transformation={'width': 1200, 'height': 400, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     
     # Status
     is_active = models.BooleanField(default=True, verbose_name="Active Campaign")
@@ -605,8 +602,7 @@ class CommunityChallenge(models.Model):
     target_goal = models.PositiveIntegerField(validators=[MinValueValidator(1)])
     current_progress = models.PositiveIntegerField(default=0)
     reward_points = models.PositiveIntegerField(default=100)
-    image = CloudinaryField('image', blank=True, null=True,
-                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -660,10 +656,8 @@ class ChallengeProof(models.Model):
     ]
     
     participant = models.ForeignKey(ChallengeParticipant, on_delete=models.CASCADE, related_name='proofs')
-    before_photo = CloudinaryField('image', help_text='Required: Before photo',
-                                  transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
-    after_photo = CloudinaryField('image', blank=True, null=True, help_text='Optional: After photo',
-                                 transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    before_photo = models.ImageField(upload_to='images/', blank=True, null=True)
+    after_photo = models.ImageField(upload_to='images/', blank=True, null=True)
     bags_collected = models.PositiveIntegerField(default=0, help_text='Number of bags collected')
     description = models.TextField(blank=True, help_text='Optional description')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')

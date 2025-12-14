@@ -20,7 +20,7 @@ services:
         value: "*"
       - key: DATABASE_URL
         fromDatabase:
-          name: ecolearn-mysql
+          name: ecolearn-postgres
           property: connectionString
       - key: REDIS_URL
         fromService:
@@ -56,8 +56,8 @@ services:
     ipAllowList: []  # Empty array allows access from all Render services
 
 databases:
-  # MySQL Database
-  - name: ecolearn-mysql
+  # PostgreSQL Database
+  - name: ecolearn-postgres
     databaseName: ecolearn
     user: ecolearn_user
     plan: starter

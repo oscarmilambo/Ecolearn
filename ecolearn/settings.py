@@ -5,7 +5,20 @@ Django settings for ecolearn project - Optimized for Render deployment
 import os
 from pathlib import Path
 from decouple import config
-import dj_database_url
+
+# Try to import optional packages, fallback if not available
+try:
+    import dj_database_url
+    HAS_DJ_DATABASE_URL = True
+except ImportError:
+    HAS_DJ_DATABASE_URL = False
+
+try:
+    import cloudinary
+    import cloudinary_storage
+    HAS_CLOUDINARY = True
+except ImportError:
+    HAS_CLOUDINARY = False
 
 # Build paths
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -28,8 +41,6 @@ INSTALLED_APPS = [
     'django.contrib.sites',  # Required for allauth
     
     # Third-party apps
-    'cloudinary_storage',  # Must be before django.contrib.staticfiles
-    'cloudinary',
     'whitenoise.runserver_nostatic',  # WhiteNoise for static files
     
     # Django Allauth (email/password only)
@@ -49,6 +60,13 @@ INSTALLED_APPS = [
     'ai_assistant',
     'security',
 ]
+
+# Add optional apps if available
+if HAS_CLOUDINARY:
+    # Insert cloudinary_storage before django.contrib.staticfiles
+    staticfiles_index = INSTALLED_APPS.index('django.contrib.staticfiles')
+    INSTALLED_APPS.insert(staticfiles_index, 'cloudinary_storage')
+    INSTALLED_APPS.append('cloudinary')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -94,28 +112,52 @@ ASGI_APPLICATION = 'ecolearn.asgi.application'
 # REDIS CONFIGURATION FOR CACHING AND CHANNELS
 REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/0')
 
-# Django Channels Configuration with Redis
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            "hosts": [REDIS_URL],
-        },
-    },
-}
+# Check if Redis packages are available
+try:
+    import redis
+    import django_redis
+    HAS_REDIS = True
+except ImportError:
+    HAS_REDIS = False
 
-# CACHING CONFIGURATION
-CACHES = {
-    'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': REDIS_URL,
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+# Django Channels Configuration
+if HAS_REDIS:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+                "hosts": [REDIS_URL],
+            },
         },
-        'KEY_PREFIX': 'ecolearn',
-        'TIMEOUT': 1800,  # 30 minutes default
     }
-}
+    
+    # CACHING CONFIGURATION with Redis
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            },
+            'KEY_PREFIX': 'ecolearn',
+            'TIMEOUT': 1800,  # 30 minutes default
+        }
+    }
+else:
+    # Fallback to in-memory for development
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels.layers.InMemoryChannelLayer'
+        }
+    }
+    
+    # Fallback to local memory cache
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'unique-snowflake',
+        }
+    }
 
 # Cache time settings
 CACHE_TTL = {
@@ -129,20 +171,21 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
 # DATABASE CONFIGURATION
-# Use MySQL for production, SQLite for development
+# Use PostgreSQL for production, SQLite for development
 DATABASE_URL = config('DATABASE_URL', default=None)
 
-if DATABASE_URL:
-    # Production: Use MySQL via DATABASE_URL
+if DATABASE_URL and HAS_DJ_DATABASE_URL:
+    # Production: Use PostgreSQL via DATABASE_URL
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-    # Ensure MySQL client is used
-    DATABASES['default']['ENGINE'] = 'django.db.backends.mysql'
+    # Ensure PostgreSQL client is used and configure connection pooling
+    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
     DATABASES['default']['OPTIONS'] = {
-        'charset': 'utf8mb4',
-        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+        'sslmode': 'require',  # Required for most cloud PostgreSQL services
     }
+    # Connection pooling settings for better performance
+    DATABASES['default']['CONN_MAX_AGE'] = 600
 else:
     # Development: Use SQLite
     DATABASES = {
@@ -186,24 +229,24 @@ LANGUAGE_COOKIE_NAME = 'django_language'
 LANGUAGE_COOKIE_AGE = 31536000  # 1 year
 
 # CLOUDINARY CONFIGURATION - GLOBAL FOR ALL APPS
-import cloudinary
-import cloudinary.uploader
-import cloudinary.api
+if HAS_CLOUDINARY:
+    import cloudinary.uploader
+    import cloudinary.api
+    
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME', default=''),
+        'API_KEY': config('CLOUDINARY_API_KEY', default=''),
+        'API_SECRET': config('CLOUDINARY_API_SECRET', default=''),
+        'SECURE': True,
+    }
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': config('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': config('CLOUDINARY_API_KEY'),
-    'API_SECRET': config('CLOUDINARY_API_SECRET'),
-    'SECURE': True,
-}
-
-# Configure Cloudinary
-cloudinary.config(
-    cloud_name=config('CLOUDINARY_CLOUD_NAME'),
-    api_key=config('CLOUDINARY_API_KEY'),
-    api_secret=config('CLOUDINARY_API_SECRET'),
-    secure=True
-)
+    # Configure Cloudinary
+    cloudinary.config(
+        cloud_name=config('CLOUDINARY_CLOUD_NAME', default=''),
+        api_key=config('CLOUDINARY_API_KEY', default=''),
+        api_secret=config('CLOUDINARY_API_SECRET', default=''),
+        secure=True
+    )
 
 # STATIC FILES CONFIGURATION WITH WHITENOISE
 STATIC_URL = '/static/'
@@ -218,8 +261,14 @@ WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = True
 WHITENOISE_MAX_AGE = 31536000  # 1 year cache for static files
 
-# MEDIA FILES WITH CLOUDINARY - ALL USER UPLOADS
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+# MEDIA FILES CONFIGURATION
+if HAS_CLOUDINARY:
+    # Use Cloudinary for media files in production
+    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+else:
+    # Use local storage for development
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -326,12 +375,12 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-# Allauth settings - Updated to new format (no more deprecation warnings)
-ACCOUNT_LOGIN_METHODS = {'email'}  # Replaces ACCOUNT_AUTHENTICATION_METHOD
-ACCOUNT_SIGNUP_FIELDS = ['email*', 'password1*', 'password2*']  # Replaces multiple deprecated settings
-ACCOUNT_EMAIL_VERIFICATION = 'optional'  # Changed from mandatory to optional for social accounts
-ACCOUNT_UNIQUE_EMAIL = True
-ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
+# Allauth settings - Phone number only, no email verification
+ACCOUNT_LOGIN_METHODS = {'username'}  # Use username instead of email
+ACCOUNT_SIGNUP_FIELDS = ['username*', 'password1*', 'password2*']  # No email required
+ACCOUNT_EMAIL_VERIFICATION = 'none'  # No email verification
+ACCOUNT_UNIQUE_EMAIL = False  # Email not required to be unique
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False  # No email confirmation
 ACCOUNT_SESSION_REMEMBER = True
 ACCOUNT_RATE_LIMITS = {
     'login_failed': '5/5m',  # Replaces ACCOUNT_LOGIN_ATTEMPTS_LIMIT/TIMEOUT

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from cloudinary.models import CloudinaryField
+# from cloudinary.models import CloudinaryField  # Temporarily disabled
 
 User = get_user_model()
 
@@ -13,8 +13,7 @@ class CleanupGroup(models.Model):
     district = models.CharField(max_length=100)
     coordinator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='coordinated_groups')
     members = models.ManyToManyField(User, through='GroupMembership', related_name='cleanup_groups')
-    image = CloudinaryField('image', blank=True,
-                           transformation={'width': 400, 'height': 300, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     
     # Social Media Links (Limited to 3 platforms)
     facebook_url = models.URLField(blank=True, help_text="Facebook page or group URL")
@@ -106,8 +105,7 @@ class GroupEvent(models.Model):
     status = models.CharField(max_length=20, choices=EVENT_STATUS, default='planned')
     waste_collected = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="In kilograms")
     participants_count = models.IntegerField(default=0)
-    image = CloudinaryField('image', blank=True,
-                           transformation={'width': 800, 'height': 600, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -122,8 +120,7 @@ class GroupChat(models.Model):
     group = models.ForeignKey(CleanupGroup, on_delete=models.CASCADE, related_name='chats')
     sender = models.ForeignKey(User, on_delete=models.CASCADE)
     message = models.TextField()
-    image = CloudinaryField('image', blank=True,
-                           transformation={'width': 600, 'height': 450, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     is_announcement = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     
@@ -169,8 +166,7 @@ class Badge(models.Model):
     description = models.TextField()
     category = models.CharField(max_length=20, choices=BADGE_CATEGORIES)
     icon = models.CharField(max_length=50, default='🏆')
-    image = CloudinaryField('image', blank=True,
-                           transformation={'width': 100, 'height': 100, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    image = models.ImageField(upload_to='images/', blank=True, null=True)
     points_required = models.IntegerField(default=0)
     criteria = models.TextField(help_text="Criteria to earn this badge")
     is_active = models.BooleanField(default=True)

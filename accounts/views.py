@@ -53,7 +53,7 @@ def contact(request):
 # 2. AUTHENTICATION VIEWS (FUNCTION-BASED — CLEAN & SECURE)
 # ===================================================================
 def login_view(request):
-    """Custom login with email verification check"""
+    """Custom login view"""
     if request.user.is_authenticated:
         return redirect('dashboard')
 
@@ -63,10 +63,7 @@ def login_view(request):
         user = authenticate(request, username=username, password=password)
         
         if user is not None:
-            # Check if email is verified
-            if not user.is_active:
-                messages.error(request, 'Please verify your email address before logging in. Check your inbox for the verification link.')
-                return render(request, 'accounts/login.html')
+            # User is active by default now
             
             login(request, user)
             messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
@@ -86,36 +83,14 @@ def logout_view(request):
     return redirect('home')  # Back to beautiful landing page
 
 
-def registration_success(request):
-    """Show success message after registration"""
-    return render(request, 'accounts/registration_success.html')
+# Registration success view removed - users go directly to login after registration
 
 
-def verify_email(request, uidb64, token):
-    """Verify user email address"""
-    from django.contrib.auth.tokens import default_token_generator
-    from django.utils.http import urlsafe_base64_decode
-    from django.utils.encoding import force_str
-    
-    try:
-        uid = force_str(urlsafe_base64_decode(uidb64))
-        user = CustomUser.objects.get(pk=uid)
-    except (TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        user = None
-    
-    if user is not None and default_token_generator.check_token(user, token):
-        user.is_active = True
-        user.is_verified = True
-        user.save()
-        messages.success(request, 'Your email has been verified! You can now log in.')
-        return redirect('accounts:login')
-    else:
-        messages.error(request, 'The verification link is invalid or has expired.')
-        return redirect('home')
+# Phone verification only - users are activated immediately upon registration
 
 
 def register_view(request):
-    """Enhanced registration with email verification and rate limiting"""
+    """Enhanced registration with phone number only and rate limiting"""
     if request.user.is_authenticated:
         return redirect('dashboard')
 
@@ -147,18 +122,11 @@ def register_view(request):
             request.session[attempts_key] = attempts + 1
             request.session[attempts_time_key] = current_time.isoformat()
             
-            # Create user manually since we're not using UserCreationForm
-            contact_method = form.cleaned_data['contact_method']
+            # Create user manually with phone number only
+            phone_number = form.cleaned_data['phone_number']
             
-            # Generate username
-            if '@' in contact_method:
-                base_username = contact_method.split('@')[0]
-                email = contact_method.lower()
-                phone_number = None
-            else:
-                base_username = f"user_{contact_method[-4:]}"
-                email = None
-                phone_number = contact_method
+            # Generate username from phone number
+            base_username = f"user_{phone_number[-4:]}"
             
             # Ensure unique username
             counter = 1
@@ -170,54 +138,21 @@ def register_view(request):
             # Create user
             user = CustomUser.objects.create_user(
                 username=username,
-                email=email,
+                email='',  # No email required
                 password=form.cleaned_data['password'],
                 first_name=form.cleaned_data['first_name'],
                 last_name=form.cleaned_data['last_name'],
                 gender=form.cleaned_data['gender'],
                 phone_number=phone_number,
-                is_active=False  # User must verify email first
+                is_active=True  # User is active immediately
             )
             
             # Create user profile
             UserProfile.objects.get_or_create(user=user)
             
-            # Generate email verification token
-            from django.contrib.auth.tokens import default_token_generator
-            from django.utils.http import urlsafe_base64_encode
-            from django.utils.encoding import force_bytes
-            from django.core.mail import send_mail
-            from django.template.loader import render_to_string
-            
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            
-            # Build verification URL
-            verification_url = request.build_absolute_uri(
-                reverse('accounts:verify_email', kwargs={'uidb64': uid, 'token': token})
-            )
-            
-            # Send verification email
-            try:
-                subject = 'Verify your EcoLearn account'
-                message = render_to_string('accounts/verification_email.html', {
-                    'user': user,
-                    'verification_url': verification_url,
-                })
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                    fail_silently=False,
-                    html_message=message
-                )
-            except Exception as e:
-                # Log error but don't fail registration
-                print(f"Email sending failed: {e}")
-            
-            # Redirect to success page
-            return redirect('accounts:registration_success')
+            # User is now active immediately upon registration
+            messages.success(request, 'Registration successful! You can now log in.')
+            return redirect('accounts:login')
         else:
             # Increment attempts even on form errors
             request.session[attempts_key] = attempts + 1

@@ -3,7 +3,8 @@ from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from phonenumber_field.modelfields import PhoneNumberField
-from cloudinary.models import CloudinaryField
+
+# Note: Using ImageField for now, can be upgraded to CloudinaryField later
 
 
 class CustomUser(AbstractUser):
@@ -67,11 +68,12 @@ class CustomUser(AbstractUser):
         blank=True,
         verbose_name=_('Bio')
     )
-    profile_picture = CloudinaryField(
-        'image', 
-        blank=True, null=True,
-        verbose_name=_('Profile Picture'),
-        transformation={'width': 200, 'height': 200, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'}
+    # Profile picture field - fallback to ImageField if Cloudinary not available
+    profile_picture = models.ImageField(
+        upload_to='profile_pictures/',
+        blank=True,
+        null=True,
+        verbose_name=_('Profile Picture')
     )
 
     # === TIMESTAMPS ===
@@ -115,11 +117,7 @@ class CustomUser(AbstractUser):
         choices=LANGUAGE_CHOICES, 
         default='en'
     )
-    profile_picture = CloudinaryField(
-        'image', 
-        blank=True, null=True,
-        transformation={'width': 200, 'height': 200, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'}
-    )
+    profile_picture = models.ImageField(upload_to='images/', blank=True, null=True)
     date_of_birth = models.DateField(blank=True, null=True)
     location = models.CharField(max_length=255, blank=True)
     

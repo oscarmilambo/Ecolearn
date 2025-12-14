@@ -21,8 +21,7 @@ path('dashboard/', views.dashboard_view, name='dashboard'),          # ← YOUR 
 # 2. REGISTRATION & VERIFICATION
 # ===================================================================
 path('register/', views.register_view, name='register'),
-path('registration-success/', views.registration_success, name='registration_success'),
-path('verify-email/<uidb64>/<token>/', views.verify_email, name='verify_email'),
+# Phone verification only - users are activated immediately
 
 # ===================================================================
 # 3. USER PROFILE & LANGUAGE

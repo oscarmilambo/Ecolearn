@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.db.models import F
 from django.utils.text import slugify
 from django.core.cache import cache
-from cloudinary.models import CloudinaryField
+# # from cloudinary.models import CloudinaryField  # Temporarily disabled  # Temporarily disabled
 
 User = get_user_model()
 
@@ -17,8 +17,7 @@ class Category(models.Model):
     description = models.TextField(blank=True)
     description_bem = models.TextField(blank=True, null=True)
     description_ny = models.TextField(blank=True, null=True)
-    icon = CloudinaryField('image', blank=True, null=True, 
-                          transformation={'width': 100, 'height': 100, 'crop': 'fill', 'format': 'webp'})
+    icon = models.ImageField(upload_to='category_icons/', blank=True, null=True)
     icon_class = models.CharField(
         max_length=50, 
         default='fas fa-leaf',
@@ -114,8 +113,7 @@ class Module(models.Model):
     difficulty = models.CharField(max_length=20, choices=DIFFICULTY_CHOICES, db_index=True)
     duration_minutes = models.IntegerField(default=0)
     points_reward = models.IntegerField(default=10)
-    thumbnail = CloudinaryField('image', blank=True, null=True,
-                               transformation={'width': 400, 'height': 300, 'crop': 'fill', 'format': 'webp', 'quality': 'auto'})
+    thumbnail = models.ImageField(upload_to='module_thumbnails/', blank=True, null=True)
     is_active = models.BooleanField(default=True, db_index=True)
     order = models.IntegerField(default=0, db_index=True)
     hierarchy_stage = models.CharField(max_length=20, choices=HIERARCHY_CHOICES, blank=True)
@@ -193,22 +191,16 @@ class Lesson(models.Model):
     content_ny = models.TextField(blank=True, null=True)
 
     # Media Files with Cloudinary - English (default)
-    video_file = CloudinaryField('video', blank=True, null=True, resource_type='video',
-                                transformation={'quality': 'auto', 'format': 'mp4'})
-    audio_file = CloudinaryField('audio', blank=True, null=True, resource_type='video',
-                                transformation={'quality': 'auto', 'format': 'mp3'})
+    video_file = models.FileField(upload_to='videos/', blank=True, null=True)
+    audio_file = models.FileField(upload_to='audio/', blank=True, null=True)
 
     # Media Files with Cloudinary - Bemba
-    video_file_bem = CloudinaryField('video', blank=True, null=True, resource_type='video',
-                                    transformation={'quality': 'auto', 'format': 'mp4'})
-    audio_file_bem = CloudinaryField('audio', blank=True, null=True, resource_type='video',
-                                    transformation={'quality': 'auto', 'format': 'mp3'})
+    video_file_bem = models.FileField(upload_to='videos/', blank=True, null=True)
+    audio_file_bem = models.FileField(upload_to='audio/', blank=True, null=True)
 
     # Media Files with Cloudinary - Nyanja
-    video_file_ny = CloudinaryField('video', blank=True, null=True, resource_type='video',
-                                   transformation={'quality': 'auto', 'format': 'mp4'})
-    audio_file_ny = CloudinaryField('audio', blank=True, null=True, resource_type='video',
-                                   transformation={'quality': 'auto', 'format': 'mp3'})
+    video_file_ny = models.FileField(upload_to='videos/', blank=True, null=True)
+    audio_file_ny = models.FileField(upload_to='audio/', blank=True, null=True)
 
     external_tour_url = models.URLField(blank=True)
     interactive_type = models.CharField(max_length=20, choices=INTERACTIVE_TYPES, default="none")

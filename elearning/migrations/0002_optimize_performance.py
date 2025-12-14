@@ -1,6 +1,5 @@
 # Generated migration for performance optimizations
 from django.db import migrations, models
-import cloudinary.models
 
 class Migration(migrations.Migration):
 
@@ -31,7 +30,7 @@ class Migration(migrations.Migration):
             reverse_sql="DROP INDEX IF EXISTS idx_module_rating_enrollments;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_lesson_module_order ON elearning_lesson (module_id, order);",
+            "CREATE INDEX IF NOT EXISTS idx_lesson_module_order ON elearning_lesson (module_id, \"order\");",
             reverse_sql="DROP INDEX IF EXISTS idx_lesson_module_order;"
         ),
         migrations.RunSQL(
@@ -39,7 +38,7 @@ class Migration(migrations.Migration):
             reverse_sql="DROP INDEX IF EXISTS idx_lesson_module_published;"
         ),
         migrations.RunSQL(
-            "CREATE INDEX IF NOT EXISTS idx_category_active_order ON elearning_category (is_active, order);",
+            "CREATE INDEX IF NOT EXISTS idx_category_active_order ON elearning_category (is_active, \"order\");",
             reverse_sql="DROP INDEX IF EXISTS idx_category_active_order;"
         ),
         
