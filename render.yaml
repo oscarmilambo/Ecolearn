@@ -9,6 +9,7 @@ services:
       python simple_health_check.py
       python diagnose_database.py
       python manage.py setup_database
+      python manage.py reset_admin
       python manage.py collectstatic --noinput
     startCommand: python start_optimized.py && gunicorn ecolearn.wsgi:application --config gunicorn.conf.py
     envVars:
