@@ -1,37 +1,52 @@
+# Core Django and Web Framework
 Django>=4.2.0
-Pillow>=10.0.0
-requests>=2.31.0
-python-decouple>=3.8
+gunicorn>=21.2.0
 whitenoise>=6.5.0
 djangorestframework>=3.14.0
 django-cors-headers>=4.3.0
+
+# Configuration and Environment
+python-decouple>=3.8
+python-dotenv>=1.0.0
+dj-database-url>=2.1.0
+
+# Database
+psycopg2-binary>=2.9.0
+
+# Authentication and User Management
+django-allauth>=0.57.0
+
+# Media and File Handling
+Pillow>=10.0.0
+cloudinary>=1.36.0
+django-cloudinary-storage>=0.3.0
+
+# Communication and APIs
+requests>=2.31.0
+twilio>=8.10.0
 django-phonenumber-field>=7.1.0
 phonenumbers>=8.13.0
-twilio>=8.10.0
-python-dotenv>=1.0.0
-reportlab>=4.0.0
 google-generativeai>=0.3.0
-django-import-export>=4.3.14
-gunicorn>=21.2.0
-
-# Social Authentication
-django-allauth>=0.57.0
 
 # Real-time WebSocket notifications
 channels>=4.0.0
 channels-redis>=4.1.0
 daphne>=4.0.0
+
+# Caching and Performance
 redis>=5.0.0
-
-# Performance & Optimization
 django-redis>=5.4.0
-psycopg2-binary>=2.9.0
-dj-database-url>=2.1.0
 
-# Cloudinary for image optimization
-cloudinary>=1.36.0
-django-cloudinary-storage>=0.3.0
+# Reporting and Data Export
+reportlab>=4.0.0
+django-import-export>=4.3.14
 
-# Additional optimization packages
+# Excel/Spreadsheet Support - MISSING PACKAGE FOUND!
+openpyxl>=3.1.0
+
+# Security and Encryption - MISSING PACKAGE FOUND!
+cryptography>=41.0.0
+
+# Development and Debugging (optional)
 django-debug-toolbar>=4.2.0
 django-extensions>=3.2.0
