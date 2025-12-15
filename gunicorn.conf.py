@@ -6,14 +6,15 @@ import os
 bind = f"0.0.0.0:{os.environ.get('PORT', '8000')}"
 backlog = 2048
 
-# Worker processes
-workers = 4
-worker_class = "sync"
-worker_connections = 1000
-max_requests = 1000
-max_requests_jitter = 100
+# Worker processes - Optimized for Render free tier (512MB RAM)
+workers = 1
+worker_class = "gthread"  # Use threads instead of processes
+threads = 2  # 2 threads per worker
+worker_connections = 500
+max_requests = 500
+max_requests_jitter = 50
 preload_app = True
-timeout = 120
+timeout = 300  # Increased timeout for slower operations
 keepalive = 2
 
 # Restart workers after this many requests, to help prevent memory leaks

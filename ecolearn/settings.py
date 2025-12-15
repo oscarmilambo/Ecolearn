@@ -159,12 +159,24 @@ else:
         }
     }
 
-# Cache time settings
+# Cache time settings - Reduced for memory optimization
 CACHE_TTL = {
-    'views': 900,  # 15 minutes for views
-    'queries': 1800,  # 30 minutes for queries
+    'views': 300,  # 5 minutes for views (reduced)
+    'queries': 600,  # 10 minutes for queries (reduced)
     'static': 86400,  # 24 hours for static content
 }
+
+# Memory optimization settings for Render free tier
+if not DEBUG:
+    # Reduce database connection pool size
+    DATABASES['default']['CONN_MAX_AGE'] = 300  # 5 minutes instead of 10
+    
+    # Optimize cache settings for low memory
+    if 'default' in CACHES and 'django_redis' in CACHES['default']['BACKEND']:
+        CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS'] = {
+            'max_connections': 10,  # Reduced from default
+            'retry_on_timeout': True,
+        }
 
 # SESSION CONFIGURATION
 SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
