@@ -6,6 +6,7 @@ services:
     plan: starter
     buildCommand: |
       pip install -r requirements.txt
+      python simple_health_check.py
       python diagnose_database.py
       python manage.py setup_database
       python manage.py collectstatic --noinput

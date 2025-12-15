@@ -177,27 +177,36 @@ DATABASE_URL = config('DATABASE_URL', default=None)
 # Force PostgreSQL if not in DEBUG mode (production)
 if not DEBUG:
     # Production: MUST use PostgreSQL
+    print(f"🔍 PRODUCTION MODE - DEBUG={DEBUG}")
+    print(f"🔍 DATABASE_URL present: {bool(DATABASE_URL)}")
+    print(f"🔍 HAS_DJ_DATABASE_URL: {HAS_DJ_DATABASE_URL}")
+    
     if not DATABASE_URL:
+        print("❌ ERROR: DATABASE_URL environment variable is missing!")
         raise ValueError("DATABASE_URL environment variable is required in production!")
     
     if not HAS_DJ_DATABASE_URL:
+        print("❌ ERROR: dj-database-url package is missing!")
         raise ImportError("dj-database-url is required for production database configuration!")
     
-    DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    }
-    # Ensure PostgreSQL client is used and configure connection pooling
-    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
-    DATABASES['default']['OPTIONS'] = {
-        'sslmode': 'require',  # Required for most cloud PostgreSQL services
-    }
-    # Connection pooling settings for better performance
-    DATABASES['default']['CONN_MAX_AGE'] = 600
-    
-    # Log database configuration for debugging
-    import logging
-    logger = logging.getLogger(__name__)
-    logger.info(f"Production database configured: {DATABASES['default']['ENGINE']}")
+    try:
+        DATABASES = {
+            'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+        }
+        # Ensure PostgreSQL client is used and configure connection pooling
+        DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
+        DATABASES['default']['OPTIONS'] = {
+            'sslmode': 'require',  # Required for most cloud PostgreSQL services
+        }
+        # Connection pooling settings for better performance
+        DATABASES['default']['CONN_MAX_AGE'] = 600
+        
+        print(f"✅ Production database configured: {DATABASES['default']['ENGINE']}")
+        print(f"✅ Database host: {DATABASES['default'].get('HOST', 'Not specified')}")
+        
+    except Exception as e:
+        print(f"❌ ERROR parsing DATABASE_URL: {e}")
+        raise
     
 elif DATABASE_URL and HAS_DJ_DATABASE_URL:
     # Development with DATABASE_URL (optional)
