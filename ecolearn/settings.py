@@ -171,11 +171,18 @@ SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
 SESSION_CACHE_ALIAS = 'default'
 
 # DATABASE CONFIGURATION
-# Use PostgreSQL for production, SQLite for development
+# Force PostgreSQL in production, SQLite only for local development
 DATABASE_URL = config('DATABASE_URL', default=None)
 
-if DATABASE_URL and HAS_DJ_DATABASE_URL:
-    # Production: Use PostgreSQL via DATABASE_URL
+# Force PostgreSQL if not in DEBUG mode (production)
+if not DEBUG:
+    # Production: MUST use PostgreSQL
+    if not DATABASE_URL:
+        raise ValueError("DATABASE_URL environment variable is required in production!")
+    
+    if not HAS_DJ_DATABASE_URL:
+        raise ImportError("dj-database-url is required for production database configuration!")
+    
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
@@ -186,8 +193,24 @@ if DATABASE_URL and HAS_DJ_DATABASE_URL:
     }
     # Connection pooling settings for better performance
     DATABASES['default']['CONN_MAX_AGE'] = 600
+    
+    # Log database configuration for debugging
+    import logging
+    logger = logging.getLogger(__name__)
+    logger.info(f"Production database configured: {DATABASES['default']['ENGINE']}")
+    
+elif DATABASE_URL and HAS_DJ_DATABASE_URL:
+    # Development with DATABASE_URL (optional)
+    DATABASES = {
+        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
+    }
+    DATABASES['default']['ENGINE'] = 'django.db.backends.postgresql'
+    DATABASES['default']['OPTIONS'] = {
+        'sslmode': 'require',
+    }
+    DATABASES['default']['CONN_MAX_AGE'] = 600
 else:
-    # Development: Use SQLite
+    # Local development: Use SQLite
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',

@@ -7,7 +7,9 @@ services:
     buildCommand: |
       pip install -r requirements.txt
       python diagnose_database.py
-      python manage.py setup_database
+      python manage.py makemigrations --noinput
+      python manage.py migrate --noinput
+      python manage.py ensure_admin
       python manage.py collectstatic --noinput
     startCommand: gunicorn ecolearn.wsgi:application --bind 0.0.0.0:$PORT --workers 4 --timeout 120 --max-requests 1000 --max-requests-jitter 100
     envVars:
@@ -54,23 +56,14 @@ services:
     name: ecolearn-redis
     plan: starter
     maxmemoryPolicy: allkeys-lru
-    ipAllowList: []  # Empty array allows access from all Render services
+    ipAllowList: []
 
 databases:
-  # PostgreSQL Database
+  # PostgreSQL Database - EXPLICITLY DEFINED
   - name: ecolearn-postgres
-    databaseName: ecolearn
+    databaseName: ecolearn_db
     user: ecolearn_user
     plan: starter
 
-# Environment Variables Documentation
-# Add these to your Render dashboard:
-# 
-# CLOUDINARY_CLOUD_NAME: Your Cloudinary cloud name
-# CLOUDINARY_API_KEY: Your Cloudinary API key  
-# CLOUDINARY_API_SECRET: Your Cloudinary API secret
-# TWILIO_ACCOUNT_SID: Your Twilio Account SID
-# TWILIO_AUTH_TOKEN: Your Twilio Auth Token
-# TWILIO_PHONE_NUMBER: Your Twilio phone number
-# TWILIO_WHATSAPP_NUMBER: Your Twilio WhatsApp number
-# GEMINI_API_KEY: Your Google Gemini API key
+# IMPORTANT: Make sure to create the PostgreSQL database service first!
+# The DATABASE_URL will be automatically generated and passed to your app.
