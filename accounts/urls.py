@@ -32,33 +32,10 @@ path('language/<str:lang_code>/', views.set_language, name='set_language'),
 # path('language/set/', views.set_language, name='set_user_language'),
 
 # ===================================================================
-# 4. PASSWORD RESET (Django Built-in — Beautiful Templates)
+# 4. PASSWORD RESET (Phone-based SMS Reset)
 # ===================================================================
-path('password-reset/', 
-        auth_views.PasswordResetView.as_view(
-        template_name='accounts/password_reset.html',
-        email_template_name='accounts/password_reset_email.html',
-        subject_template_name='accounts/password_reset_subject.txt'
-        ), 
-        name='password_reset'),
-
-path('password-reset/done/', 
-        auth_views.PasswordResetDoneView.as_view(
-        template_name='accounts/password_reset_done.html'
-        ), 
-        name='password_reset_done'),
-
-path('reset/<uidb64>/<token>/', 
-        auth_views.PasswordResetConfirmView.as_view(
-        template_name='accounts/password_reset_confirm.html'
-        ), 
-        name='password_reset_confirm'),
-
-path('reset/done/', 
-        auth_views.PasswordResetCompleteView.as_view(
-        template_name='accounts/password_reset_complete.html'
-        ), 
-        name='password_reset_complete'),
+path('password-reset/', views.password_reset_request, name='password_reset_request'),
+path('password-reset/verify/', views.password_reset_verify, name='password_reset_verify'),
 
 # ===================================================================
 # 5. SESSION SECURITY (AJAX — All views exist in your views.py)
@@ -78,8 +55,9 @@ path('roles/', views.role_management_view, name='role_management'),
 path('switch-dashboard/', views.switch_dashboard_view, name='switch_dashboard'),
 
 # ===================================================================
-# 7. NOTIFICATION PREFERENCES
+# 7. NOTIFICATION PREFERENCES & API
 # ===================================================================
 path('notifications/preferences/', views.notification_preferences, name='notification_preferences'),
 path('notifications/test/', views.test_notification, name='test_notification'),
+path('api/notifications/count/', views.notification_count_api, name='notification_count_api'),
 ]

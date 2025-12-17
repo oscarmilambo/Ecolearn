@@ -17,14 +17,14 @@
         <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-transparent"></div>
     </div>
     
-    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
-        <div class="text-white w-full">
-            <h1 class="text-4xl md:text-5xl font-bold mb-3 animate-fade-in-up">
-                Welcome back, {{ user.get_full_name|default:user.username }}! 
-            </h1>
-            <p class="text-xl md:text-2xl opacity-90 animate-fade-in-up delay-200">
-                Here's your environmental impact summary
-            </p>
+        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center">
+            <div class="text-white">
+                <h1 class="text-5xl md:text-6xl font-extrabold mb-4 drop-shadow-2xl">
+                    Welcome back, {{ user.get_full_name|default:user.username }}!
+                </h1>
+                <p class="text-2xl opacity-95 mb-8 drop-shadow-lg">
+                    Here's your environmental impact summary
+                </p>
             
             <!-- Debug Info (styled for hero section) -->
             <div class="mt-4 inline-block bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-3 text-sm animate-fade-in-up delay-400">
@@ -367,7 +367,7 @@
                             <i class="fas fa-bell text-eco-green mr-2"></i>
                             Notifications
                             {% if unread_notifications > 0 %}
-                            <span class="ml-2 px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-full">
+                            <span class="ml-2 px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-full notification-badge">
                                 {{ unread_notifications }}
                             </span>
                             {% endif %}
@@ -378,7 +378,7 @@
                     </div>
                     <div class="p-6">
                         {% if recent_notifications %}
-                            <div class="space-y-3">
+                            <div class="space-y-3 notifications-list">
                                 {% for notification in recent_notifications %}
                                 <div class="flex items-start space-x-3 p-2 {% if not notification.is_read %}bg-blue-50 rounded{% endif %}">
                                     <div class="flex-shrink-0 mt-1">
@@ -549,4 +549,172 @@
     animation: pulse-glow 2s infinite;
 }
 </style>
+
+<!-- Real-time Notifications WebSocket -->
+<script>
+// WebSocket for real-time notifications
+let notificationSocket = null;
+
+function initializeNotificationWebSocket() {
+    // Only initialize if user is authenticated
+    {% if user.is_authenticated %}
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/notifications/`;
+    
+    notificationSocket = new WebSocket(wsUrl);
+    
+    notificationSocket.onopen = function(e) {
+        console.log('✅ Notification WebSocket connected');
+    };
+    
+    notificationSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        
+        if (data.type === 'notification') {
+            handleNewNotification(data.notification);
+        } else if (data.type === 'connection_established') {
+            console.log('🔔 Notifications ready:', data.message);
+        }
+    };
+    
+    notificationSocket.onclose = function(e) {
+        console.log('❌ Notification WebSocket disconnected, code:', e.code);
+        
+        // Only reconnect if it's not an authentication error (code 4001)
+        if (e.code !== 4001) {
+            console.log('🔄 Attempting to reconnect in 5 seconds...');
+            setTimeout(initializeNotificationWebSocket, 5000);
+        } else {
+            console.log('🚫 WebSocket authentication failed - not reconnecting');
+        }
+    };
+    
+    notificationSocket.onerror = function(e) {
+        console.error('WebSocket error:', e);
+    };
+    {% else %}
+    console.log('🔒 User not authenticated - skipping WebSocket connection');
+    {% endif %}
+}
+
+function handleNewNotification(notification) {
+    console.log('🔔 New notification received:', notification);
+    
+    // Show browser notification if permission granted
+    if (Notification.permission === 'granted') {
+        new Notification(notification.title, {
+            body: notification.message,
+            icon: '{% static "images/logo.png" %}',
+            badge: '{% static "images/logo.png" %}'
+        });
+    }
+    
+    // Show in-page notification toast
+    showNotificationToast(notification);
+    
+    // Update notification count
+    updateNotificationCount();
+    
+    // Add to notification list if visible
+    addToNotificationList(notification);
+}
+
+function showNotificationToast(notification) {
+    // Create toast notification
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-white border-l-4 border-eco-green rounded-lg shadow-lg p-4 max-w-sm z-50 transform translate-x-full transition-transform duration-300';
+    toast.innerHTML = `
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-bell text-eco-green"></i>
+            </div>
+            <div class="ml-3 flex-1">
+                <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                <p class="text-xs text-gray-500 mt-1">${notification.message.substring(0, 100)}...</p>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+    
+    // Make clickable if has URL
+    if (notification.url) {
+        toast.style.cursor = 'pointer';
+        toast.onclick = () => {
+            window.location.href = notification.url;
+        };
+    }
+}
+
+function updateNotificationCount() {
+    // Update the notification badge count
+    fetch('/api/notifications/count/')
+        .then(response => response.json())
+        .then(data => {
+            const badge = document.querySelector('.notification-badge');
+            if (badge) {
+                badge.textContent = data.unread_count;
+                badge.style.display = data.unread_count > 0 ? 'inline' : 'none';
+            }
+        })
+        .catch(error => console.error('Error updating notification count:', error));
+}
+
+function addToNotificationList(notification) {
+    const notificationsList = document.querySelector('.notifications-list');
+    if (notificationsList) {
+        const notificationElement = document.createElement('div');
+        notificationElement.className = 'flex items-start space-x-3 p-2 bg-blue-50 rounded';
+        notificationElement.innerHTML = `
+            <div class="flex-shrink-0 mt-1">
+                <i class="fas fa-circle text-xs text-blue-600"></i>
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-medium text-gray-900">${notification.title}</p>
+                <p class="text-xs text-gray-500 mt-1">${notification.message.substring(0, 50)}...</p>
+                <p class="text-xs text-gray-400 mt-1">Just now</p>
+            </div>
+        `;
+        
+        // Add to top of list
+        notificationsList.insertBefore(notificationElement, notificationsList.firstChild);
+        
+        // Remove oldest if more than 5
+        const notifications = notificationsList.children;
+        if (notifications.length > 5) {
+            notificationsList.removeChild(notifications[notifications.length - 1]);
+        }
+    }
+}
+
+// Request notification permission
+function requestNotificationPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission().then(permission => {
+            console.log('Notification permission:', permission);
+        });
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    requestNotificationPermission();
+    initializeNotificationWebSocket();
+});
+</script>
+
 {% endblock %}

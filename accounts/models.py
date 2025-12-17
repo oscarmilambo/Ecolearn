@@ -2,7 +2,11 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
 from phonenumber_field.modelfields import PhoneNumberField
+import secrets
+import string
+from datetime import timedelta
 
 # Note: Using ImageField for now, can be upgraded to CloudinaryField later
 
@@ -75,6 +79,14 @@ class CustomUser(AbstractUser):
         null=True,
         verbose_name=_('Profile Picture')
     )
+    
+    # Location field (from old migrations)
+    location = models.CharField(
+        max_length=255,
+        blank=True,
+        default='',
+        verbose_name=_('Location')
+    )
 
     # === TIMESTAMPS ===
     date_joined = models.DateTimeField(auto_now_add=True)
@@ -91,102 +103,20 @@ class CustomUser(AbstractUser):
         verbose_name = _('User')
         verbose_name_plural = _('Users')
         ordering = ['-date_joined']
-    
-    # User Role Management
-    USER_ROLES = [
-        ('student', 'Student'),
-        ('instructor', 'Instructor'),
-        ('admin', 'Administrator'),
-        ('moderator', 'Moderator'),
-        ('super_admin', 'Super Administrator'),
-    ]
-    
-    LANGUAGE_CHOICES = [
-        ('en', 'English'),
-        ('bem', 'Bemba'),
-        ('ny', 'Nyanja'),
-    ]
-    
-    # Role and permissions
-    role = models.CharField(max_length=20, choices=USER_ROLES, default='student')
-    
-    # Contact and profile information
-    phone_number = PhoneNumberField(blank=True, null=True, unique=True)
-    preferred_language = models.CharField(
-        max_length=3, 
-        choices=LANGUAGE_CHOICES, 
-        default='en'
-    )
-    profile_picture = models.ImageField(upload_to='images/', blank=True, null=True)
-    date_of_birth = models.DateField(blank=True, null=True)
-    location = models.CharField(max_length=255, blank=True)
-    
-    # Verification and security
-    is_verified = models.BooleanField(default=False)
-    sms_verification_code = models.CharField(max_length=6, blank=True, null=True)
-    
-    # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.username or str(self.phone_number)
+
+class PasswordResetAttempt(models.Model):
+    """Track password reset attempts for rate limiting"""
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='reset_attempts')
+    ip_address = models.GenericIPAddressField()
+    method = models.CharField(max_length=20)
+    success = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
     
-    # Role-based permission methods
-    def is_student(self):
-        """Check if user is a student"""
-        return self.role == 'student'
-    
-    def is_instructor(self):
-        """Check if user is an instructor"""
-        return self.role == 'instructor'
-    
-    def is_admin_user(self):
-        """Check if user has admin privileges"""
-        return self.role in ['admin', 'moderator', 'super_admin'] or self.is_staff or self.is_superuser
-    
-    def is_moderator(self):
-        """Check if user is a moderator"""
-        return self.role == 'moderator'
-    
-    def is_super_admin(self):
-        """Check if user is a super admin"""
-        return self.role == 'super_admin' or self.is_superuser
-    
-    def can_access_admin_dashboard(self):
-        """Check if user can access admin dashboard"""
-        return self.is_admin_user()
-    
-    def can_manage_users(self):
-        """Check if user can manage other users"""
-        return self.role in ['admin', 'super_admin'] or self.is_superuser
-    
-    def can_manage_content(self):
-        """Check if user can manage learning content"""
-        return self.role in ['instructor', 'admin', 'super_admin'] or self.is_staff
-    
-    def can_moderate_reports(self):
-        """Check if user can moderate dumping reports"""
-        return self.role in ['moderator', 'admin', 'super_admin'] or self.is_staff
-    
-    def get_role_display_with_icon(self):
-        """Get role display with appropriate icon"""
-        role_icons = {
-            'student': '🎓',
-            'instructor': '👨‍🏫',
-            'admin': '👨‍💼',
-            'moderator': '🛡️',
-            'super_admin': '👑',
-        }
-        icon = role_icons.get(self.role, '👤')
-        return f"{icon} {self.get_role_display()}"
-    
-    def get_dashboard_url(self):
-        """Get appropriate dashboard URL based on role"""
-        if self.can_access_admin_dashboard():
-            return 'admin_dashboard:dashboard'
-        else:
-            return 'dashboard'
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Password Reset Attempt'
+        verbose_name_plural = 'Password Reset Attempts'
 
 
 class UserProfile(models.Model):
@@ -201,6 +131,43 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.username}'s Profile"
+
+
+class PasswordResetCode(models.Model):
+    """Model to store password reset codes"""
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    phone_number = models.CharField(max_length=20)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_used = models.BooleanField(default=False)
+    expires_at = models.DateTimeField()
+    
+    def save(self, *args, **kwargs):
+        if not self.code:
+            self.code = self.generate_code()
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(minutes=10)  # 10 minutes expiry
+        super().save(*args, **kwargs)
+    
+    def generate_code(self):
+        """Generate a 6-digit numeric code"""
+        return ''.join(secrets.choice(string.digits) for _ in range(6))
+    
+    def is_expired(self):
+        """Check if the code has expired"""
+        return timezone.now() > self.expires_at
+    
+    def is_valid(self):
+        """Check if the code is valid (not used and not expired)"""
+        return not self.is_used and not self.is_expired()
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Password Reset Code'
+        verbose_name_plural = 'Password Reset Codes'
+        
+    def __str__(self):
+        return f"Reset code for {self.user.username} - {self.code}"
 
 
 

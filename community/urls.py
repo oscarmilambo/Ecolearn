@@ -7,6 +7,7 @@ app_name = 'community'
 urlpatterns = [
     # ====================== FORUM ======================
     path('forum/', views.forum_home, name='forum_home'),
+    path('forum/start-discussion/', views.start_discussion, name='start_discussion'),
     path('forum/category/<int:category_id>/', views.category_topics, name='category_topics'),
     path('forum/category/<int:category_id>/create/', views.create_topic, name='create_topic'),
     path('forum/topic/<int:topic_id>/', views.topic_detail, name='topic_detail'),

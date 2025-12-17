@@ -53,24 +53,62 @@ def contact(request):
 # 2. AUTHENTICATION VIEWS (FUNCTION-BASED — CLEAN & SECURE)
 # ===================================================================
 def login_view(request):
-    """Custom login view"""
+    """Custom login view with flexible username support"""
     if request.user.is_authenticated:
         return redirect('dashboard')
 
     if request.method == 'POST':
-        username = request.POST.get('username')
+        username_input = request.POST.get('username')
         password = request.POST.get('password')
-        user = authenticate(request, username=username, password=password)
+        
+        # Try multiple authentication methods to support both old and new usernames
+        user = None
+        
+        # Method 1: Direct username match (for both old and new formats)
+        user = authenticate(request, username=username_input, password=password)
+        
+        # Method 2: If direct match fails, try to find user by email
+        if user is None and '@' in username_input:
+            try:
+                user_obj = CustomUser.objects.get(email=username_input)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except CustomUser.DoesNotExist:
+                pass
+        
+        # Method 3: If still no match, try to find by full name parts
+        if user is None and ' ' in username_input:
+            try:
+                # Split the input and try to find by first and last name
+                parts = username_input.strip().split()
+                if len(parts) >= 2:
+                    first_name = parts[0]
+                    last_name = ' '.join(parts[1:])  # Handle multiple last names
+                    
+                    # Try to find user by first and last name
+                    user_obj = CustomUser.objects.get(
+                        first_name__iexact=first_name, 
+                        last_name__iexact=last_name
+                    )
+                    user = authenticate(request, username=user_obj.username, password=password)
+            except CustomUser.DoesNotExist:
+                pass
+        
+        # Method 4: Try old-style usernames (for legacy users like oscarmilambo2)
+        if user is None:
+            # Check if there's a user with this exact username (case-insensitive)
+            try:
+                user_obj = CustomUser.objects.get(username__iexact=username_input)
+                user = authenticate(request, username=user_obj.username, password=password)
+            except CustomUser.DoesNotExist:
+                pass
         
         if user is not None:
-            # User is active by default now
-            
             login(request, user)
             messages.success(request, f'Welcome back, {user.get_full_name() or user.username}!')
             next_url = request.GET.get('next')
             return redirect(next_url or 'dashboard')
         else:
-            messages.error(request, 'Invalid username or password.')
+            messages.error(request, 'Invalid username or password. Try your full name, email, or original username.')
     
     return render(request, 'accounts/login.html')
 
@@ -87,6 +125,120 @@ def logout_view(request):
 
 
 # Phone verification only - users are activated immediately upon registration
+
+
+# ===================================================================
+# PASSWORD RESET VIEWS
+# ===================================================================
+
+def password_reset_request(request):
+    """Request password reset via phone number"""
+    if request.method == 'POST':
+        phone_number = request.POST.get('phone_number', '').strip()
+        
+        if not phone_number:
+            messages.error(request, 'Please enter your phone number.')
+            return render(request, 'accounts/password_reset_request.html')
+        
+        # Find user by phone number
+        try:
+            user = CustomUser.objects.get(phone_number=phone_number, is_active=True)
+        except CustomUser.DoesNotExist:
+            messages.error(request, 'No active account found with this phone number.')
+            return render(request, 'accounts/password_reset_request.html')
+        
+        # Create reset code
+        from .models import PasswordResetCode
+        
+        # Deactivate any existing codes for this user
+        PasswordResetCode.objects.filter(user=user, is_used=False).update(is_used=True)
+        
+        # Create new reset code
+        reset_code = PasswordResetCode.objects.create(
+            user=user,
+            phone_number=phone_number
+        )
+        
+        # Send SMS (if Twilio is configured)
+        try:
+            from community.notifications import notification_service
+            sms_message = f"Your EcoLearn password reset code is: {reset_code.code}. Valid for 10 minutes."
+            result = notification_service.send_sms(phone_number, sms_message)
+            
+            if result.get('success'):
+                messages.success(request, f'Reset code sent to {phone_number}. Check your SMS.')
+            else:
+                messages.warning(request, f'Reset code generated: {reset_code.code} (SMS service unavailable)')
+        except Exception as e:
+            messages.warning(request, f'Reset code generated: {reset_code.code} (SMS service unavailable)')
+        
+        # Redirect to verification page
+        request.session['reset_phone'] = phone_number
+        return redirect('accounts:password_reset_verify')
+    
+    return render(request, 'accounts/password_reset_request.html')
+
+
+def password_reset_verify(request):
+    """Verify reset code and set new password"""
+    phone_number = request.session.get('reset_phone')
+    
+    if not phone_number:
+        messages.error(request, 'Session expired. Please start the password reset process again.')
+        return redirect('accounts:password_reset_request')
+    
+    if request.method == 'POST':
+        code = request.POST.get('code', '').strip()
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+        
+        if not all([code, new_password, confirm_password]):
+            messages.error(request, 'Please fill in all fields.')
+            return render(request, 'accounts/password_reset_verify.html', {'phone_number': phone_number})
+        
+        if new_password != confirm_password:
+            messages.error(request, 'Passwords do not match.')
+            return render(request, 'accounts/password_reset_verify.html', {'phone_number': phone_number})
+        
+        if len(new_password) < 8:
+            messages.error(request, 'Password must be at least 8 characters long.')
+            return render(request, 'accounts/password_reset_verify.html', {'phone_number': phone_number})
+        
+        # Find and verify reset code
+        from .models import PasswordResetCode
+        
+        try:
+            reset_code = PasswordResetCode.objects.get(
+                phone_number=phone_number,
+                code=code,
+                is_used=False
+            )
+            
+            if reset_code.is_expired():
+                messages.error(request, 'Reset code has expired. Please request a new one.')
+                return redirect('accounts:password_reset_request')
+            
+            # Reset password
+            user = reset_code.user
+            user.set_password(new_password)
+            user.save()
+            
+            # Mark code as used
+            reset_code.is_used = True
+            reset_code.save()
+            
+            # Clear session
+            if 'reset_phone' in request.session:
+                del request.session['reset_phone']
+            
+            messages.success(request, 'Password reset successful! You can now log in with your new password.')
+            return redirect('accounts:login')
+            
+        except PasswordResetCode.DoesNotExist:
+            messages.error(request, 'Invalid reset code.')
+            return render(request, 'accounts/password_reset_verify.html', {'phone_number': phone_number})
+    
+    return render(request, 'accounts/password_reset_verify.html', {'phone_number': phone_number})
 
 
 def register_view(request):
@@ -122,23 +274,38 @@ def register_view(request):
             request.session[attempts_key] = attempts + 1
             request.session[attempts_time_key] = current_time.isoformat()
             
-            # Create user manually with phone number only
-            phone_number = form.cleaned_data['phone_number']
+            # Create user manually with contact method (phone or email)
+            contact_method = form.cleaned_data['contact_method']
+            email = form.cleaned_data['email']
             
-            # Generate username from phone number
-            base_username = f"user_{phone_number[-4:]}"
+            # Determine if contact_method is phone or email
+            if '@' in contact_method:
+                # Contact method is email, use it as primary email
+                phone_number = None
+                user_email = contact_method
+            else:
+                # Contact method is phone number
+                phone_number = contact_method
+                user_email = email
+            
+            # Use full name exactly as entered (what user expects)
+            first_name = form.cleaned_data['first_name'].strip()
+            last_name = form.cleaned_data['last_name'].strip()
+            
+            # Create username from full name exactly as entered (e.g., "Edward Jere")
+            base_username = f"{first_name} {last_name}"
             
             # Ensure unique username
             counter = 1
             username = base_username
             while CustomUser.objects.filter(username=username).exists():
-                username = f"{base_username}{counter}"
+                username = f"{base_username} {counter}"
                 counter += 1
             
             # Create user
             user = CustomUser.objects.create_user(
                 username=username,
-                email='',  # No email required
+                email=user_email,
                 password=form.cleaned_data['password'],
                 first_name=form.cleaned_data['first_name'],
                 last_name=form.cleaned_data['last_name'],
@@ -624,3 +791,20 @@ def test_notification(request):
             })
     
     return JsonResponse({'success': False, 'error': 'Invalid request'})
+
+@login_required
+def notification_count_api(request):
+    """API endpoint to get unread notification count"""
+    try:
+        from community.models import Notification
+        unread_count = Notification.objects.filter(user=request.user, is_read=False).count()
+        return JsonResponse({
+            'success': True,
+            'unread_count': unread_count
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'unread_count': 0
+        })

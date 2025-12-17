@@ -27,8 +27,15 @@ class NotificationConsumer(AsyncWebsocketConsumer):
             )
             
             await self.accept()
+            
+            # Send connection confirmation
+            await self.send(text_data=json.dumps({
+                'type': 'connection_established',
+                'message': 'Notifications connected successfully'
+            }))
         else:
-            await self.close()
+            # Close connection gracefully for unauthenticated users
+            await self.close(code=4001)
     
     async def disconnect(self, close_code):
         """Handle WebSocket disconnection"""
@@ -79,8 +86,15 @@ class DashboardConsumer(AsyncWebsocketConsumer):
             )
             
             await self.accept()
+            
+            # Send connection confirmation
+            await self.send(text_data=json.dumps({
+                'type': 'connection_established',
+                'message': 'Dashboard connected successfully'
+            }))
         else:
-            await self.close()
+            # Close connection gracefully for unauthenticated users
+            await self.close(code=4001)
     
     async def disconnect(self, close_code):
         """Handle WebSocket disconnection"""

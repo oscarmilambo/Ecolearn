@@ -205,7 +205,7 @@ def user_management(request):
         'search_query': search_query,
         # Filter choices
         'language_choices': CustomUser.LANGUAGE_CHOICES,
-        'role_choices': CustomUser.USER_ROLES,
+        'role_choices': CustomUser.ROLE_CHOICES,
     }
     
     return render(request, 'admin_dashboard/users.html', context)
@@ -836,6 +836,7 @@ def challenge_create(request):
         try:
             from accounts.models import CustomUser
             active_users = CustomUser.objects.filter(is_active=True)
+            logger.info(f"Creating challenge notifications for {active_users.count()} active users")
             
             # Prepare notification data
             notification_data = {
@@ -851,13 +852,40 @@ def challenge_create(request):
             for user in active_users:
                 try:
                     # Create in-app notification
-                    Notification.objects.create(
+                    notification = Notification.objects.create(
                         user=user,
                         notification_type='challenge_update',
                         title=f'🏆 New Challenge: {challenge.title}',
                         message=f'{challenge.description[:150]}... Reward: {challenge.reward_points} points!',
                         url=f'/community/challenges/{challenge.id}/'
                     )
+                    logger.info(f"Created notification {notification.id} for user {user.username}")
+                    notification_count += 1
+                    
+                    # Send real-time notification via WebSocket
+                    try:
+                        from channels.layers import get_channel_layer
+                        from asgiref.sync import async_to_sync
+                        
+                        channel_layer = get_channel_layer()
+                        if channel_layer:
+                            async_to_sync(channel_layer.group_send)(
+                                f"notifications_{user.id}",
+                                {
+                                    'type': 'notification_message',
+                                    'notification': {
+                                        'id': notification.id,
+                                        'title': notification.title,
+                                        'message': notification.message,
+                                        'url': notification.url,
+                                        'type': notification.notification_type,
+                                        'created_at': notification.created_at.isoformat(),
+                                        'is_read': notification.is_read
+                                    }
+                                }
+                            )
+                    except Exception as ws_error:
+                        logger.warning(f"WebSocket notification failed for user {user.username}: {ws_error}")
                     
                     # Send external notifications if user has preferences
                     if hasattr(user, 'notification_preferences'):
@@ -889,9 +917,10 @@ def challenge_create(request):
                             if 'email' in channels and user.email:
                                 notification_service.send_email(user.email, message_data['subject'], message_data['text'])
                     
-                    notification_count += 1
                 except Exception as e:
                     logger.error(f"Error sending notification to user {user.id}: {str(e)}")
+                    # Still count as notified since in-app notification was created
+                    pass
             
             messages.success(request, f'Challenge "{challenge.title}" created and {notification_count} users notified!')
         except Exception as e:
@@ -2046,7 +2075,7 @@ def notification_create(request):
     context = {
         'locations': locations,
         'language_choices': CustomUser.LANGUAGE_CHOICES,
-        'role_choices': CustomUser.USER_ROLES,
+        'role_choices': CustomUser.ROLE_CHOICES,
     }
     
     return render(request, 'admin_dashboard/notification_create.html', context)

@@ -1,7 +1,8 @@
 # community/notifications.py
 """
-Notification Service for SMS, WhatsApp, and Email
-Handles sending notifications for events, challenges, and community updates
+Enhanced Notification Service with Africa's Talking Integration
+Primary SMS via Africa's Talking, WhatsApp via Twilio, Email via Django
+Optimized for African markets with cost-effective SMS delivery
 """
 
 from django.conf import settings
@@ -9,64 +10,247 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from twilio.rest import Client
 import logging
+import africastalking
 
 logger = logging.getLogger(__name__)
 
 
 class NotificationService:
     """
-    Unified notification service supporting SMS, WhatsApp, and Email
+    Enhanced notification service with Africa's Talking as primary SMS provider
+    - Africa's Talking: Primary SMS (cost-effective for African numbers)
+    - Twilio: WhatsApp and backup SMS
+    - Django: Email notifications
     """
     
     def __init__(self):
-        # Initialize Twilio client if credentials are available
+        # Initialize Africa's Talking
+        self.africas_talking_username = getattr(settings, 'AFRICAS_TALKING_USERNAME', 'sandbox')
+        self.africas_talking_api_key = getattr(settings, 'AFRICAS_TALKING_API_KEY', '')
+        
+        if self.africas_talking_api_key:
+            try:
+                africastalking.initialize(self.africas_talking_username, self.africas_talking_api_key)
+                self.africas_talking_sms = africastalking.SMS
+                logger.info(f"Africa's Talking initialized for {self.africas_talking_username}")
+            except Exception as e:
+                self.africas_talking_sms = None
+                logger.error(f"Africa's Talking initialization failed: {e}")
+        else:
+            self.africas_talking_sms = None
+            logger.warning("Africa's Talking credentials not configured")
+        
+        # Initialize Twilio client (for WhatsApp and backup SMS)
         if hasattr(settings, 'TWILIO_ACCOUNT_SID') and settings.TWILIO_ACCOUNT_SID:
-            self.twilio_client = Client(
-                settings.TWILIO_ACCOUNT_SID,
-                settings.TWILIO_AUTH_TOKEN
-            )
-            self.twilio_phone = settings.TWILIO_PHONE_NUMBER
-            self.twilio_whatsapp = getattr(settings, 'TWILIO_WHATSAPP_NUMBER', None)
+            try:
+                self.twilio_client = Client(
+                    settings.TWILIO_ACCOUNT_SID,
+                    settings.TWILIO_AUTH_TOKEN
+                )
+                self.twilio_phone = settings.TWILIO_PHONE_NUMBER
+                self.twilio_whatsapp = getattr(settings, 'TWILIO_WHATSAPP_NUMBER', None)
+                logger.info("Twilio client initialized for WhatsApp and backup SMS")
+            except Exception as e:
+                self.twilio_client = None
+                logger.error(f"Twilio initialization failed: {e}")
         else:
             self.twilio_client = None
             logger.warning("Twilio credentials not configured")
     
-    def send_sms(self, to_number, message):
+    def send_sms(self, to_number, message, provider='auto'):
         """
-        Send SMS message via Twilio
+        Send SMS with intelligent provider selection
+        Primary: Africa's Talking (cost-effective for African numbers)
+        Backup: Twilio (international numbers or fallback)
         
         Args:
             to_number: Phone number with country code
             message: Message text
+            provider: 'auto', 'africas_talking', or 'twilio'
         
         Returns:
-            dict: {'success': bool, 'message_sid': str, 'error': str}
+            dict: {'success': bool, 'message_sid': str, 'provider': str, 'error': str}
         """
-        if not self.twilio_client:
-            return {'success': False, 'error': 'SMS not configured'}
+        # Format phone number
+        if not to_number.startswith('+'):
+            if to_number.startswith('0'):
+                to_number = '+260' + to_number[1:]  # Zambian numbers
+            else:
+                to_number = '+260' + to_number
         
-        try:
-            # Format phone number
-            if not to_number.startswith('+'):
-                to_number = f'+260{to_number}'
-            
-            message_obj = self.twilio_client.messages.create(
-                body=message,
-                from_=self.twilio_phone,
-                to=to_number
-            )
-            
-            logger.info(f"SMS sent to {to_number}: {message_obj.sid}")
-            return {
-                'success': True,
-                'message_sid': message_obj.sid,
-                'status': message_obj.status
-            }
+        # Auto-select provider based on number
+        if provider == 'auto':
+            # Use Africa's Talking for African numbers (cheaper and better delivery)
+            african_prefixes = ['+260', '+254', '+256', '+255', '+234', '+233', '+27']
+            if any(to_number.startswith(prefix) for prefix in african_prefixes):
+                provider = 'africas_talking'
+            else:
+                provider = 'twilio'
         
-        except Exception as e:
-            logger.error(f"SMS send failed to {to_number}: {str(e)}")
-            return {'success': False, 'error': str(e)}
+        # Try Africa's Talking first
+        if provider == 'africas_talking' and self.africas_talking_sms:
+            try:
+                response = self.africas_talking_sms.send(message, [to_number])
+                
+                if response['SMSMessageData']['Recipients']:
+                    recipient = response['SMSMessageData']['Recipients'][0]
+                    if recipient['status'] == 'Success':
+                        logger.info(f"SMS sent via Africa's Talking to {to_number}: {recipient['messageId']}")
+                        return {
+                            'success': True,
+                            'message_sid': recipient['messageId'],
+                            'provider': 'africas_talking',
+                            'cost': recipient.get('cost', 'N/A'),
+                            'status': recipient['status']
+                        }
+                    else:
+                        # Africa's Talking failed, try Twilio as backup
+                        logger.warning(f"Africa's Talking failed for {to_number}: {recipient['status']}")
+                        provider = 'twilio'
+                else:
+                    logger.warning(f"Africa's Talking: No recipients processed for {to_number}")
+                    provider = 'twilio'
+                    
+            except Exception as e:
+                logger.error(f"Africa's Talking SMS failed to {to_number}: {str(e)}")
+                provider = 'twilio'
+        
+        # Use Twilio as backup or for international numbers
+        if provider == 'twilio' and self.twilio_client:
+            try:
+                message_obj = self.twilio_client.messages.create(
+                    body=message,
+                    from_=self.twilio_phone,
+                    to=to_number
+                )
+                
+                logger.info(f"SMS sent via Twilio to {to_number}: {message_obj.sid}")
+                return {
+                    'success': True,
+                    'message_sid': message_obj.sid,
+                    'provider': 'twilio',
+                    'status': message_obj.status
+                }
+            
+            except Exception as e:
+                logger.error(f"Twilio SMS failed to {to_number}: {str(e)}")
+                return {'success': False, 'error': str(e), 'provider': 'twilio'}
+        
+        # No SMS provider available
+        return {'success': False, 'error': 'No SMS provider available or configured'}
     
+    def send_bulk_sms(self, phone_numbers, message):
+        """
+        Send bulk SMS using Africa's Talking for efficiency
+        
+        Args:
+            phone_numbers: List of phone numbers
+            message: Message text
+        
+        Returns:
+            dict: Bulk send results with per-number status
+        """
+        if not phone_numbers:
+            return {'success': False, 'error': 'No phone numbers provided'}
+        
+        # Format phone numbers
+        formatted_numbers = []
+        for phone in phone_numbers:
+            if not phone.startswith('+'):
+                if phone.startswith('0'):
+                    phone = '+260' + phone[1:]
+                else:
+                    phone = '+260' + phone
+            formatted_numbers.append(phone)
+        
+        results = []
+        
+        # Separate African and international numbers
+        african_numbers = []
+        international_numbers = []
+        
+        african_prefixes = ['+260', '+254', '+256', '+255', '+234', '+233', '+27']
+        
+        for phone in formatted_numbers:
+            if any(phone.startswith(prefix) for prefix in african_prefixes):
+                african_numbers.append(phone)
+            else:
+                international_numbers.append(phone)
+        
+        # Send African numbers via Africa's Talking (bulk)
+        if african_numbers and self.africas_talking_sms:
+            try:
+                response = self.africas_talking_sms.send(message, african_numbers)
+                
+                if response['SMSMessageData']['Recipients']:
+                    for recipient in response['SMSMessageData']['Recipients']:
+                        results.append({
+                            'phone': recipient['number'],
+                            'success': recipient['status'] == 'Success',
+                            'message_id': recipient.get('messageId'),
+                            'cost': recipient.get('cost'),
+                            'provider': 'africas_talking',
+                            'error': recipient['status'] if recipient['status'] != 'Success' else None
+                        })
+                        
+                        if recipient['status'] == 'Success':
+                            logger.info(f"Bulk SMS sent to {recipient['number']}: {recipient.get('messageId')}")
+                        else:
+                            logger.warning(f"Bulk SMS failed to {recipient['number']}: {recipient['status']}")
+                            
+            except Exception as e:
+                logger.error(f"Africa's Talking bulk SMS failed: {str(e)}")
+                # Add failed results for African numbers
+                for phone in african_numbers:
+                    results.append({
+                        'phone': phone,
+                        'success': False,
+                        'provider': 'africas_talking',
+                        'error': str(e)
+                    })
+        
+        # Send international numbers via Twilio (individual)
+        if international_numbers and self.twilio_client:
+            for phone in international_numbers:
+                try:
+                    message_obj = self.twilio_client.messages.create(
+                        body=message,
+                        from_=self.twilio_phone,
+                        to=phone
+                    )
+                    
+                    results.append({
+                        'phone': phone,
+                        'success': True,
+                        'message_id': message_obj.sid,
+                        'provider': 'twilio',
+                        'status': message_obj.status
+                    })
+                    
+                    logger.info(f"International SMS sent to {phone}: {message_obj.sid}")
+                    
+                except Exception as e:
+                    results.append({
+                        'phone': phone,
+                        'success': False,
+                        'provider': 'twilio',
+                        'error': str(e)
+                    })
+                    logger.error(f"International SMS failed to {phone}: {str(e)}")
+        
+        # Calculate summary
+        total_sent = len([r for r in results if r['success']])
+        total_failed = len([r for r in results if not r['success']])
+        
+        return {
+            'success': total_sent > 0,
+            'results': results,
+            'total_sent': total_sent,
+            'total_failed': total_failed,
+            'african_numbers': len(african_numbers),
+            'international_numbers': len(international_numbers)
+        }
+
     def send_whatsapp(self, to_number, message, media_url=None):
         """
         Send WhatsApp message via Twilio
@@ -555,3 +739,184 @@ def send_medical_waste_alert(location, affected_areas='', target_locations=None,
         target_locations=target_locations,
         created_by=created_by
     )
+
+
+# Waste Management Campaign Functions
+def send_waste_management_campaign(campaign_type, target_users=None, custom_message=None, location=None):
+    """
+    Send waste management campaigns to users using Africa's Talking
+    
+    Args:
+        campaign_type: 'cleanup', 'recycling', 'education', 'emergency', 'general'
+        target_users: QuerySet of users (None = all active users with phones)
+        custom_message: Custom message override
+        location: Specific location for the campaign
+    
+    Returns:
+        dict: Campaign results with delivery statistics
+    """
+    from accounts.models import CustomUser
+    
+    if target_users is None:
+        target_users = CustomUser.objects.filter(
+            is_active=True, 
+            phone_number__isnull=False
+        ).exclude(phone_number='')
+    
+    # Pre-defined campaign messages optimized for SMS length
+    messages = {
+        'cleanup': f"🧹 EcoLearn Community Cleanup this Saturday 8AM! Location: {location or 'Community Center'}. Bring gloves & bags. Together we keep Zambia clean! 🇿🇲 Info: marabo.co.zm",
+        
+        'recycling': "♻️ Did you know plastic bottles take 450 years to decompose? Join our recycling program! Learn proper waste sorting & earn points. Start: marabo.co.zm/learn",
+        
+        'education': "📚 New Waste Management Course! Learn the 3 R's: Reduce, Reuse, Recycle. Complete modules for certificates & points. Enroll: marabo.co.zm/courses",
+        
+        'emergency': f"🚨 URGENT: Illegal dumping reported{f' near {location}' if location else ''}! Help keep communities clean. Report: marabo.co.zm/report or call authorities. Act now!",
+        
+        'general': "🌍 EcoLearn: Join our mission for cleaner communities! Learn waste management, join challenges, earn rewards. Start today: marabo.co.zm",
+        
+        'reminder': f"⏰ Reminder: Community event{f' at {location}' if location else ''} starts soon! Don't miss out on making a difference. Details: marabo.co.zm"
+    }
+    
+    message = custom_message or messages.get(campaign_type, messages['general'])
+    
+    # Get phone numbers
+    phone_numbers = [str(user.phone_number) for user in target_users if user.phone_number]
+    
+    if not phone_numbers:
+        return {
+            'success': False,
+            'error': 'No users with phone numbers found',
+            'total_users': target_users.count()
+        }
+    
+    logger.info(f"Launching {campaign_type} campaign to {len(phone_numbers)} users")
+    
+    # Send bulk SMS via enhanced notification service
+    sms_result = notification_service.send_bulk_sms(phone_numbers, message)
+    
+    # Create in-app notifications for all users
+    from .models import Notification
+    in_app_created = 0
+    
+    for user in target_users:
+        try:
+            Notification.objects.create(
+                user=user,
+                notification_type='campaign',
+                title=f"{campaign_type.title()} Campaign",
+                message=message,
+                url='/community/campaigns/'
+            )
+            in_app_created += 1
+        except Exception as e:
+            logger.error(f"Failed to create in-app notification for user {user.id}: {e}")
+    
+    # Compile results
+    result = {
+        'success': sms_result['success'],
+        'campaign_type': campaign_type,
+        'message': message,
+        'total_users': target_users.count(),
+        'sms_sent': sms_result['total_sent'],
+        'sms_failed': sms_result['total_failed'],
+        'in_app_created': in_app_created,
+        'african_numbers': sms_result.get('african_numbers', 0),
+        'international_numbers': sms_result.get('international_numbers', 0),
+        'detailed_results': sms_result.get('results', [])
+    }
+    
+    # Log campaign summary
+    logger.info(f"Campaign '{campaign_type}' completed: {result['sms_sent']} SMS sent, {result['in_app_created']} in-app notifications created")
+    
+    return result
+
+
+def send_challenge_notification(user, challenge, notification_type, **kwargs):
+    """
+    Send challenge-related notifications (joins, completions, achievements)
+    
+    Args:
+        user: User object
+        challenge: Challenge object
+        notification_type: 'joined', 'completed', 'achievement', 'reminder'
+        **kwargs: Additional data for message customization
+    """
+    messages = {
+        'joined': f"🎉 Welcome to '{challenge.title}'! Start collecting waste, earn points, climb leaderboards. Track progress: marabo.co.zm/challenges/{challenge.id}",
+        
+        'completed': f"🏆 Challenge '{challenge.title}' completed! You earned {kwargs.get('points', 0)} points. Total: {kwargs.get('total_points', 0)}. Well done! 🌍",
+        
+        'achievement': f"🌟 Achievement unlocked in '{challenge.title}': {kwargs.get('achievement', 'Eco Warrior')}! Your environmental impact is growing. Keep it up! 💚",
+        
+        'reminder': f"⏰ Challenge '{challenge.title}' ends in {kwargs.get('time_left', '24 hours')}! Complete your activities to earn points. Go: marabo.co.zm/challenges/{challenge.id}",
+        
+        'leaderboard': f"🏆 You're #{kwargs.get('rank', 1)} in '{challenge.title}'! {kwargs.get('points', 0)} points earned. Keep climbing the leaderboard! 📈"
+    }
+    
+    message = messages.get(notification_type, kwargs.get('custom_message', f"Update for challenge: {challenge.title}"))
+    
+    # Send SMS if user has phone number
+    sms_result = {'success': False}
+    if user.phone_number:
+        sms_result = notification_service.send_sms(str(user.phone_number), message)
+    
+    # Create in-app notification
+    from .models import Notification
+    try:
+        notification = Notification.objects.create(
+            user=user,
+            notification_type='challenge',
+            title=f"Challenge: {challenge.title}",
+            message=message,
+            url=f'/community/challenges/{challenge.id}/'
+        )
+        in_app_success = True
+    except Exception as e:
+        logger.error(f"Failed to create challenge notification for user {user.id}: {e}")
+        in_app_success = False
+    
+    return {
+        'success': sms_result['success'] or in_app_success,
+        'sms_sent': sms_result['success'],
+        'in_app_created': in_app_success,
+        'message': message,
+        'provider': sms_result.get('provider'),
+        'message_id': sms_result.get('message_sid')
+    }
+
+
+def send_points_notification(user, points_earned, activity, total_points=None):
+    """
+    Send points earned notification
+    """
+    total_display = f"Total: {total_points}" if total_points else ""
+    message = f"🏆 +{points_earned} points for '{activity}'! {total_display} You're making a real environmental impact! Keep going! 🌍"
+    
+    # Send SMS
+    sms_result = {'success': False}
+    if user.phone_number:
+        sms_result = notification_service.send_sms(str(user.phone_number), message)
+    
+    # Create in-app notification
+    from .models import Notification
+    try:
+        Notification.objects.create(
+            user=user,
+            notification_type='points',
+            title=f"Points Earned: +{points_earned}",
+            message=message,
+            url='/dashboard/'
+        )
+        in_app_success = True
+    except Exception as e:
+        logger.error(f"Failed to create points notification for user {user.id}: {e}")
+        in_app_success = False
+    
+    return {
+        'success': sms_result['success'] or in_app_success,
+        'sms_sent': sms_result['success'],
+        'in_app_created': in_app_success,
+        'points': points_earned,
+        'provider': sms_result.get('provider')
+    }

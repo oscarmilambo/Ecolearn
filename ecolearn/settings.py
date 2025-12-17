@@ -28,6 +28,13 @@ SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,testserver,*.onrender.com').split(',')
 
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://*.onrender.com',
+]
+
 # Application definition
 INSTALLED_APPS = [
     'daphne',  # Must be first for Channels
@@ -109,55 +116,28 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ecolearn.wsgi.application'
 ASGI_APPLICATION = 'ecolearn.asgi.application'
 
-# REDIS CONFIGURATION FOR CACHING AND CHANNELS
-REDIS_URL = config('REDIS_URL', default='redis://127.0.0.1:6379/0')
+# SIMPLIFIED CACHING AND CHANNELS CONFIGURATION (NO REDIS)
+print("🔧 Using simplified local cache and session configuration (no Redis)")
 
-# Check if Redis packages are available
-try:
-    import redis
-    import django_redis
-    HAS_REDIS = True
-except ImportError:
-    HAS_REDIS = False
+# Django Channels Configuration - In-Memory Only
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer'
+    }
+}
 
-# Django Channels Configuration
-if HAS_REDIS:
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels_redis.core.RedisChannelLayer',
-            'CONFIG': {
-                "hosts": [REDIS_URL],
-            },
-        },
-    }
-    
-    # CACHING CONFIGURATION with Redis
-    CACHES = {
-        'default': {
-            'BACKEND': 'django_redis.cache.RedisCache',
-            'LOCATION': REDIS_URL,
-            'OPTIONS': {
-                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            },
-            'KEY_PREFIX': 'ecolearn',
-            'TIMEOUT': 1800,  # 30 minutes default
+# LOCAL MEMORY CACHE CONFIGURATION
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'ecolearn-cache',
+        'TIMEOUT': 300,  # 5 minutes default
+        'OPTIONS': {
+            'MAX_ENTRIES': 1000,  # Maximum number of cache entries
+            'CULL_FREQUENCY': 3,  # Fraction of entries to cull when MAX_ENTRIES is reached
         }
     }
-else:
-    # Fallback to in-memory for development
-    CHANNEL_LAYERS = {
-        'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer'
-        }
-    }
-    
-    # Fallback to local memory cache
-    CACHES = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            'LOCATION': 'unique-snowflake',
-        }
-    }
+}
 
 # Cache time settings - Reduced for memory optimization
 CACHE_TTL = {
@@ -168,24 +148,40 @@ CACHE_TTL = {
 
 # Memory optimization settings will be applied after DATABASES is defined
 
-# SESSION CONFIGURATION
-SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
-SESSION_CACHE_ALIAS = 'default'
+# SESSION CONFIGURATION - DATABASE SESSIONS ONLY
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 3600  # 1 hour (in seconds)
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_SAVE_EVERY_REQUEST = True  # Update session expiry on every request
 
 # DATABASE CONFIGURATION
-# Force PostgreSQL in production, SQLite only for local development
 DATABASE_URL = config('DATABASE_URL', default=None)
+USE_MYSQL = config('USE_MYSQL', default=False, cast=bool)
 
-# Force PostgreSQL if not in DEBUG mode (production)
-if not DEBUG:
-    # Production: MUST use PostgreSQL
+# Check if MySQL configuration is requested
+if USE_MYSQL:
+    # Use MySQL configuration from .env
+    DATABASES = {
+        'default': {
+            'ENGINE': config('DB_ENGINE', default='django.db.backends.mysql'),
+            'NAME': config('DB_NAME'),
+            'USER': config('DB_USER'),
+            'PASSWORD': config('DB_PASSWORD'),
+            'HOST': config('DB_HOST', default='localhost'),
+            'PORT': config('DB_PORT', default='3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+            },
+        }
+    }
+    print(f"✅ MySQL database configured: {DATABASES['default']['NAME']} at {DATABASES['default']['HOST']}")
+
+elif not DEBUG and DATABASE_URL:
+    # Production: Use PostgreSQL
     print(f"🔍 PRODUCTION MODE - DEBUG={DEBUG}")
     print(f"🔍 DATABASE_URL present: {bool(DATABASE_URL)}")
     print(f"🔍 HAS_DJ_DATABASE_URL: {HAS_DJ_DATABASE_URL}")
-    
-    if not DATABASE_URL:
-        print("❌ ERROR: DATABASE_URL environment variable is missing!")
-        raise ValueError("DATABASE_URL environment variable is required in production!")
     
     if not HAS_DJ_DATABASE_URL:
         print("❌ ERROR: dj-database-url package is missing!")
@@ -209,9 +205,9 @@ if not DEBUG:
     except Exception as e:
         print(f"❌ ERROR parsing DATABASE_URL: {e}")
         raise
-    
+
 elif DATABASE_URL and HAS_DJ_DATABASE_URL:
-    # Development with DATABASE_URL (optional)
+    # Development with DATABASE_URL (optional PostgreSQL)
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
@@ -221,25 +217,19 @@ elif DATABASE_URL and HAS_DJ_DATABASE_URL:
     }
     DATABASES['default']['CONN_MAX_AGE'] = 600
 else:
-    # Local development: Use SQLite
+    # Local development: Use SQLite as fallback
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+    print("✅ SQLite database configured for local development")
 
-# Memory optimization settings for Render free tier
+# Memory optimization settings for production
 if not DEBUG:
     # Reduce database connection pool size
     DATABASES['default']['CONN_MAX_AGE'] = 300  # 5 minutes instead of 10
-    
-    # Optimize cache settings for low memory
-    if 'default' in CACHES and 'django_redis' in CACHES['default']['BACKEND']:
-        CACHES['default']['OPTIONS']['CONNECTION_POOL_KWARGS'] = {
-            'max_connections': 10,  # Reduced from default
-            'retry_on_timeout': True,
-        }
 
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
@@ -342,7 +332,11 @@ LOGOUT_REDIRECT_URL = '/'  # Redirect to landing page on logout/session expiry
 # Gemini AI Configuration
 GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
-# Twilio Configuration (SMS & WhatsApp)
+# Africa's Talking Configuration (Primary SMS Provider)
+AFRICAS_TALKING_USERNAME = config('AFRICAS_TALKING_USERNAME', default='sandbox')
+AFRICAS_TALKING_API_KEY = config('AFRICAS_TALKING_API_KEY', default='')
+
+# Twilio Configuration (Backup & WhatsApp)
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='')
 TWILIO_API_KEY_SID = config('TWILIO_API_KEY_SID', default='')
@@ -359,12 +353,9 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Session Security
+# Session Security (consolidated with session configuration above)
 SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_AGE = 3600  # 1 hour (in seconds)
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_SAVE_EVERY_REQUEST = True  # Update session expiry on every request
 
 # CSRF Protection
 CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
@@ -493,3 +484,11 @@ ACCOUNT_LOGOUT_REDIRECT_URL = '/'
 
 # Custom adapter to handle user creation
 ACCOUNT_ADAPTER = 'accounts.adapters.CustomAccountAdapter'
+
+# CSRF Trusted Origins
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:8000',
+    'http://127.0.0.1:8000',
+    'https://*.onrender.com',
+]
+

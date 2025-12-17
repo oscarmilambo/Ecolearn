@@ -3,293 +3,258 @@
 
 {% block title %}{{ group.name }} - EcoLearn{% endblock %}
 
-{% block extra_css %}
-<style>
-    .group-header {
-        background: linear-gradient(135deg, #4CAF50, #2c5530);
-        color: white;
-        padding: 30px;
-        border-radius: 8px;
-        margin-bottom: 30px;
-    }
-    
-    .group-title {
-        font-size: 2.2em;
-        margin-bottom: 10px;
-    }
-    
-    .group-meta {
-        display: flex;
-        gap: 20px;
-        flex-wrap: wrap;
-        margin-top: 15px;
-    }
-    
-    .meta-item {
-        background: rgba(255,255,255,0.2);
-        padding: 8px 15px;
-        border-radius: 20px;
-        font-size: 0.9em;
-    }
-    
-    .section-card {
-        background: white;
-        border-radius: 8px;
-        padding: 25px;
-        margin-bottom: 25px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    
-    .section-title {
-        font-size: 1.4em;
-        color: #2c5530;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #4CAF50;
-        padding-bottom: 8px;
-    }
-    
-    .event-item {
-        border-left: 4px solid #4CAF50;
-        padding: 15px;
-        margin-bottom: 15px;
-        background: #f9f9f9;
-        border-radius: 0 8px 8px 0;
-    }
-    
-    .event-title {
-        font-weight: bold;
-        color: #2c5530;
-        margin-bottom: 5px;
-    }
-    
-    .event-meta {
-        color: #666;
-        font-size: 0.9em;
-    }
-    
-    .chat-container {
-        max-height: 400px;
-        overflow-y: auto;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 15px;
-        background: #f9f9f9;
-    }
-    
-    .chat-message {
-        margin-bottom: 15px;
-        padding: 10px;
-        background: white;
-        border-radius: 8px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-    
-    .chat-sender {
-        font-weight: bold;
-        color: #2c5530;
-        margin-bottom: 5px;
-    }
-    
-    .chat-time {
-        font-size: 0.8em;
-        color: #888;
-        float: right;
-    }
-    
-    .chat-announcement {
-        border-left: 4px solid #FF9800;
-        background: #FFF3E0;
-    }
-    
-    .chat-form {
-        margin-top: 15px;
-    }
-    
-    .btn-primary {
-        background: #4CAF50;
-        border-color: #4CAF50;
-    }
-    
-    .btn-primary:hover {
-        background: #45a049;
-        border-color: #45a049;
-    }
-    
-    .btn-warning {
-        background: #FF9800;
-        border-color: #FF9800;
-    }
-    
-    .btn-danger {
-        background: #f44336;
-        border-color: #f44336;
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 10px;
-        margin-top: 20px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <div class="group-header">
-        <h1 class="group-title">{{ group.name }}</h1>
-        <p>{{ group.description }}</p>
-        <div class="group-meta">
-            <span class="meta-item">
-                <i class="fas fa-users"></i> {{ group.members.count }} members
-            </span>
-            <span class="meta-item">
-                <i class="fas fa-map-marker-alt"></i> {{ group.community }}, {{ group.district }}
-            </span>
-            <span class="meta-item">
-                <i class="fas fa-user-tie"></i> Coordinator: {{ group.coordinator.get_full_name|default:group.coordinator.username }}
-            </span>
-            <span class="meta-item">
-                <i class="fas fa-calendar"></i> Created: {{ group.created_at|date:"M d, Y" }}
-            </span>
-        </div>
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        <div class="action-buttons">
-            {% if not is_member %}
-                <form method="post" action="{% url 'collaboration:join_group' group.id %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-user-plus"></i> Join Group
-                    </button>
-                </form>
-            {% else %}
-                {% if membership.role == 'coordinator' %}
-                    <a href="{% url 'collaboration:edit_group' group.id %}" class="btn btn-secondary">
-                        <i class="fas fa-edit"></i> Edit Group
-                    </a>
-                    <a href="{% url 'collaboration:create_event' group.id %}" class="btn btn-warning">
-                        <i class="fas fa-calendar-plus"></i> Create Event
-                    </a>
-                    <a href="{% url 'collaboration:generate_impact_report' group.id %}" class="btn btn-info">
-                        <i class="fas fa-chart-bar"></i> Generate Report
-                    </a>
-                {% else %}
-                    <form method="post" action="{% url 'collaboration:leave_group' group.id %}" style="display: inline;">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to leave this group?')">
-                            <i class="fas fa-user-minus"></i> Leave Group
-                        </button>
-                    </form>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Social Media Links -->
-    {% if group.social_media_links %}
-    <div class="section-card">
-        <h2 class="section-title">
-            <i class="fas fa-share-alt text-eco-green mr-2"></i>
-            Connect with Us on Social Media
-        </h2>
-        <div class="flex flex-wrap gap-3">
-            {% for link in group.social_media_links %}
-            <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
-               class="inline-flex items-center px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
-               style="background-color: {{ link.color }};">
-                <i class="{{ link.icon }} mr-2"></i>
-                {{ link.name }}
-            </a>
-            {% endfor %}
-        </div>
-        <p class="text-sm text-gray-600 mt-3">
-            <i class="fas fa-info-circle mr-1"></i>
-            Join our social media communities to stay updated on events, share experiences, and connect with fellow environmental champions!
-        </p>
-    </div>
-    {% endif %}
-    
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Upcoming Events -->
-            <div class="section-card">
-                <h2 class="section-title">Upcoming Events</h2>
-                {% if upcoming_events %}
-                    {% for event in upcoming_events %}
-                    <div class="event-item">
-                        <div class="event-title">{{ event.title }}</div>
-                        <div class="event-meta">
-                            <i class="fas fa-calendar"></i> {{ event.scheduled_date|date:"M d, Y H:i" }} |
-                            <i class="fas fa-clock"></i> {{ event.duration_hours }} hours |
-                            <i class="fas fa-map-marker-alt"></i> {{ event.location }}
+        <!-- Group Header -->
+        <div class="bg-gradient-to-r from-eco-green to-eco-dark text-white rounded-xl shadow-xl p-8 mb-8">
+            <div class="flex items-start justify-between">
+                <div class="flex-1">
+                    <h1 class="text-4xl font-bold mb-4">{{ group.name }}</h1>
+                    <p class="text-eco-light text-lg mb-6 max-w-3xl">{{ group.description }}</p>
+                    
+                    <!-- Group Meta Information -->
+                    <div class="flex flex-wrap gap-4 mb-6">
+                        <div class="bg-white bg-opacity-20 px-4 py-2 rounded-full flex items-center">
+                            <i class="fas fa-users mr-2"></i>
+                            <span class="font-semibold">{{ group.members.count }} members</span>
                         </div>
-                        <p>{{ event.description|truncatewords:15 }}</p>
+                        <div class="bg-white bg-opacity-20 px-4 py-2 rounded-full flex items-center">
+                            <i class="fas fa-map-marker-alt mr-2"></i>
+                            <span>{{ group.community }}, {{ group.district }}</span>
+                        </div>
+                        <div class="bg-white bg-opacity-20 px-4 py-2 rounded-full flex items-center">
+                            <i class="fas fa-user-tie mr-2"></i>
+                            <span>Coordinator: {{ group.coordinator.get_full_name|default:group.coordinator.username }}</span>
+                        </div>
+                        <div class="bg-white bg-opacity-20 px-4 py-2 rounded-full flex items-center">
+                            <i class="fas fa-calendar mr-2"></i>
+                            <span>Created: {{ group.created_at|date:"M d, Y" }}</span>
+                        </div>
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="text-muted">No upcoming events scheduled.</p>
-                {% endif %}
+                </div>
             </div>
             
-            <!-- Recent Events -->
-            <div class="section-card">
-                <h2 class="section-title">Recent Events</h2>
-                {% if past_events %}
-                    {% for event in past_events %}
-                    <div class="event-item">
-                        <div class="event-title">{{ event.title }}</div>
-                        <div class="event-meta">
-                            <i class="fas fa-calendar"></i> {{ event.scheduled_date|date:"M d, Y" }} |
-                            <i class="fas fa-users"></i> {{ event.participants_count|default:0 }} participants |
-                            <i class="fas fa-trash"></i> {{ event.waste_collected|default:0 }} kg collected
-                        </div>
-                        <p>{{ event.description|truncatewords:15 }}</p>
-                    </div>
-                    {% endfor %}
+            <!-- Action Buttons -->
+            <div class="flex flex-wrap gap-3">
+                {% if not is_member %}
+                    <form method="post" action="{% url 'collaboration:join_group' group.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="bg-white text-eco-green px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center shadow-lg">
+                            <i class="fas fa-user-plus mr-2"></i>Join Group
+                        </button>
+                    </form>
                 {% else %}
-                    <p class="text-muted">No past events.</p>
+                    {% if membership.role == 'coordinator' %}
+                        <a href="{% url 'collaboration:edit_group' group.id %}" 
+                           class="bg-white text-gray-800 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors flex items-center shadow-lg">
+                            <i class="fas fa-edit mr-2"></i>Edit Group
+                        </a>
+                        <a href="{% url 'collaboration:create_event' group.id %}" 
+                           class="bg-yellow-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-yellow-600 transition-colors flex items-center shadow-lg">
+                            <i class="fas fa-calendar-plus mr-2"></i>Create Event
+                        </a>
+                        <a href="{% url 'collaboration:generate_impact_report' group.id %}" 
+                           class="bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-600 transition-colors flex items-center shadow-lg">
+                            <i class="fas fa-chart-bar mr-2"></i>Generate Report
+                        </a>
+                    {% else %}
+                        <form method="post" action="{% url 'collaboration:leave_group' group.id %}">
+                            {% csrf_token %}
+                            <button type="submit" onclick="return confirm('Are you sure you want to leave this group?')"
+                                    class="bg-red-500 text-white px-6 py-3 rounded-lg font-semibold hover:bg-red-600 transition-colors flex items-center shadow-lg">
+                                <i class="fas fa-user-minus mr-2"></i>Leave Group
+                            </button>
+                        </form>
+                    {% endif %}
                 {% endif %}
             </div>
         </div>
         
-        <div class="col-md-4">
-            <!-- Group Chat -->
-            {% if is_member %}
-            <div class="section-card">
-                <h2 class="section-title">Group Chat</h2>
-                <div class="chat-container" id="chatContainer">
-                    {% for chat in recent_chats %}
-                    <div class="chat-message {% if chat.is_announcement %}chat-announcement{% endif %}">
-                        <div class="chat-sender">
-                            {{ chat.sender.get_full_name|default:chat.sender.username }}
-                            {% if chat.is_announcement %}
-                                <span class="badge badge-warning">Announcement</span>
-                            {% endif %}
-                            <span class="chat-time">{{ chat.created_at|date:"M d, H:i" }}</span>
+        <!-- Social Media Links -->
+        {% if group.social_media_links %}
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-share-alt text-eco-green mr-3"></i>
+                Connect with Us on Social Media
+            </h2>
+            <div class="flex flex-wrap gap-3 mb-4">
+                {% for link in group.social_media_links %}
+                <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
+                   class="inline-flex items-center px-4 py-2 rounded-lg text-white font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg"
+                   style="background-color: {{ link.color }};">
+                    <i class="{{ link.icon }} mr-2"></i>
+                    {{ link.name }}
+                </a>
+                {% endfor %}
+            </div>
+            <p class="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+                <i class="fas fa-info-circle text-eco-green mr-2"></i>
+                Join our social media communities to stay updated on events, share experiences, and connect with fellow environmental champions!
+            </p>
+        </div>
+        {% endif %}
+        
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column - Events -->
+            <div class="lg:col-span-2 space-y-8">
+                
+                <!-- Upcoming Events -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-calendar-alt text-eco-green mr-3"></i>
+                        Upcoming Events
+                    </h2>
+                    {% if upcoming_events %}
+                        <div class="space-y-4">
+                            {% for event in upcoming_events %}
+                            <div class="border-l-4 border-eco-green bg-eco-light bg-opacity-30 p-4 rounded-r-lg hover:shadow-md transition-shadow">
+                                <h3 class="font-bold text-gray-900 mb-2">{{ event.title }}</h3>
+                                <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-2">
+                                    <span class="flex items-center">
+                                        <i class="fas fa-calendar text-eco-green mr-1"></i>
+                                        {{ event.scheduled_date|date:"M d, Y H:i" }}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-clock text-eco-green mr-1"></i>
+                                        {{ event.duration_hours }} hours
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-map-marker-alt text-eco-green mr-1"></i>
+                                        {{ event.location }}
+                                    </span>
+                                </div>
+                                <p class="text-gray-700">{{ event.description|truncatewords:15 }}</p>
+                            </div>
+                            {% endfor %}
                         </div>
-                        <div>{{ chat.message }}</div>
-                    </div>
-                    {% endfor %}
+                    {% else %}
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-calendar-plus text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-500">No upcoming events scheduled.</p>
+                            {% if membership.role == 'coordinator' %}
+                            <a href="{% url 'collaboration:create_event' group.id %}" 
+                               class="mt-4 inline-flex items-center bg-eco-green text-white px-4 py-2 rounded-lg hover:bg-eco-dark transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Create First Event
+                            </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
                 </div>
                 
-                <form class="chat-form" id="chatForm">
-                    {% csrf_token %}
-                    <div class="form-group">
-                        <textarea class="form-control" name="message" placeholder="Type your message..." rows="3" required></textarea>
-                    </div>
-                    {% if membership.role in 'coordinator,moderator' %}
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="is_announcement" id="isAnnouncement">
-                        <label class="form-check-label" for="isAnnouncement">
-                            Send as announcement
-                        </label>
-                    </div>
+                <!-- Recent Events -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-history text-blue-600 mr-3"></i>
+                        Recent Events
+                    </h2>
+                    {% if past_events %}
+                        <div class="space-y-4">
+                            {% for event in past_events %}
+                            <div class="border-l-4 border-blue-500 bg-blue-50 p-4 rounded-r-lg">
+                                <h3 class="font-bold text-gray-900 mb-2">{{ event.title }}</h3>
+                                <div class="flex flex-wrap gap-4 text-sm text-gray-600 mb-2">
+                                    <span class="flex items-center">
+                                        <i class="fas fa-calendar text-blue-600 mr-1"></i>
+                                        {{ event.scheduled_date|date:"M d, Y" }}
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-users text-blue-600 mr-1"></i>
+                                        {{ event.participants_count|default:0 }} participants
+                                    </span>
+                                    <span class="flex items-center">
+                                        <i class="fas fa-trash text-blue-600 mr-1"></i>
+                                        {{ event.waste_collected|default:0 }} kg collected
+                                    </span>
+                                </div>
+                                <p class="text-gray-700">{{ event.description|truncatewords:15 }}</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-history text-gray-400 text-2xl"></i>
+                            </div>
+                            <p class="text-gray-500">No past events yet.</p>
+                        </div>
                     {% endif %}
-                    <button type="submit" class="btn btn-primary btn-sm">
-                        <i class="fas fa-paper-plane"></i> Send
-                    </button>
-                </form>
+                </div>
             </div>
-            {% endif %}
+            
+            <!-- Right Column - Group Chat -->
+            <div class="lg:col-span-1">
+                {% if is_member %}
+                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-8">
+                    <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-comments text-eco-green mr-3"></i>
+                        Group Chat
+                    </h2>
+                    
+                    <!-- Chat Messages -->
+                    <div class="h-80 overflow-y-auto bg-gray-50 rounded-lg p-4 mb-4" id="chatContainer">
+                        {% for chat in recent_chats %}
+                        <div class="mb-4 {% if chat.is_announcement %}bg-yellow-50 border-l-4 border-yellow-400 pl-3{% else %}bg-white{% endif %} p-3 rounded-lg shadow-sm">
+                            <div class="flex items-center justify-between mb-1">
+                                <span class="font-semibold text-gray-900 text-sm">
+                                    {{ chat.sender.get_full_name|default:chat.sender.username }}
+                                </span>
+                                <div class="flex items-center space-x-2">
+                                    {% if chat.is_announcement %}
+                                        <span class="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
+                                            Announcement
+                                        </span>
+                                    {% endif %}
+                                    <span class="text-xs text-gray-500">{{ chat.created_at|date:"M d, H:i" }}</span>
+                                </div>
+                            </div>
+                            <p class="text-gray-700 text-sm">{{ chat.message }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Chat Form -->
+                    <form id="chatForm" class="space-y-3">
+                        {% csrf_token %}
+                        <textarea name="message" placeholder="Type your message..." rows="3" required
+                                  class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-eco-green focus:border-eco-green resize-none"></textarea>
+                        
+                        {% if membership.role in 'coordinator,moderator' %}
+                        <div class="flex items-center">
+                            <input type="checkbox" name="is_announcement" id="isAnnouncement" class="mr-2">
+                            <label for="isAnnouncement" class="text-sm text-gray-700">Send as announcement</label>
+                        </div>
+                        {% endif %}
+                        
+                        <button type="submit" 
+                                class="w-full bg-eco-green text-white py-2 px-4 rounded-lg hover:bg-eco-dark transition-colors flex items-center justify-center font-semibold">
+                            <i class="fas fa-paper-plane mr-2"></i>Send Message
+                        </button>
+                    </form>
+                </div>
+                {% else %}
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <div class="text-center py-8">
+                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-lock text-gray-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Join to Chat</h3>
+                        <p class="text-gray-600 mb-4">Join this group to participate in discussions and stay updated.</p>
+                        <form method="post" action="{% url 'collaboration:join_group' group.id %}">
+                            {% csrf_token %}
+                            <button type="submit" class="bg-eco-green text-white px-6 py-2 rounded-lg hover:bg-eco-dark transition-colors font-semibold">
+                                <i class="fas fa-user-plus mr-2"></i>Join Group
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>

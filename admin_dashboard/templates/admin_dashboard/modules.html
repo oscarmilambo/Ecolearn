@@ -1,7 +1,7 @@
 {% extends 'admin_dashboard/base.html' %}
 {% load static i18n %}
 
-{% block page_title %}Content Management System{% endblock %}
+{% block page_title %}Modules & Content{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6 p-6">
@@ -9,7 +9,6 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
         <div>
-            <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Content Management System</h1>
             <p class="text-gray-600 dark:text-gray-400 mt-1">Manage e-learning modules and content</p>
         </div>
         <div class="flex space-x-3">
@@ -128,7 +127,7 @@
                     </div>
                     <div class="w-full bg-gray-200 dark:bg-zinc-600 rounded-full h-1.5">
                         <div class="bg-gradient-to-r from-green-400 to-green-600 h-1.5 rounded-full transition-all duration-300" 
-                             style="width: {% if category.module_count > 0 %}{{ category.published_count|default:0|floatformat:0 }}{% widthratio category.published_count|default:0 category.module_count 100 %}{% else %}0{% endif %}%"></div>
+                             style="width: {% if category.module_count > 0 %}{% widthratio category.published_count|default:0 category.module_count 100 %}{% else %}0{% endif %}%"></div>
                     </div>
                 </div>
                 {% endif %}

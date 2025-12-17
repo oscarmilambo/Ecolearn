@@ -312,7 +312,7 @@
                                 <!-- User Info & Menu items remain unchanged -->
                                 <div class="px-4 py-3 border-b border-gray-100">
                                     <p class="text-sm font-semibold text-gray-900">{{ user.get_full_name|default:user.username }}</p>
-                                    <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                                    <p class="text-xs text-gray-500 truncate">{{ user.phone_number|default:"Phone not provided" }}</p>
                                 </div>
 
                                 <div class="py-1">
@@ -396,7 +396,7 @@
                 {% if user.is_authenticated %}
                     <div class="px-3 py-2 border-b border-gray-200">
                         <p class="text-sm font-semibold text-gray-900">{{ user.username }}</p>
-                        <p class="text-xs text-gray-500">{{ user.email }}</p>
+                        <p class="text-xs text-gray-500">{{ user.phone_number|default:"Phone not provided" }}</p>
                     </div>
 
                     {% if user.is_staff %}
@@ -569,7 +569,7 @@
                 
                 <div class="text-center">
                     <p class="text-gray-400 text-sm">
-                        © 2025 <span class="text-white font-bold">EcoLearn</span>. Made with <i class="fas fa-heart text-red-500"></i> for Zambia's green future.
+                        © 2025 <span class="text-white font-bold">EcoLearn</span>. Made for Zambia's green future.
                     </p>
                 </div>
             </div>

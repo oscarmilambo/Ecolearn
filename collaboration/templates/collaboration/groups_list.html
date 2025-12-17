@@ -3,251 +3,147 @@
 
 {% block title %}Cleanup Groups - EcoLearn{% endblock %}
 
-{% block extra_css %}
-<style>
-    .group-card {
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
-        background: white;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        transition: transform 0.2s;
-    }
-    
-    .group-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-    }
-    
-    .group-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 15px;
-    }
-    
-    .group-title {
-        font-size: 1.4em;
-        font-weight: bold;
-        color: #2c5530;
-        margin: 0;
-    }
-    
-    .member-count {
-        background: #4CAF50;
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.9em;
-    }
-    
-    .group-description {
-        color: #666;
-        margin-bottom: 15px;
-        line-height: 1.5;
-    }
-    
-    .group-location {
-        color: #888;
-        font-size: 0.9em;
-        margin-bottom: 15px;
-    }
-    
-    .group-actions {
-        display: flex;
-        gap: 10px;
-    }
-    
-    .btn-join {
-        background: #4CAF50;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 0.9em;
-        transition: background 0.2s;
-    }
-    
-    .btn-join:hover {
-        background: #45a049;
-        color: white;
-        text-decoration: none;
-    }
-    
-    .btn-view {
-        background: #2196F3;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 0.9em;
-        transition: background 0.2s;
-    }
-    
-    .btn-view:hover {
-        background: #1976D2;
-        color: white;
-        text-decoration: none;
-    }
-    
-    .btn-member {
-        background: #FF9800;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        text-decoration: none;
-        font-size: 0.9em;
-    }
-    
-    .create-group-btn {
-        background: #4CAF50;
-        color: white;
-        padding: 12px 24px;
-        border-radius: 6px;
-        text-decoration: none;
-        font-weight: bold;
-        display: inline-block;
-        margin-bottom: 30px;
-        transition: background 0.2s;
-    }
-    
-    .create-group-btn:hover {
-        background: #45a049;
-        color: white;
-        text-decoration: none;
-    }
-    
-    .section-title {
-        font-size: 1.8em;
-        color: #2c5530;
-        margin-bottom: 20px;
-        border-bottom: 2px solid #4CAF50;
-        padding-bottom: 10px;
-    }
-    
-    .my-groups-section {
-        margin-bottom: 40px;
-    }
-    
-    .no-groups {
-        text-align: center;
-        color: #666;
-        font-style: italic;
-        padding: 40px;
-        background: #f9f9f9;
-        border-radius: 8px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="section-title">Cleanup Groups</h1>
-            
-            <a href="{% url 'collaboration:create_group' %}" class="create-group-btn">
-                <i class="fas fa-plus"></i> Create New Group
-            </a>
-            
-            {% if user_groups %}
-            <div class="my-groups-section">
-                <h2 class="section-title">My Groups</h2>
-                <div class="row">
-                    {% for group in user_groups %}
-                    <div class="col-md-6 col-lg-4">
-                        <div class="group-card">
-                            <div class="group-header">
-                                <h3 class="group-title">{{ group.name }}</h3>
-                                <span class="member-count">{{ group.member_count }} members</span>
-                            </div>
-                            
-                            <div class="group-description">
-                                {{ group.description|truncatewords:20 }}
-                            </div>
-                            
-                            <div class="group-location">
-                                <i class="fas fa-map-marker-alt"></i> {{ group.community }}, {{ group.district }}
-                            </div>
-                            
-                            <!-- Social Media Icons -->
-                            {% if group.social_media_links %}
-                            <div class="social-media-preview mb-3">
-                                <small class="text-muted">Connect with us:</small>
-                                <div class="d-flex gap-2 mt-1">
-                                    {% for link in group.social_media_links %}
-                                    <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
-                                       class="text-decoration-none" title="{{ link.name }}"
-                                       style="color: {{ link.color }};">
-                                        <i class="{{ link.icon }} fa-lg"></i>
-                                    </a>
-                                    {% endfor %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                        <i class="fas fa-users text-eco-green mr-3"></i>
+                        Cleanup Groups
+                    </h1>
+                    <p class="text-gray-600 mt-2">Join or create environmental cleanup groups in your community</p>
+                </div>
+                <a href="{% url 'collaboration:create_group' %}" 
+                   class="bg-eco-green text-white px-6 py-3 rounded-lg hover:bg-eco-dark transition-colors flex items-center font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                    <i class="fas fa-plus mr-2"></i>Create New Group
+                </a>
+            </div>
+        </div>
+
+        <!-- My Groups Section -->
+        {% if user_groups %}
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-star text-yellow-500 mr-3"></i>
+                My Groups
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for group in user_groups %}
+                <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+                    <div class="p-6">
+                        <!-- Group Header -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ group.name }}</h3>
+                                <div class="flex items-center text-sm text-gray-600 mb-2">
+                                    <i class="fas fa-map-marker-alt text-eco-green mr-2"></i>
+                                    {{ group.community }}, {{ group.district }}
                                 </div>
                             </div>
-                            {% endif %}
-                            
-                            <div class="group-actions">
-                                <a href="{% url 'collaboration:group_detail' group.id %}" class="btn-member">
-                                    <i class="fas fa-users"></i> View Group
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-            
-            <h2 class="section-title">All Groups</h2>
-            
-            {% if groups %}
-            <div class="row">
-                {% for group in groups %}
-                <div class="col-md-6 col-lg-4">
-                    <div class="group-card">
-                        <div class="group-header">
-                            <h3 class="group-title">{{ group.name }}</h3>
-                            <span class="member-count">{{ group.member_count }} members</span>
+                            <span class="bg-eco-green text-white px-3 py-1 rounded-full text-sm font-semibold">
+                                {{ group.member_count }} members
+                            </span>
                         </div>
                         
-                        <div class="group-description">
+                        <!-- Description -->
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">
                             {{ group.description|truncatewords:20 }}
-                        </div>
+                        </p>
                         
-                        <div class="group-location">
-                            <i class="fas fa-map-marker-alt"></i> {{ group.community }}, {{ group.district }}
-                        </div>
-                        
-                        <!-- Social Media Icons -->
+                        <!-- Social Media Links -->
                         {% if group.social_media_links %}
-                        <div class="social-media-preview mb-3">
-                            <small class="text-muted">Connect with us:</small>
-                            <div class="d-flex gap-2 mt-1">
+                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-xs font-semibold text-gray-700 mb-2">Connect with us:</p>
+                            <div class="flex space-x-2">
                                 {% for link in group.social_media_links %}
                                 <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
-                                   class="text-decoration-none" title="{{ link.name }}"
-                                   style="color: {{ link.color }};">
-                                    <i class="{{ link.icon }} fa-lg"></i>
+                                   class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform"
+                                   style="background-color: {{ link.color }};" title="{{ link.name }}">
+                                    <i class="{{ link.icon }} text-sm"></i>
                                 </a>
                                 {% endfor %}
                             </div>
                         </div>
                         {% endif %}
                         
-                        <div class="group-actions">
-                            <a href="{% url 'collaboration:group_detail' group.id %}" class="btn-view">
-                                <i class="fas fa-eye"></i> View Details
+                        <!-- Action Button -->
+                        <div class="flex space-x-2">
+                            <a href="{% url 'collaboration:group_detail' group.id %}" 
+                               class="flex-1 bg-eco-green text-white px-4 py-2 rounded-lg hover:bg-eco-dark transition-colors text-center font-semibold">
+                                <i class="fas fa-users mr-2"></i>View Group
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- All Groups Section -->
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-globe text-eco-green mr-3"></i>
+                All Groups
+            </h2>
+            
+            {% if groups %}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for group in groups %}
+                <div class="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100">
+                    <div class="p-6">
+                        <!-- Group Header -->
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex-1">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2">{{ group.name }}</h3>
+                                <div class="flex items-center text-sm text-gray-600 mb-2">
+                                    <i class="fas fa-map-marker-alt text-eco-green mr-2"></i>
+                                    {{ group.community }}, {{ group.district }}
+                                </div>
+                            </div>
+                            <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-semibold">
+                                {{ group.member_count }} members
+                            </span>
+                        </div>
+                        
+                        <!-- Description -->
+                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">
+                            {{ group.description|truncatewords:20 }}
+                        </p>
+                        
+                        <!-- Social Media Links -->
+                        {% if group.social_media_links %}
+                        <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                            <p class="text-xs font-semibold text-gray-700 mb-2">Connect with us:</p>
+                            <div class="flex space-x-2">
+                                {% for link in group.social_media_links %}
+                                <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
+                                   class="w-8 h-8 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform"
+                                   style="background-color: {{ link.color }};" title="{{ link.name }}">
+                                    <i class="{{ link.icon }} text-sm"></i>
+                                </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Action Buttons -->
+                        <div class="flex space-x-2">
+                            <a href="{% url 'collaboration:group_detail' group.id %}" 
+                               class="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center font-semibold">
+                                <i class="fas fa-eye mr-2"></i>View Details
                             </a>
                             
                             {% if group not in user_groups %}
-                            <form method="post" action="{% url 'collaboration:join_group' group.id %}" style="display: inline;">
+                            <form method="post" action="{% url 'collaboration:join_group' group.id %}" class="flex-1">
                                 {% csrf_token %}
-                                <button type="submit" class="btn-join">
-                                    <i class="fas fa-user-plus"></i> Join Group
+                                <button type="submit" 
+                                        class="w-full bg-eco-green text-white px-4 py-2 rounded-lg hover:bg-eco-dark transition-colors font-semibold">
+                                    <i class="fas fa-user-plus mr-2"></i>Join Group
                                 </button>
                             </form>
                             {% endif %}
@@ -257,13 +153,19 @@
                 {% endfor %}
             </div>
             {% else %}
-            <div class="no-groups">
-                <i class="fas fa-users fa-3x mb-3" style="color: #ccc;"></i>
-                <h3>No Groups Available</h3>
-                <p>Be the first to create a cleanup group in your community!</p>
-                <a href="{% url 'collaboration:create_group' %}" class="create-group-btn">
-                    <i class="fas fa-plus"></i> Create First Group
-                </a>
+            <!-- No Groups State -->
+            <div class="text-center py-16">
+                <div class="bg-white rounded-xl shadow-lg p-12 max-w-md mx-auto">
+                    <div class="w-20 h-20 bg-eco-light rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-users text-eco-green text-3xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">No Groups Available</h3>
+                    <p class="text-gray-600 mb-6">Be the first to create a cleanup group in your community!</p>
+                    <a href="{% url 'collaboration:create_group' %}" 
+                       class="bg-eco-green text-white px-6 py-3 rounded-lg hover:bg-eco-dark transition-colors font-semibold inline-flex items-center">
+                        <i class="fas fa-plus mr-2"></i>Create First Group
+                    </a>
+                </div>
             </div>
             {% endif %}
         </div>

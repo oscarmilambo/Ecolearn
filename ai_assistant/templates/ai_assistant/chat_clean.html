@@ -1,0 +1,522 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}AI Assistant - EcoLearn{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Main Container -->
+    <div class="max-w-6xl mx-auto h-screen flex">
+        
+        <!-- Sidebar for Chat History -->
+        <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-800">Chat History</h2>
+                    <button onclick="startNewChat()" class="bg-eco-green text-white px-3 py-1 rounded-md text-sm hover:bg-eco-dark transition-colors">
+                        <i class="fas fa-plus mr-1"></i> New Chat
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Chat Sessions List -->
+            <div id="chat-sessions" class="flex-1 overflow-y-auto p-2">
+                <div class="text-center text-gray-500 py-8">
+                    <i class="fas fa-comments text-3xl mb-2"></i>
+                    <p class="text-sm">Your chat history will appear here</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Chat Area -->
+        <div class="flex-1 flex flex-col">
+            
+            <!-- Chat Header -->
+            <div class="bg-gradient-to-r from-eco-green to-eco-dark p-4 text-white">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-robot text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">EcoLearn AI Assistant</h1>
+                        <p class="text-white/90 text-sm">Your environmental learning companion</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Messages Container -->
+            <div id="messages-container" class="flex-1 overflow-y-auto bg-gray-50 p-4">
+                
+                <!-- Welcome Screen -->
+                <div id="welcome-screen" class="h-full flex items-center justify-center">
+                    <div class="text-center max-w-2xl">
+                        <div class="w-24 h-24 bg-gradient-to-br from-eco-green to-eco-dark rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-leaf text-4xl text-white"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-4">Welcome to EcoLearn AI!</h2>
+                        <p class="text-gray-600 text-lg mb-8">I'm here to help you with environmental practices, waste management, and navigating the platform.</p>
+                        
+                        <!-- Quick Start Buttons -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="quickAsk('How do I report illegal dumping?')" 
+                                    class="bg-white border-2 border-eco-green/20 hover:border-eco-green hover:bg-eco-light p-4 rounded-xl transition-all duration-300 text-left group shadow-sm">
+                                <i class="fas fa-flag text-eco-green text-xl mb-3 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="font-semibold text-gray-800 mb-1">Report Illegal Dumping</h3>
+                                <p class="text-sm text-gray-600">Learn how to report waste violations</p>
+                            </button>
+                            
+                            <button onclick="quickAsk('What learning modules are available?')" 
+                                    class="bg-white border-2 border-eco-green/20 hover:border-eco-green hover:bg-eco-light p-4 rounded-xl transition-all duration-300 text-left group shadow-sm">
+                                <i class="fas fa-graduation-cap text-eco-green text-xl mb-3 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="font-semibold text-gray-800 mb-1">Learning Modules</h3>
+                                <p class="text-sm text-gray-600">Discover available courses</p>
+                            </button>
+                            
+                            <button onclick="quickAsk('Tell me about recycling best practices')" 
+                                    class="bg-white border-2 border-eco-green/20 hover:border-eco-green hover:bg-eco-light p-4 rounded-xl transition-all duration-300 text-left group shadow-sm">
+                                <i class="fas fa-recycle text-eco-green text-xl mb-3 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="font-semibold text-gray-800 mb-1">Recycling Tips</h3>
+                                <p class="text-sm text-gray-600">Learn recycling best practices</p>
+                            </button>
+                            
+                            <button onclick="quickAsk('How can I get involved in my community?')" 
+                                    class="bg-white border-2 border-eco-green/20 hover:border-eco-green hover:bg-eco-light p-4 rounded-xl transition-all duration-300 text-left group shadow-sm">
+                                <i class="fas fa-users text-eco-green text-xl mb-3 group-hover:scale-110 transition-transform"></i>
+                                <h3 class="font-semibold text-gray-800 mb-1">Community Engagement</h3>
+                                <p class="text-sm text-gray-600">Join community activities</p>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Messages (Hidden initially) -->
+                <div id="chat-messages" class="hidden space-y-4">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+                
+            </div>
+            
+            <!-- Input Area -->
+            <div class="bg-white border-t border-gray-200 p-4">
+                <div class="flex items-end space-x-3 max-w-4xl mx-auto">
+                    <div class="flex-1">
+                        <textarea 
+                            id="message-input" 
+                            placeholder="Ask me anything about EcoLearn, waste management, or environmental practices..."
+                            class="w-full p-3 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-eco-green focus:border-eco-green transition-all"
+                            rows="1"
+                            style="min-height: 48px; max-height: 120px;"
+                        ></textarea>
+                    </div>
+                    <button 
+                        id="send-btn"
+                        onclick="sendMessage()"
+                        class="bg-eco-green hover:bg-eco-dark text-white p-3 rounded-xl transition-colors duration-200 flex items-center justify-center shadow-sm"
+                        style="min-width: 48px; height: 48px;"
+                    >
+                        <i class="fas fa-paper-plane text-lg"></i>
+                    </button>
+                </div>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<script>
+let currentSessionId = null;
+let isLoading = false;
+let chatSessions = [];
+
+// Initialize
+document.addEventListener('DOMContentLoaded', function() {
+    setupEventListeners();
+    loadChatSessions();
+});
+
+function setupEventListeners() {
+    const input = document.getElementById('message-input');
+    
+    // Auto-resize textarea
+    input.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+    
+    // Send on Enter (but not Shift+Enter)
+    input.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    // Focus input
+    input.focus();
+}
+
+function quickAsk(question) {
+    document.getElementById('message-input').value = question;
+    sendMessage();
+}
+
+function sendMessage() {
+    const input = document.getElementById('message-input');
+    const message = input.value.trim();
+    
+    if (!message || isLoading) return;
+    
+    // Clear input and show loading
+    input.value = '';
+    input.style.height = 'auto';
+    setLoading(true);
+    
+    // Hide welcome screen and show chat
+    showChatArea();
+    
+    // Add user message
+    addMessage('user', message);
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    // Send to server
+    fetch('/ai-assistant/send/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            message: message,
+            session_id: currentSessionId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideTypingIndicator();
+        
+        if (data.success && data.assistant_message) {
+            currentSessionId = data.session_id;
+            addMessage('assistant', data.assistant_message.content);
+            updateChatSession(message);
+        } else {
+            addMessage('assistant', getOfflineResponse(message));
+        }
+    })
+    .catch(error => {
+        console.log('Using offline response:', error);
+        hideTypingIndicator();
+        addMessage('assistant', getOfflineResponse(message));
+    })
+    .finally(() => {
+        setLoading(false);
+        input.focus();
+    });
+}
+
+function showChatArea() {
+    document.getElementById('welcome-screen').classList.add('hidden');
+    document.getElementById('chat-messages').classList.remove('hidden');
+}
+
+function addMessage(role, content) {
+    const messagesContainer = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    
+    const isUser = role === 'user';
+    const alignClass = isUser ? 'justify-end' : 'justify-start';
+    const bgColor = isUser ? 'bg-eco-green text-white' : 'bg-white text-gray-800 border border-gray-200';
+    const iconBg = isUser ? 'bg-eco-dark' : 'bg-gray-100';
+    const icon = isUser ? 'fas fa-user' : 'fas fa-robot';
+    const iconColor = isUser ? 'text-white' : 'text-eco-green';
+    
+    messageDiv.className = `flex ${alignClass} mb-4`;
+    messageDiv.innerHTML = `
+        <div class="flex ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start max-w-3xl">
+            <div class="w-8 h-8 ${iconBg} rounded-full flex items-center justify-center flex-shrink-0 ${isUser ? 'ml-3' : 'mr-3'}">
+                <i class="${icon} ${iconColor} text-sm"></i>
+            </div>
+            <div class="${bgColor} px-4 py-3 rounded-2xl shadow-sm max-w-2xl">
+                <div class="whitespace-pre-wrap text-sm leading-relaxed">${content}</div>
+            </div>
+        </div>
+    `;
+    
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+function showTypingIndicator() {
+    const messagesContainer = document.getElementById('chat-messages');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typing-indicator';
+    typingDiv.className = 'flex justify-start mb-4';
+    typingDiv.innerHTML = `
+        <div class="flex items-start max-w-3xl">
+            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0 mr-3">
+                <i class="fas fa-robot text-eco-green text-sm"></i>
+            </div>
+            <div class="bg-white px-4 py-3 rounded-2xl shadow-sm border border-gray-200">
+                <div class="flex space-x-1">
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    messagesContainer.appendChild(typingDiv);
+    scrollToBottom();
+}
+
+function hideTypingIndicator() {
+    const typing = document.getElementById('typing-indicator');
+    if (typing) typing.remove();
+}
+
+function scrollToBottom() {
+    const container = document.getElementById('messages-container');
+    container.scrollTop = container.scrollHeight;
+}
+
+function setLoading(loading) {
+    isLoading = loading;
+    const btn = document.getElementById('send-btn');
+    if (loading) {
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin text-lg"></i>';
+        btn.disabled = true;
+    } else {
+        btn.innerHTML = '<i class="fas fa-paper-plane text-lg"></i>';
+        btn.disabled = false;
+    }
+}
+
+function startNewChat() {
+    currentSessionId = null;
+    document.getElementById('chat-messages').innerHTML = '';
+    document.getElementById('chat-messages').classList.add('hidden');
+    document.getElementById('welcome-screen').classList.remove('hidden');
+    document.getElementById('message-input').focus();
+}
+
+function loadChatSessions() {
+    fetch('/ai-assistant/sessions/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.sessions.length > 0) {
+                displayChatSessions(data.sessions);
+            }
+        })
+        .catch(error => {
+            console.log('Could not load chat sessions:', error);
+        });
+}
+
+function displayChatSessions(sessions) {
+    const container = document.getElementById('chat-sessions');
+    container.innerHTML = '';
+    
+    sessions.forEach(session => {
+        const sessionDiv = document.createElement('div');
+        sessionDiv.className = `p-3 hover:bg-gray-50 rounded-lg cursor-pointer border-l-4 ${session.is_active ? 'border-eco-green bg-eco-light/20' : 'border-gray-200'} mb-2 transition-colors`;
+        sessionDiv.onclick = () => loadChatSession(session.id);
+        
+        sessionDiv.innerHTML = `
+            <div class="font-medium text-sm text-gray-800 truncate">${session.preview}</div>
+            <div class="text-xs text-gray-500 mt-1">${session.updated_at}</div>
+        `;
+        
+        container.appendChild(sessionDiv);
+    });
+}
+
+function loadChatSession(sessionId) {
+    fetch(`/ai-assistant/session/${sessionId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.session_id) {
+                currentSessionId = data.session_id;
+                displayChatMessages(data.messages);
+                showChatArea();
+            }
+        })
+        .catch(error => {
+            console.log('Could not load chat session:', error);
+        });
+}
+
+function displayChatMessages(messages) {
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = '';
+    
+    messages.forEach(message => {
+        addMessage(message.role, message.content);
+    });
+}
+
+function updateChatSession(firstMessage) {
+    // Add to chat sessions list
+    const sessionsContainer = document.getElementById('chat-sessions');
+    if (sessionsContainer.children.length === 1) {
+        // Remove placeholder
+        sessionsContainer.innerHTML = '';
+    }
+    
+    const sessionDiv = document.createElement('div');
+    sessionDiv.className = 'p-3 hover:bg-gray-50 rounded-lg cursor-pointer border-l-4 border-eco-green mb-2';
+    sessionDiv.innerHTML = `
+        <div class="font-medium text-sm text-gray-800 truncate">${firstMessage}</div>
+        <div class="text-xs text-gray-500 mt-1">Just now</div>
+    `;
+    
+    sessionsContainer.insertBefore(sessionDiv, sessionsContainer.firstChild);
+}
+
+function getOfflineResponse(message) {
+    const msg = message.toLowerCase();
+    
+    if (msg.includes('hello') || msg.includes('hi') || msg.includes('hey')) {
+        return "Hello! 👋 Welcome to EcoLearn Zambia! I'm your AI assistant here to help with environmental education, waste management, and navigating our platform. What would you like to learn about today?";
+    }
+    
+    if (msg.includes('help') || msg.includes('what') || msg.includes('can')) {
+        return `I can help you with:
+
+🌱 **Environmental Education**
+• Waste management best practices
+• Recycling techniques for Zambia
+• Community cleanup strategies
+
+📚 **Platform Navigation**
+• Finding learning modules
+• Joining community discussions
+• Reporting environmental issues
+
+🏆 **Getting Involved**
+• Community challenges and events
+• Earning points and rewards
+• Connecting with other users
+
+What specific topic interests you most?`;
+    }
+    
+    if (msg.includes('recycle') || msg.includes('waste')) {
+        return `Great question about recycling! ♻️
+
+In Zambia, you can recycle:
+• **Plastic bottles** - Clean and sort by type
+• **Paper & cardboard** - Keep dry and bundle together  
+• **Metal cans** - Rinse before recycling
+• **Glass bottles** - Separate by color
+
+**Pro tip:** Check our Learning Modules for detailed recycling guides specific to Zambian communities!`;
+    }
+    
+    if (msg.includes('dump') || msg.includes('report')) {
+        return `To report illegal dumping: 🚨
+
+1. **Go to Report section** in the main menu
+2. **Fill out the form** with location details
+3. **Add photos** if possible
+4. **Submit your report**
+
+Your reports help keep Zambian communities clean and healthy! 🌍`;
+    }
+    
+    if (msg.includes('module') || msg.includes('learn') || msg.includes('course')) {
+        return `Our learning modules cover: 📖
+
+🌿 **Waste Management Basics**
+♻️ **Recycling Techniques**  
+👥 **Community Organization**
+🏥 **Environmental Health**
+
+Visit the **Learning** section to start your environmental education journey!`;
+    }
+    
+    if (msg.includes('community') || msg.includes('involve')) {
+        return `Get involved in your community! 🤝
+
+**Ways to participate:**
+• **Join cleanup challenges** - Compete with others
+• **Attend local events** - Meet like-minded people  
+• **Share success stories** - Inspire others
+• **Form cleanup groups** - Organize with neighbors
+
+Ready to make a difference? Check out our Community section!`;
+    }
+    
+    // Default response
+    return `Thanks for your question about "${message}"! 
+
+I'm here to help with environmental education and EcoLearn platform guidance. Here's what I can assist with:
+
+🌱 **Environmental Topics**
+• Waste management and recycling
+• Community cleanup strategies
+• Environmental health practices
+
+🖥️ **Platform Features**  
+• Learning modules and courses
+• Community forums and events
+• Reporting environmental issues
+
+What specific aspect would you like to explore? I'm here to help! 🌍`;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+.animate-bounce {
+    animation: bounce 1.4s infinite;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-6px);
+    }
+}
+
+/* Custom scrollbar */
+#messages-container::-webkit-scrollbar,
+#chat-sessions::-webkit-scrollbar {
+    width: 6px;
+}
+
+#messages-container::-webkit-scrollbar-track,
+#chat-sessions::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+#messages-container::-webkit-scrollbar-thumb,
+#chat-sessions::-webkit-scrollbar-thumb {
+    background: #22c55e;
+    border-radius: 3px;
+}
+
+#messages-container::-webkit-scrollbar-thumb:hover,
+#chat-sessions::-webkit-scrollbar-thumb:hover {
+    background: #16a34a;
+}
+</style>
+{% endblock %}

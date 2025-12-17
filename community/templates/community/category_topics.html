@@ -1,38 +1,135 @@
 {% extends 'base.html' %}
-{% block title %}{{ category.name }} - Topics{% endblock %}
+{% block title %}{{ category.name }} - EcoLearn Forum{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12">
+<div class="min-h-screen bg-gradient-to-br from-eco-light via-gray-50 to-eco-light/30 py-8">
 <div class="max-w-6xl mx-auto px-4">
-<div class="flex justify-between items-center mb-8">
-    <div>
-    <h1 class="text-4xl font-bold text-green-800">{{ category.name }}</h1>
-    <p class="text-gray-600 mt-2">{{ category.description|default:"" }}</p>
+    
+    <!-- Back Navigation -->
+    <div class="mb-6">
+        <a href="{% url 'community:forum_home' %}" 
+           class="inline-flex items-center text-eco-green hover:text-eco-dark font-semibold bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Forum
+        </a>
     </div>
-    <a href="{% url 'community:create_topic' category.id %}" 
-        class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 font-medium">
-    + New Topic
-    </a>
-</div>
 
-    <div class="bg-white rounded-lg shadow">
-    {% for topic in page_obj %}
-    <a href="{% url 'community:topic_detail' topic.id %}" class="block p-6 hover:bg-gray-50 border-b">
-    <div class="flex justify-between items-start">
-        <div class="flex-1">
-        <h3 class="text-xl font-semibold text-green-700">{{ topic.title }}</h3>
-        <p class="text-gray-600 mt-2">by {{ topic.author.get_full_name|default:topic.author.username }}</p>
+    <!-- Category Header -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <div class="w-20 h-20 bg-gradient-to-br from-eco-light to-eco-green/30 rounded-2xl flex items-center justify-center shadow-lg">
+                    <span class="text-4xl">{{ category.icon|default:"💬" }}</span>
+                </div>
+                <div>
+                    <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">{{ category.name }}</h1>
+                    <p class="text-lg text-gray-600 mb-4">{{ category.description|default:"Join the discussion and share your knowledge" }}</p>
+                    <div class="flex items-center space-x-6 text-sm text-gray-600">
+                        <span class="flex items-center">
+                            <i class="fas fa-comments text-eco-green mr-1"></i>
+                            {{ page_obj.paginator.count }} topics
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-users text-blue-500 mr-1"></i>
+                            Active community
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-clock text-orange-500 mr-1"></i>
+                            Updated recently
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <a href="{% url 'community:create_topic' category.id %}" 
+               class="px-6 py-3 bg-gradient-to-r from-eco-green to-eco-dark text-white rounded-xl hover:shadow-lg transition-all duration-300 font-bold transform hover:-translate-y-1">
+                <i class="fas fa-plus mr-2"></i>New Discussion
+            </a>
         </div>
-        <div class="text-right ml-4">
-        <p class="text-2xl font-bold text-green-600">{{ topic.reply_count|default:0 }}</p>
-        <p class="text-sm text-gray-500">Replies</p>
-        <p class="text-xs text-gray-400 mt-1">{{ topic.created_at|date:"M d" }}</p>
+    </div>
+
+    <!-- Topics List -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="p-6 border-b border-gray-200 bg-gradient-to-r from-eco-light/20 to-gray-50">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-list text-eco-green mr-2"></i>
+                    All Discussions
+                </h2>
+                <div class="flex items-center space-x-4 text-sm text-gray-600">
+                    <button class="flex items-center hover:text-eco-green transition-colors">
+                        <i class="fas fa-sort mr-1"></i>Sort by latest
+                    </button>
+                    <button class="flex items-center hover:text-eco-green transition-colors">
+                        <i class="fas fa-filter mr-1"></i>Filter
+                    </button>
+                </div>
+            </div>
         </div>
+
+        <div class="divide-y divide-gray-100">
+        {% for topic in page_obj %}
+        <a href="{% url 'community:topic_detail' topic.id %}" 
+           class="block p-6 hover:bg-gradient-to-r hover:from-eco-light/20 hover:to-gray-50 transition-all duration-300 hover:shadow-sm">
+            <div class="flex items-start justify-between">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center space-x-3 mb-2">
+                        {% if topic.is_pinned %}
+                        <i class="fas fa-thumbtack text-eco-green"></i>
+                        {% endif %}
+                        {% if topic.is_solved %}
+                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full">
+                            <i class="fas fa-check mr-1"></i>Solved
+                        </span>
+                        {% endif %}
+                        <h3 class="text-lg font-bold text-gray-900 hover:text-eco-green transition-colors line-clamp-1">
+                            {{ topic.title }}
+                        </h3>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 text-sm text-gray-600 mb-3">
+                        <span class="flex items-center">
+                            <i class="fas fa-user-circle text-gray-400 mr-1"></i>
+                            {{ topic.author.get_full_name|default:topic.author.username }}
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-clock text-orange-500 mr-1"></i>
+                            {{ topic.created_at|timesince }} ago
+                        </span>
+                        <span class="flex items-center">
+                            <i class="fas fa-eye text-blue-500 mr-1"></i>
+                            {{ topic.views }} views
+                        </span>
+                    </div>
+
+                    {% if topic.content %}
+                    <p class="text-gray-600 text-sm line-clamp-2">{{ topic.content|truncatewords:20 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="ml-6 text-center flex-shrink-0">
+                    <div class="w-16 h-16 bg-gradient-to-br from-eco-light to-eco-green/30 rounded-xl flex items-center justify-center mb-2 shadow-sm">
+                        <span class="text-xl font-bold text-eco-green">{{ topic.reply_count|default:0 }}</span>
+                    </div>
+                    <p class="text-xs text-gray-500 font-medium">
+                        {% if topic.reply_count == 1 %}Reply{% else %}Replies{% endif %}
+                    </p>
+                    <p class="text-xs text-gray-400 mt-1">{{ topic.created_at|date:"M d" }}</p>
+                </div>
+            </div>
+        </a>
+        {% empty %}
+        <div class="p-12 text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-eco-light rounded-full mb-4">
+                <i class="fas fa-comments text-eco-green text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-700 mb-2">Start the First Discussion!</h3>
+            <p class="text-gray-500 mb-6">No topics in this category yet. Be the pioneer and share your knowledge.</p>
+            <a href="{% url 'community:create_topic' category.id %}" 
+               class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-eco-green to-eco-dark text-white rounded-xl hover:shadow-lg transition-all duration-300 font-bold">
+                <i class="fas fa-plus mr-2"></i>Create First Topic
+            </a>
         </div>
-    </a>
-    {% empty %}
-    <p class="p-8 text-center text-gray-500">No topics yet. Be the first to start one!</p>
-    {% endfor %}
+        {% endfor %}
+        </div>
     </div>
 
     <!-- Pagination -->

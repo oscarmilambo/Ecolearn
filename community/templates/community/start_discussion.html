@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Start a Discussion - EcoLearn Forum{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-eco-light via-gray-50 to-eco-light/30 py-8">
+  <div class="max-w-4xl mx-auto px-4">
+    
+    <!-- Back Navigation -->
+    <div class="mb-6">
+        <a href="{% url 'community:forum_home' %}" 
+           class="inline-flex items-center text-eco-green hover:text-eco-dark font-semibold bg-white px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Forum
+        </a>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-eco-green to-eco-dark rounded-full mb-6 shadow-lg">
+            <i class="fas fa-comments text-white text-3xl"></i>
+        </div>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Start a Discussion</h1>
+        <p class="text-lg text-gray-600">Connect with the community and share your thoughts, questions, or knowledge</p>
+    </div>
+
+    <!-- Discussion Type Guide -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="text-center p-4 bg-white rounded-xl shadow-sm border border-blue-200 hover:shadow-md transition-all duration-300">
+            <i class="fas fa-question-circle text-blue-500 text-2xl mb-2"></i>
+            <p class="text-sm font-semibold text-gray-700">Ask Questions</p>
+            <p class="text-xs text-gray-600">Get help from experts</p>
+        </div>
+        <div class="text-center p-4 bg-white rounded-xl shadow-sm border border-purple-200 hover:shadow-md transition-all duration-300">
+            <i class="fas fa-balance-scale text-purple-500 text-2xl mb-2"></i>
+            <p class="text-sm font-semibold text-gray-700">Start Debates</p>
+            <p class="text-xs text-gray-600">Discuss different views</p>
+        </div>
+        <div class="text-center p-4 bg-white rounded-xl shadow-sm border border-eco-green/30 hover:shadow-md transition-all duration-300">
+            <i class="fas fa-lightbulb text-eco-green text-2xl mb-2"></i>
+            <p class="text-sm font-semibold text-gray-700">Share Ideas</p>
+            <p class="text-xs text-gray-600">Inspire the community</p>
+        </div>
+        <div class="text-center p-4 bg-white rounded-xl shadow-sm border border-orange-200 hover:shadow-md transition-all duration-300">
+            <i class="fas fa-share-alt text-orange-500 text-2xl mb-2"></i>
+            <p class="text-sm font-semibold text-gray-700">Share Resources</p>
+            <p class="text-xs text-gray-600">Tutorials, tools, files</p>
+        </div>
+    </div>
+    
+    <!-- Form -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Category Selection -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center">
+            <i class="fas fa-layer-group text-eco-green mr-2"></i>
+            Choose Discussion Category
+          </label>
+          <select name="category" required
+                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-eco-green focus:outline-none transition-colors duration-300 text-base">
+            <option value="">Select a category for your discussion...</option>
+            {% for category in categories %}
+            <option value="{{ category.id }}">
+              {{ category.icon|default:"💬" }} {{ category.name }} - {{ category.description|truncatewords:8 }}
+            </option>
+            {% endfor %}
+          </select>
+          <p class="text-sm text-gray-600 mt-2">
+            <i class="fas fa-info-circle mr-1"></i>
+            Choose the most relevant category to help others find your discussion
+          </p>
+        </div>
+        
+        <!-- Title -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center">
+            <i class="fas fa-heading text-eco-green mr-2"></i>
+            Discussion Title
+          </label>
+          <input type="text" name="title" required
+                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-eco-green focus:outline-none transition-colors duration-300 text-lg"
+                 placeholder="What would you like to discuss? Be clear and specific...">
+          <p class="text-sm text-gray-600 mt-2">
+            <i class="fas fa-lightbulb mr-1"></i>
+            Good titles get more responses. Example: "How do I reduce plastic waste in my kitchen?"
+          </p>
+        </div>
+
+        <!-- Content -->
+        <div>
+          <label class="block text-sm font-bold text-gray-700 mb-3 flex items-center">
+            <i class="fas fa-edit text-eco-green mr-2"></i>
+            Your Message
+          </label>
+          <textarea name="content" rows="8" required
+                    class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-eco-green focus:outline-none transition-colors duration-300 resize-none"
+                    placeholder="Provide details, context, or background information. The more information you share, the better help you'll receive..."></textarea>
+          <div class="flex items-center justify-between mt-2">
+            <p class="text-sm text-gray-600">
+              <i class="fas fa-heart text-red-500 mr-1"></i>
+              Be respectful, helpful, and constructive
+            </p>
+            <p class="text-sm text-gray-500">Minimum 20 characters</p>
+          </div>
+        </div>
+
+        <!-- Community Guidelines -->
+        <div class="bg-gradient-to-r from-eco-light/30 to-blue-50 rounded-xl p-6">
+          <h4 class="font-bold text-gray-900 mb-3 flex items-center">
+            <i class="fas fa-users text-eco-green mr-2"></i>
+            Community Guidelines
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700">
+            <div>
+              <h5 class="font-semibold mb-2 text-eco-green">✅ Do:</h5>
+              <ul class="space-y-1">
+                <li>• Be specific about your problem or question</li>
+                <li>• Include relevant details and context</li>
+                <li>• Use clear, descriptive language</li>
+                <li>• Search existing topics first</li>
+              </ul>
+            </div>
+            <div>
+              <h5 class="font-semibold mb-2 text-red-600">❌ Don't:</h5>
+              <ul class="space-y-1">
+                <li>• Use offensive or inappropriate language</li>
+                <li>• Share personal information</li>
+                <li>• Post spam or promotional content</li>
+                <li>• Create duplicate discussions</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between pt-4">
+          <a href="{% url 'community:forum_home' %}" 
+             class="text-gray-600 hover:text-gray-800 font-semibold">
+            <i class="fas fa-times mr-1"></i>Cancel
+          </a>
+          <button type="submit" 
+                  class="px-8 py-3 bg-gradient-to-r from-eco-green to-eco-dark text-white rounded-xl hover:shadow-lg transition-all duration-300 font-bold transform hover:-translate-y-1">
+            <i class="fas fa-paper-plane mr-2"></i>Start Discussion
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Recent Discussions Preview -->
+    <div class="mt-8 bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+      <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+        <i class="fas fa-fire text-orange-500 mr-2"></i>
+        Recent Community Discussions
+      </h3>
+      <p class="text-gray-600 mb-4">See what others are talking about in the community</p>
+      <a href="{% url 'community:forum_home' %}" 
+         class="inline-flex items-center text-eco-green hover:text-eco-dark font-semibold">
+        <i class="fas fa-arrow-right mr-2"></i>Browse All Discussions
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

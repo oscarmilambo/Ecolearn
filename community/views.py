@@ -131,6 +131,38 @@ def create_topic(request, category_id):
 
 
 @login_required
+def start_discussion(request):
+    """Allow users to start a discussion and choose the category"""
+    categories = ForumCategory.objects.filter(is_active=True)
+    
+    if request.method == 'POST':
+        category_id = request.POST.get('category')
+        title = request.POST.get('title')
+        content = request.POST.get('content')
+        
+        if category_id and title and content:
+            try:
+                category = ForumCategory.objects.get(id=category_id, is_active=True)
+                topic = ForumTopic.objects.create(
+                    title=title,
+                    content=content,
+                    category=category,
+                    author=request.user
+                )
+                messages.success(request, 'Discussion started successfully!')
+                return redirect('community:topic_detail', topic_id=topic.id)
+            except ForumCategory.DoesNotExist:
+                messages.error(request, 'Invalid category selected.')
+        else:
+            messages.error(request, 'Please fill in all required fields.')
+    
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'community/start_discussion.html', context)
+
+
+@login_required
 def events_list(request):
     upcoming_events = CommunityEvent.objects.filter(
         start_date__gte=timezone.now(),

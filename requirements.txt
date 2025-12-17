@@ -24,6 +24,7 @@ django-cloudinary-storage>=0.3.0
 # Communication and APIs
 requests>=2.31.0
 twilio>=8.10.0
+africastalking>=1.2.5
 django-phonenumber-field>=7.1.0
 phonenumbers>=8.13.0
 google-generativeai>=0.3.0

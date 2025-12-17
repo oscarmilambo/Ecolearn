@@ -210,7 +210,7 @@ class CommunityCampaignAdmin(ImportExportModelAdmin):
         }),
     )
     
-    actions = ['publish_campaigns', 'unpublish_campaigns', 'create_recurring_campaigns']
+    actions = ['publish_campaigns', 'unpublish_campaigns', 'create_recurring_campaigns', 'send_sms_campaign']
     
     def recurrence_display(self, obj):
         if obj.recurrence == 'one_time':
@@ -248,6 +248,49 @@ class CommunityCampaignAdmin(ImportExportModelAdmin):
                 count += 1
         self.message_user(request, f"🔄 {count} recurring campaign(s) created!")
     create_recurring_campaigns.short_description = "🔄 Create next occurrence for recurring campaigns"
+    
+    def send_sms_campaign(self, request, queryset):
+        """Send SMS notifications for selected campaigns"""
+        from .notifications import send_waste_management_campaign
+        from django.contrib.auth import get_user_model
+        
+        User = get_user_model()
+        total_sent = 0
+        total_failed = 0
+        
+        for campaign in queryset.filter(is_published=True):
+            # Get users interested in this campaign or all active users
+            target_users = User.objects.filter(
+                is_active=True,
+                phone_number__isnull=False
+            ).exclude(phone_number='')
+            
+            # Determine campaign type based on campaign
+            campaign_type = 'cleanup' if 'cleanup' in campaign.title.lower() else 'general'
+            
+            try:
+                result = send_waste_management_campaign(
+                    campaign_type=campaign_type,
+                    target_users=target_users,
+                    location=campaign.location,
+                    custom_message=f"📢 {campaign.title} - {campaign.start_date.strftime('%B %d')} at {campaign.location}. Join us! Details: marabo.co.zm/campaigns/{campaign.id}"
+                )
+                
+                if result['success']:
+                    total_sent += result['sms_sent']
+                    total_failed += result['sms_failed']
+                else:
+                    total_failed += target_users.count()
+                    
+            except Exception as e:
+                self.message_user(request, f"❌ Error sending SMS for '{campaign.title}': {str(e)}", level='ERROR')
+        
+        if total_sent > 0:
+            self.message_user(request, f"📱 SMS Campaign sent! ✅ {total_sent} delivered, ❌ {total_failed} failed")
+        else:
+            self.message_user(request, f"❌ No SMS messages sent. Check campaign settings and user phone numbers.", level='WARNING')
+    
+    send_sms_campaign.short_description = "📱 Send SMS notifications for campaigns"
 
 
 @admin.register(CampaignParticipant)

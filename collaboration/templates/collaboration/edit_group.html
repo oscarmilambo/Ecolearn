@@ -3,250 +3,128 @@
 
 {% block title %}Edit {{ group.name }} - EcoLearn{% endblock %}
 
-{% block extra_css %}
-<style>
-    .edit-group-container {
-        max-width: 800px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 12px;
-        padding: 30px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-    
-    .page-title {
-        text-align: center;
-        color: #2c5530;
-        margin-bottom: 30px;
-        font-size: 2em;
-    }
-    
-    .form-section {
-        margin-bottom: 30px;
-        padding: 20px;
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        background: #f9fafb;
-    }
-    
-    .section-title {
-        font-size: 1.3em;
-        font-weight: bold;
-        color: #2c5530;
-        margin-bottom: 15px;
-        border-bottom: 2px solid #4CAF50;
-        padding-bottom: 8px;
-    }
-    
-    .form-group {
-        margin-bottom: 20px;
-    }
-    
-    .form-label {
-        font-weight: bold;
-        color: #374151;
-        margin-bottom: 8px;
-        display: block;
-    }
-    
-    .form-control {
-        border: 2px solid #e5e7eb;
-        border-radius: 6px;
-        padding: 12px;
-        font-size: 1em;
-        transition: border-color 0.2s;
-        width: 100%;
-    }
-    
-    .form-control:focus {
-        border-color: #4CAF50;
-        box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
-        outline: none;
-    }
-    
-    .btn-save {
-        background: #4CAF50;
-        color: white;
-        border: none;
-        padding: 12px 30px;
-        border-radius: 6px;
-        font-size: 1.1em;
-        font-weight: bold;
-        transition: background 0.2s;
-    }
-    
-    .btn-save:hover {
-        background: #45a049;
-    }
-    
-    .btn-cancel {
-        background: #6c757d;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 6px;
-        text-decoration: none;
-        display: inline-block;
-        margin-left: 15px;
-        transition: background 0.2s;
-    }
-    
-    .btn-cancel:hover {
-        background: #5a6268;
-        color: white;
-        text-decoration: none;
-    }
-    
-    .help-text {
-        font-size: 0.9em;
-        color: #6b7280;
-        margin-top: 5px;
-    }
-    
-    .form-icon {
-        color: #4CAF50;
-        margin-right: 8px;
-    }
-    
-    .social-preview {
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-radius: 6px;
-        padding: 15px;
-        margin-top: 15px;
-    }
-    
-    .social-link {
-        display: inline-flex;
-        align-items: center;
-        margin: 5px 10px 5px 0;
-        padding: 6px 12px;
-        border-radius: 20px;
-        text-decoration: none;
-        font-size: 0.9em;
-        font-weight: 500;
-        transition: all 0.2s;
-    }
-    
-    .social-link:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        text-decoration: none;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <!-- Header -->
-        <div class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">Edit Group</h1>
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 flex items-center justify-center">
+                <i class="fas fa-edit text-eco-green mr-3"></i>
+                Edit Group
+            </h1>
             <p class="text-gray-600 mt-2">Update your group's information and social media links</p>
         </div>
 
-        <div class="edit-group-container">
-            <form method="post">
+        <!-- Form Container -->
+        <div class="bg-white rounded-xl shadow-xl p-8">
+            <form method="post" class="space-y-8">
                 {% csrf_token %}
                 
-                <!-- Basic Information -->
-                <div class="form-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-info-circle form-icon"></i>
-                        Basic Information
-                    </h2>
-                    
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="name" class="form-label">Group Name</label>
-                                <input type="text" class="form-control" id="name" name="name" 
-                                       value="{{ group.name }}" required>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="community" class="form-label">Community</label>
-                                <input type="text" class="form-control" id="community" name="community" 
-                                       value="{{ group.community }}" required>
-                            </div>
-                        </div>
+                <!-- Basic Information Section -->
+                <div class="space-y-6">
+                    <div class="border-b border-gray-200 pb-4">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-info-circle text-eco-green mr-3"></i>
+                            Basic Information
+                        </h2>
+                        <p class="text-gray-600 text-sm mt-1">Update your group's basic details</p>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="form-group">
-                                <label for="district" class="form-label">District</label>
-                                <input type="text" class="form-control" id="district" name="district" 
-                                       value="{{ group.district }}" required>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label for="name" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-tag text-eco-green mr-2"></i>
+                                Group Name *
+                            </label>
+                            <input type="text" id="name" name="name" value="{{ group.name }}" required
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-eco-green focus:border-eco-green transition-colors">
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea class="form-control" id="description" name="description" rows="4" required>{{ group.description }}</textarea>
-                        <div class="help-text">Describe your group's mission, goals, and activities</div>
+                        
+                        <div>
+                            <label for="community" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-home text-eco-green mr-2"></i>
+                                Community *
+                            </label>
+                            <input type="text" id="community" name="community" value="{{ group.community }}" required
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-eco-green focus:border-eco-green transition-colors">
+                        </div>
+                        
+                        <div>
+                            <label for="district" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-map-marker-alt text-eco-green mr-2"></i>
+                                District *
+                            </label>
+                            <input type="text" id="district" name="district" value="{{ group.district }}" required
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-eco-green focus:border-eco-green transition-colors">
+                        </div>
+                        
+                        <div class="md:col-span-2">
+                            <label for="description" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fas fa-align-left text-eco-green mr-2"></i>
+                                Description *
+                            </label>
+                            <textarea id="description" name="description" rows="4" required
+                                      class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-eco-green focus:border-eco-green transition-colors resize-none">{{ group.description }}</textarea>
+                            <p class="text-sm text-gray-500 mt-1">Describe your group's mission, goals, and activities</p>
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Social Media Links -->
-                <div class="form-section">
-                    <h2 class="section-title">
-                        <i class="fas fa-share-alt form-icon"></i>
-                        Social Media Links
-                    </h2>
-                    <div class="help-text mb-4">
-                        Add your group's social media links to help members connect and stay updated. All fields are optional.
+                <!-- Social Media Section -->
+                <div class="space-y-6">
+                    <div class="border-b border-gray-200 pb-4">
+                        <h2 class="text-xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-share-alt text-eco-green mr-3"></i>
+                            Social Media Links
+                        </h2>
+                        <p class="text-gray-600 text-sm mt-1">Add your group's social media links to help members connect and stay updated (Optional)</p>
                     </div>
                     
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="facebook_url" class="form-label">
-                                    <i class="fab fa-facebook-f" style="color: #1877f2;"></i>
-                                    Facebook
-                                </label>
-                                <input type="url" class="form-control" id="facebook_url" name="facebook_url"
-                                       value="{{ group.facebook_url }}" placeholder="https://facebook.com/your-group">
-                                <div class="help-text">Your group's Facebook page or community group</div>
-                            </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label for="facebook_url" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fab fa-facebook-f text-blue-600 mr-2"></i>
+                                Facebook
+                            </label>
+                            <input type="url" id="facebook_url" name="facebook_url" value="{{ group.facebook_url }}"
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                                   placeholder="https://facebook.com/your-group">
+                            <p class="text-sm text-gray-500 mt-1">Your group's Facebook page or community group</p>
                         </div>
                         
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="whatsapp_url" class="form-label">
-                                    <i class="fab fa-whatsapp" style="color: #25d366;"></i>
-                                    WhatsApp
-                                </label>
-                                <input type="url" class="form-control" id="whatsapp_url" name="whatsapp_url"
-                                       value="{{ group.whatsapp_url }}" placeholder="https://chat.whatsapp.com/invite-link">
-                                <div class="help-text">WhatsApp group invite link for coordination</div>
-                            </div>
+                        <div>
+                            <label for="whatsapp_url" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fab fa-whatsapp text-green-500 mr-2"></i>
+                                WhatsApp
+                            </label>
+                            <input type="url" id="whatsapp_url" name="whatsapp_url" value="{{ group.whatsapp_url }}"
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                                   placeholder="https://chat.whatsapp.com/invite-link">
+                            <p class="text-sm text-gray-500 mt-1">WhatsApp group invite link for coordination</p>
                         </div>
                         
-                        <div class="col-md-4">
-                            <div class="form-group">
-                                <label for="twitter_url" class="form-label">
-                                    <i class="fab fa-x-twitter" style="color: #000000;"></i>
-                                    X (Twitter)
-                                </label>
-                                <input type="url" class="form-control" id="twitter_url" name="twitter_url"
-                                       value="{{ group.twitter_url }}" placeholder="https://x.com/your-group">
-                                <div class="help-text">Your group's X (formerly Twitter) profile</div>
-                            </div>
+                        <div>
+                            <label for="twitter_url" class="block text-sm font-semibold text-gray-700 mb-2">
+                                <i class="fab fa-x-twitter text-gray-800 mr-2"></i>
+                                X (Twitter)
+                            </label>
+                            <input type="url" id="twitter_url" name="twitter_url" value="{{ group.twitter_url }}"
+                                   class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-gray-500 focus:border-gray-500 transition-colors"
+                                   placeholder="https://x.com/your-group">
+                            <p class="text-sm text-gray-500 mt-1">Your group's X (formerly Twitter) profile</p>
                         </div>
                     </div>
                     
-                    <!-- Social Media Preview -->
+                    <!-- Current Social Media Preview -->
                     {% if group.social_media_links %}
-                    <div class="social-preview">
+                    <div class="bg-gray-50 p-4 rounded-lg">
                         <h4 class="text-sm font-semibold text-gray-700 mb-3">Current Social Media Links:</h4>
                         <div class="flex flex-wrap gap-2">
                             {% for link in group.social_media_links %}
                             <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer" 
-                               class="social-link text-white" style="background-color: {{ link.color }};">
+                               class="inline-flex items-center px-3 py-2 rounded-lg text-white font-medium hover:scale-105 transition-transform"
+                               style="background-color: {{ link.color }};">
                                 <i class="{{ link.icon }} mr-2"></i>
                                 {{ link.name }}
                             </a>
@@ -257,13 +135,15 @@
                 </div>
                 
                 <!-- Action Buttons -->
-                <div class="text-center">
-                    <button type="submit" class="btn-save">
-                        <i class="fas fa-save"></i>
+                <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
+                    <button type="submit" 
+                            class="flex-1 bg-eco-green text-white py-3 px-6 rounded-lg hover:bg-eco-dark transition-colors font-semibold text-lg flex items-center justify-center shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                        <i class="fas fa-save mr-2"></i>
                         Save Changes
                     </button>
-                    <a href="{% url 'collaboration:group_detail' group.id %}" class="btn-cancel">
-                        <i class="fas fa-times"></i>
+                    <a href="{% url 'collaboration:group_detail' group.id %}" 
+                       class="flex-1 sm:flex-none bg-gray-600 text-white py-3 px-6 rounded-lg hover:bg-gray-700 transition-colors font-semibold text-center flex items-center justify-center">
+                        <i class="fas fa-times mr-2"></i>
                         Cancel
                     </a>
                 </div>
